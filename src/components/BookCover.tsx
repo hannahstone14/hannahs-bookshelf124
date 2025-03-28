@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useCallback } from 'react';
 import { Book } from '@/types/book';
 import { 
   Card, 
@@ -79,23 +80,28 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   // Show status indicator for all books when showStatus is true
   const showStatusIndicator = showStatus;
 
-  // Handle favorite toggle with prevention of event propagation
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  // Memoized handlers to prevent unnecessary rerenders
+  const handleFavoriteToggle = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     toggleFavorite(book.id);
-  };
+  }, [book.id, toggleFavorite]);
   
-  // Handle edit click with prevention of event propagation
-  const handleEditClick = (e: React.MouseEvent) => {
+  const handleEditClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setShowEdit(true);
-  };
+  }, []);
 
-  // Handle remove with prevention of event propagation
-  const handleRemoveClick = (e: React.MouseEvent) => {
+  const handleRemoveClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     removeBook(book.id);
-  };
+  }, [book.id, removeBook]);
+
+  const handleDialogClose = useCallback(() => {
+    setShowEdit(false);
+  }, []);
 
   return (
     <div className="relative group transition-all">
@@ -106,9 +112,9 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
               className="w-full h-full bg-cover bg-center flex-grow"
               style={{ backgroundImage: `url(${book.coverUrl})` }}
             >
-              {/* Favorite indicator for books with cover images */}
+              {/* Favorite indicator at bottom right */}
               {book.favorite && (
-                <div className="absolute bottom-2 left-2 z-10">
+                <div className="absolute bottom-0 right-0 z-10 p-2">
                   <Badge variant="outline" className="bg-yellow-400 border-0 p-1">
                     <Star className="h-4 w-4 text-white fill-white" />
                   </Badge>
@@ -141,9 +147,9 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
                 />
               )}
               
-              {/* Favorite indicator for books without cover */}
+              {/* Favorite indicator at bottom right */}
               {book.favorite && (
-                <div className="absolute bottom-2 left-2 z-10">
+                <div className="absolute bottom-0 right-0 z-10 p-2">
                   <Badge variant="outline" className="bg-yellow-400 border-0 p-1">
                     <Star className="h-4 w-4 text-white fill-white" />
                   </Badge>
@@ -175,14 +181,14 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
       )}
       
       {/* Dialog for editing - always mounted but shown/hidden with the open prop */}
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+      <Dialog open={showEdit} onOpenChange={handleDialogClose}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogTitle>Edit Book</DialogTitle>
-          <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
+          <AddBookForm bookToEdit={book} onSuccess={handleDialogClose} />
         </DialogContent>
       </Dialog>
 
-      {/* Options menu - fixed position at top right, with improved visibility */}
+      {/* Options menu - fixed position at top left, separate from favorite indicator */}
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -216,12 +222,12 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
                 </>
               )}
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-gray-500">
+            <DropdownMenuItem className="text-gray-500 pointer-events-none">
               <Calendar className="h-4 w-4 mr-2" />
               Read: {format(book.dateRead instanceof Date ? book.dateRead : new Date(), 'MMM d, yyyy')}
             </DropdownMenuItem>
             {book.status === 'reading' && (
-              <DropdownMenuItem className="text-blue-700">
+              <DropdownMenuItem className="text-blue-700 pointer-events-none">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Currently Reading
               </DropdownMenuItem>

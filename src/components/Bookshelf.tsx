@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -75,16 +75,16 @@ const Bookshelf: React.FC = () => {
     setBooksToDisplay(displayedBooks);
   }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks]);
 
-  const handleTabChange = (value: string) => {
+  const handleTabChange = useCallback((value: string) => {
     const newTab = value as ViewTab;
     setViewTab(newTab);
     
     if (newTab === 'shelf' || newTab === 'list') {
       setDisplayStyle(newTab);
     }
-  };
+  }, []);
   
-  const getSortedBooks = (booksToSort: Book[]) => {
+  const getSortedBooks = useCallback((booksToSort: Book[]) => {
     return [...booksToSort].sort((a, b) => {
       let comparison = 0;
       
@@ -98,7 +98,7 @@ const Bookshelf: React.FC = () => {
         case 'dateRead':
           if (!a.dateRead) return sortOrder === 'asc' ? -1 : 1;
           if (!b.dateRead) return sortOrder === 'asc' ? 1 : -1;
-          comparison = a.dateRead.getTime() - b.dateRead.getTime();
+          comparison = new Date(a.dateRead).getTime() - new Date(b.dateRead).getTime();
           break;
         case 'progress':
           comparison = a.progress - b.progress;
@@ -112,31 +112,31 @@ const Bookshelf: React.FC = () => {
       
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  };
+  }, [sortBy, sortOrder]);
   
   const sortedReadingBooks = getSortedBooks(readingBooks);
 
-  const handleSort = (option: SortOption) => {
+  const handleSort = useCallback((option: SortOption) => {
     if (sortBy === option) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(option);
       setSortOrder('desc');
     }
-  };
+  }, [sortBy, sortOrder]);
 
-  const handleDragStart = (book: Book) => {
+  const handleDragStart = useCallback((book: Book) => {
     setDraggedBook(book);
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, book: Book) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>, book: Book) => {
     e.preventDefault();
     if (draggedBook?.id !== book.id) {
       setDraggedOverBook(book);
     }
-  };
+  }, [draggedBook]);
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetBook: Book) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, targetBook: Book) => {
     e.preventDefault();
     
     if (!draggedBook) return;
@@ -156,16 +156,36 @@ const Bookshelf: React.FC = () => {
     
     setDraggedBook(null);
     setDraggedOverBook(null);
-  };
+  }, [draggedBook, viewTab, toReadBooks, allShelfBooks, books, getSortedBooks, reorderBooks]);
 
-  const handleEdit = (book: Book) => {
+  const handleEdit = useCallback((book: Book) => {
     setSelectedBook(book);
     setIsEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleDelete = (bookId: string) => {
+  const handleDelete = useCallback((bookId: string) => {
     removeBook(bookId);
-  };
+  }, [removeBook]);
+
+  const handleAddDialogOpenChange = useCallback((open: boolean) => {
+    setIsAddDialogOpen(open);
+  }, []);
+
+  const handleEditDialogOpenChange = useCallback((open: boolean) => {
+    setIsEditDialogOpen(open);
+    if (!open) {
+      setSelectedBook(null);
+    }
+  }, []);
+
+  const handleAddSuccess = useCallback(() => {
+    setIsAddDialogOpen(false);
+  }, []);
+
+  const handleEditSuccess = useCallback(() => {
+    setIsEditDialogOpen(false);
+    setSelectedBook(null);
+  }, []);
 
   const renderListItem = (book: Book) => {
     return (
@@ -298,11 +318,14 @@ const Bookshelf: React.FC = () => {
         <h1 className="text-3xl font-medium">Hannah's Library</h1>
         
         <div className="flex items-center gap-3">
-          <Dialog>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button 
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
-                onClick={() => setIsAddDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAddDialogOpen(true);
+                }}
               >
                 <PlusCircle className="h-6 w-6 mr-2" />
                 Add Book
@@ -310,18 +333,18 @@ const Bookshelf: React.FC = () => {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogTitle>Add New Book</DialogTitle>
-              <AddBookForm onSuccess={() => setIsAddDialogOpen(false)} />
+              <AddBookForm onSuccess={handleAddSuccess} />
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogTitle>Edit Book</DialogTitle>
           {selectedBook && (
             <AddBookForm 
-              onSuccess={() => setIsEditDialogOpen(false)} 
+              onSuccess={handleEditSuccess} 
               bookToEdit={selectedBook}
             />
           )}
@@ -361,7 +384,6 @@ const Bookshelf: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="border-blue-700 text-blue-700"
-              onClick={(e) => e.preventDefault()}
             >
               Sort Books
             </Button>
