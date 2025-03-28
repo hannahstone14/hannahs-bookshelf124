@@ -2,6 +2,9 @@
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { format, startOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
@@ -44,11 +47,35 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
+  // Prepare monthly reading data for chart
+  const last6Months = eachMonthOfInterval({
+    start: startOfMonth(subMonths(new Date(), 5)),
+    end: startOfMonth(new Date())
+  });
+
+  const monthlyReadingData = last6Months.map(month => {
+    const booksReadInMonth = books.filter(book => 
+      book.status === 'read' && 
+      book.dateRead.getMonth() === month.getMonth() && 
+      book.dateRead.getFullYear() === month.getFullYear()
+    ).length;
+
+    return {
+      month: format(month, 'MMM'),
+      books: booksReadInMonth
+    };
+  });
+
+  const genreDistribution = Object.entries(genreCounts).map(([genre, count]) => ({
+    genre,
+    count
+  }));
+
   return (
     <div className="mb-12">
       <h1 className="text-3xl font-medium mb-6">Your Reading Stats</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="stat-card stat-card-gray">
           <div className="stat-label">Books Read</div>
           <div className="stat-value">{totalBooksRead}</div>
@@ -71,6 +98,30 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {books.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-medium mb-4">Monthly Reading Progress</h2>
+          <div className="bg-white p-4 rounded-xl shadow-md h-64">
+            <ChartContainer 
+              config={{
+                books: { theme: { light: '#8B5CF6', dark: '#8B5CF6' } }
+              }}
+            >
+              <BarChart data={monthlyReadingData}>
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Bar dataKey="books" fill="var(--color-books)" radius={[4, 4, 0, 0]} />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent />
+                  }
+                />
+              </BarChart>
+            </ChartContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

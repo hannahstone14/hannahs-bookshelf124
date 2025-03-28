@@ -105,7 +105,33 @@
 /* Modern bookshelf styles */
 .modern-bookshelf {
   position: relative;
-  padding-bottom: 2rem;
+  padding-bottom: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Enhanced bookshelf */
+.modern-bookshelf::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1rem;
+  background: linear-gradient(to right, #D4A76A, #B38B5D, #8B5A2B);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modern-bookshelf::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.5rem;
+  height: 0.5rem;
+  background: #8B5A2B;
+  opacity: 0.6;
+  border-radius: 0 0 4px 4px;
 }
 
 /* Book hover and focus styles */
@@ -132,7 +158,7 @@
 
 /* Card styles */
 .stat-card {
-  @apply rounded-xl p-6 transition-shadow hover:shadow-md;
+  @apply rounded-xl p-6 transition-shadow hover:shadow-lg shadow-md;
 }
 
 .stat-card-gray {
