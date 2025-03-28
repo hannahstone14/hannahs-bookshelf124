@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -47,6 +48,7 @@ const Bookshelf: React.FC = () => {
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
   
   const readingBooks = books.filter(book => book.status === 'reading');
   const toReadBooks = books.filter(book => book.status === 'to-read');
@@ -54,6 +56,27 @@ const Bookshelf: React.FC = () => {
   
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
+  useEffect(() => {
+    // Update displayed books whenever the sorting or view tab changes
+    let displayedBooks: Book[] = [];
+    
+    switch(viewTab) {
+      case 'to-read':
+        displayedBooks = getSortedBooks(toReadBooks);
+        break;
+      case 'recommendations':
+        displayedBooks = getSortedBooks(recommendations);
+        break;
+      case 'shelf':
+      case 'list':
+      default:
+        displayedBooks = getSortedBooks(allShelfBooks);
+        break;
+    }
+    
+    setBooksToDisplay(displayedBooks);
+  }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks]);
+
   const handleTabChange = (value: string) => {
     const newTab = value as ViewTab;
     setViewTab(newTab);
@@ -75,6 +98,9 @@ const Bookshelf: React.FC = () => {
           comparison = a.author.localeCompare(b.author);
           break;
         case 'dateRead':
+          // Handle potential null dates gracefully
+          if (!a.dateRead) return sortOrder === 'asc' ? -1 : 1;
+          if (!b.dateRead) return sortOrder === 'asc' ? 1 : -1;
           comparison = a.dateRead.getTime() - b.dateRead.getTime();
           break;
         case 'progress':
@@ -92,9 +118,6 @@ const Bookshelf: React.FC = () => {
   };
   
   const sortedReadingBooks = getSortedBooks(readingBooks);
-  const sortedAllBooks = getSortedBooks(allShelfBooks);
-  const sortedToReadBooks = getSortedBooks(toReadBooks);
-  const sortedRecommendations = getSortedBooks(recommendations);
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {
@@ -121,7 +144,7 @@ const Bookshelf: React.FC = () => {
     
     if (!draggedBook) return;
     
-    const displayBooks = viewTab === 'to-read' ? sortedToReadBooks : sortedAllBooks;
+    const displayBooks = viewTab === 'to-read' ? toReadBooks : allShelfBooks;
     const allBooks = getSortedBooks(books);
     const sourceIndex = allBooks.findIndex(book => book.id === draggedBook.id);
     const targetIndex = allBooks.findIndex(book => book.id === targetBook.id);
@@ -209,7 +232,7 @@ const Bookshelf: React.FC = () => {
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 bg-white">
               <DropdownMenuItem onClick={() => handleEdit(book)}>
                 <Pencil className="h-4 w-4 mr-2" /> Edit
               </DropdownMenuItem>
@@ -244,7 +267,7 @@ const Bookshelf: React.FC = () => {
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-48 bg-white">
                       <DropdownMenuItem onClick={() => handleEdit(book)}>
                         <Pencil className="h-4 w-4 mr-2" /> Edit
                       </DropdownMenuItem>
@@ -336,7 +359,7 @@ const Bookshelf: React.FC = () => {
               Sort Books
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 bg-white">
             <DropdownMenuLabel>Sort by</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -401,11 +424,11 @@ const Bookshelf: React.FC = () => {
                 displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
-                      {sortedRecommendations.map(book => renderListItem(book))}
+                      {booksToDisplay.map(book => renderListItem(book))}
                     </div>
                   </div>
                 ) : (
-                  renderShelfView(sortedRecommendations)
+                  renderShelfView(booksToDisplay)
                 )
               )}
             </div>
@@ -425,11 +448,11 @@ const Bookshelf: React.FC = () => {
                 displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
-                      {sortedToReadBooks.map(book => renderListItem(book))}
+                      {booksToDisplay.map(book => renderListItem(book))}
                     </div>
                   </div>
                 ) : (
-                  renderShelfView(sortedToReadBooks)
+                  renderShelfView(booksToDisplay)
                 )
               )}
             </div>
@@ -461,11 +484,11 @@ const Bookshelf: React.FC = () => {
                 {displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
-                      {sortedAllBooks.map(book => renderListItem(book))}
+                      {booksToDisplay.map(book => renderListItem(book))}
                     </div>
                   </div>
                 ) : (
-                  renderShelfView(sortedAllBooks, true)
+                  renderShelfView(booksToDisplay, true)
                 )}
               </div>
             </div>
