@@ -53,7 +53,12 @@ const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) =
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 bg-white" align="start">
-        <Tabs defaultValue="full-date" value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'full-date' | 'year-only')}>
+        <Tabs 
+          defaultValue="full-date" 
+          value={selectedTab} 
+          onValueChange={(value) => setSelectedTab(value as 'full-date' | 'year-only')}
+          className="w-full"
+        >
           <div className="p-3 border-b">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="full-date">Full Date</TabsTrigger>
@@ -61,24 +66,28 @@ const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) =
             </TabsList>
           </div>
           
-          <TabsContent value="full-date" className="p-0 pointer-events-auto">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => newDate && onDateChange(newDate)}
-              initialFocus
-              className="pointer-events-auto"
-            />
-          </TabsContent>
-          
-          <TabsContent value="year-only" className="p-3 pointer-events-auto">
-            <YearPicker
-              value={date.getFullYear()}
-              onChange={handleYearChange}
-              startYear={1900}
-              className="w-full pointer-events-auto"
-            />
-          </TabsContent>
+          <div className="min-h-[300px]">
+            <TabsContent value="full-date" className="p-0 pointer-events-auto">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => newDate && onDateChange(newDate)}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </TabsContent>
+            
+            <TabsContent value="year-only" className="p-3 pointer-events-auto">
+              <div className="py-4">
+                <YearPicker
+                  value={date.getFullYear()}
+                  onChange={handleYearChange}
+                  startYear={1900}
+                  className="w-full pointer-events-auto"
+                />
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
       </PopoverContent>
     </Popover>

@@ -39,13 +39,13 @@ export function YearPicker({
       onValueChange={(value) => onChange(parseInt(value))}
     >
       <SelectTrigger 
-        className={cn("w-full", className)}
+        className={cn("w-full pointer-events-auto", className)}
       >
         <SelectValue placeholder="Select year" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="pointer-events-auto">
         {years.map((year) => (
-          <SelectItem key={year} value={year.toString()}>
+          <SelectItem key={year} value={year.toString()} className="pointer-events-auto">
             {year}
           </SelectItem>
         ))}
