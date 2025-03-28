@@ -14,7 +14,8 @@ import {
   ArrowDown10, 
   ArrowDownAZ, 
   ArrowDownZA, 
-  Percent
+  Percent,
+  LightbulbIcon
 } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
@@ -29,11 +30,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress';
+type ViewTab = 'shelf' | 'list' | 'wishlist' | 'recommendations';
 
 const Bookshelf: React.FC = () => {
-  const { books, reorderBooks } = useBookshelf();
+  const { books, recommendations, reorderBooks } = useBookshelf();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [viewTab, setViewTab] = useState<'shelf' | 'list' | 'wishlist'>('shelf');
+  const [viewTab, setViewTab] = useState<ViewTab>('shelf');
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
@@ -77,6 +79,7 @@ const Bookshelf: React.FC = () => {
   const sortedReadingBooks = getSortedBooks(readingBooks);
   const sortedAllBooks = getSortedBooks(allShelfBooks);
   const sortedWishlistBooks = getSortedBooks(wishlistBooks);
+  const sortedRecommendations = getSortedBooks(recommendations);
 
   // Handle sorting
   const handleSort = (option: SortOption) => {
@@ -158,6 +161,9 @@ const Bookshelf: React.FC = () => {
           {book.pages && (
             <p className="text-xs text-gray-400">{book.pages} pages</p>
           )}
+          {book.recommendedBy && (
+            <p className="text-xs text-blue-500">Recommended by: {book.recommendedBy}</p>
+          )}
         </div>
         {book.status === 'reading' && (
           <div className="ml-4 text-blue-700 text-sm font-medium">
@@ -173,18 +179,29 @@ const Bookshelf: React.FC = () => {
     return (
       <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
         <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
-          {booksToRender.map(book => (
-            <div 
-              key={book.id}
-              draggable
-              onDragStart={() => handleDragStart(book)}
-              onDragOver={(e) => handleDragOver(e, book)}
-              onDrop={(e) => handleDrop(e, book)}
-              className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
-            >
-              <BookCover book={book} showStatus={showStatus} />
+          {booksToRender.length > 0 ? (
+            booksToRender.map(book => (
+              <div 
+                key={book.id}
+                draggable
+                onDragStart={() => handleDragStart(book)}
+                onDragOver={(e) => handleDragOver(e, book)}
+                onDrop={(e) => handleDrop(e, book)}
+                className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+              >
+                <BookCover book={book} showStatus={showStatus} />
+                {book.recommendedBy && (
+                  <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
+                    From: {book.recommendedBy}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="w-full text-center py-6 text-gray-500">
+              No books to display
             </div>
-          ))}
+          )}
         </div>
       </div>
     );
@@ -214,10 +231,10 @@ const Bookshelf: React.FC = () => {
         <Tabs 
           defaultValue="shelf" 
           value={viewTab} 
-          onValueChange={(value) => setViewTab(value as 'shelf' | 'list' | 'wishlist')}
-          className="w-[400px]"
+          onValueChange={(value) => setViewTab(value as ViewTab)}
+          className="w-[540px]"
         >
-          <TabsList className="grid grid-cols-3">
+          <TabsList className="grid grid-cols-4">
             <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BookOpen className="h-4 w-4 mr-2" />
               Shelf View
@@ -229,6 +246,10 @@ const Bookshelf: React.FC = () => {
             <TabsTrigger value="wishlist" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BookmarkPlus className="h-4 w-4 mr-2" />
               Wishlist
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <LightbulbIcon className="h-4 w-4 mr-2" />
+              Recommendations
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -264,7 +285,7 @@ const Bookshelf: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      {books.length === 0 ? (
+      {books.length === 0 && recommendations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-lg text-center">
           <h3 className="text-xl font-medium mb-4">Your bookshelf is empty</h3>
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
@@ -282,7 +303,33 @@ const Bookshelf: React.FC = () => {
         </div>
       ) : (
         <div>
-          {viewTab === 'wishlist' ? (
+          {viewTab === 'recommendations' ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-medium flex items-center">
+                <LightbulbIcon className="h-5 w-5 mr-2 text-yellow-500" />
+                Book Recommendations From Others
+              </h2>
+              
+              {recommendations.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-md">
+                  <p className="text-gray-500">No recommendations yet</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Recommendations will appear when others add books without a verification code
+                  </p>
+                </div>
+              ) : (
+                viewTab === 'list' ? (
+                  <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="divide-y divide-gray-200">
+                      {sortedRecommendations.map(book => renderListItem(book))}
+                    </div>
+                  </div>
+                ) : (
+                  renderShelfView(sortedRecommendations)
+                )
+              )}
+            </div>
+          ) : viewTab === 'wishlist' ? (
             <div className="space-y-4">
               <h2 className="text-xl font-medium flex items-center">
                 <BookmarkPlus className="h-5 w-5 mr-2 text-amber-600" />

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 interface BookshelfContextType {
   books: Book[];
+  recommendations: Book[];
   addBook: (book: Omit<Book, 'id'>) => void;
   removeBook: (id: string) => void;
   editBook: (id: string, bookData: Partial<Book>) => void;
@@ -30,15 +31,17 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         // Parse the dates back to Date objects
         const parsedBooks = JSON.parse(savedBooks);
-        return parsedBooks.map((book: any) => ({
-          ...book,
-          dateRead: new Date(book.dateRead),
-          // Ensure backward compatibility with older data
-          status: book.status || 'read',
-          genre: book.genre || undefined,
-          progress: book.progress || (book.status === 'read' ? 100 : 0),
-          pages: book.pages || 0
-        }));
+        return parsedBooks
+          .filter((book: any) => book.status !== 'recommendation')
+          .map((book: any) => ({
+            ...book,
+            dateRead: new Date(book.dateRead),
+            // Ensure backward compatibility with older data
+            status: book.status || 'read',
+            genre: book.genre || undefined,
+            progress: book.progress || (book.status === 'read' ? 100 : 0),
+            pages: book.pages || 0
+          }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);
         return [];
@@ -47,14 +50,39 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return [];
   });
 
+  const [recommendations, setRecommendations] = useState<Book[]>(() => {
+    const savedBooks = localStorage.getItem('bookshelf');
+    if (savedBooks) {
+      try {
+        // Parse the dates back to Date objects
+        const parsedBooks = JSON.parse(savedBooks);
+        return parsedBooks
+          .filter((book: any) => book.status === 'recommendation')
+          .map((book: any) => ({
+            ...book,
+            dateRead: new Date(book.dateRead),
+            progress: 0,
+            pages: book.pages || 0
+          }));
+      } catch (error) {
+        console.error('Failed to parse recommendations from localStorage:', error);
+        return [];
+      }
+    }
+    return [];
+  });
+
   useEffect(() => {
+    // Combine books and recommendations for storage
+    const allBooks = [...books, ...recommendations];
+    
     // Convert Date objects to ISO strings for storage
-    const booksToStore = books.map(book => ({
+    const booksToStore = allBooks.map(book => ({
       ...book,
       dateRead: book.dateRead.toISOString()
     }));
     localStorage.setItem('bookshelf', JSON.stringify(booksToStore));
-  }, [books]);
+  }, [books, recommendations]);
 
   const addBook = (book: Omit<Book, 'id'>) => {
     const newBook = {
@@ -63,21 +91,47 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       progress: book.progress || (book.status === 'read' ? 100 : 0),
       pages: book.pages || 0
     };
-    setBooks(currentBooks => [newBook, ...currentBooks]);
-    toast.success('Book added to your shelf!');
+    
+    if (book.status === 'recommendation') {
+      setRecommendations(currentRecs => [newBook, ...currentRecs]);
+      toast.success('Thank you for your recommendation!');
+    } else {
+      setBooks(currentBooks => [newBook, ...currentBooks]);
+      toast.success('Book added to your shelf!');
+    }
   };
 
   const removeBook = (id: string) => {
-    setBooks(currentBooks => currentBooks.filter(book => book.id !== id));
+    // Check if it's in the main bookshelf
+    if (books.some(book => book.id === id)) {
+      setBooks(currentBooks => currentBooks.filter(book => book.id !== id));
+    } 
+    // Check if it's in recommendations
+    else if (recommendations.some(rec => rec.id === id)) {
+      setRecommendations(currentRecs => currentRecs.filter(rec => rec.id !== id));
+    }
+    
     toast.info('Book removed from your shelf');
   };
 
   const editBook = (id: string, bookData: Partial<Book>) => {
-    setBooks(currentBooks => 
-      currentBooks.map(book => 
-        book.id === id ? { ...book, ...bookData } : book
-      )
-    );
+    // First check if it's in the main bookshelf
+    if (books.some(book => book.id === id)) {
+      setBooks(currentBooks => 
+        currentBooks.map(book => 
+          book.id === id ? { ...book, ...bookData } : book
+        )
+      );
+    } 
+    // Then check if it's in recommendations
+    else if (recommendations.some(rec => rec.id === id)) {
+      setRecommendations(currentRecs => 
+        currentRecs.map(rec => 
+          rec.id === id ? { ...rec, ...bookData } : rec
+        )
+      );
+    }
+    
     toast.success('Book updated successfully!');
   };
 
@@ -125,6 +179,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const value = {
     books,
+    recommendations,
     addBook,
     removeBook,
     editBook,
