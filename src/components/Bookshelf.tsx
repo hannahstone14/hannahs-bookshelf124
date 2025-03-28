@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -7,10 +7,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
+import { move } from '@/lib/utils';
 
 const Bookshelf: React.FC = () => {
-  const { books } = useBookshelf();
-  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const { books, reorderBooks } = useBookshelf();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [draggedBook, setDraggedBook] = useState<Book | null>(null);
+  const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
 
   // Group books by month and year
   const groupedBooks = React.useMemo(() => {
@@ -50,10 +53,48 @@ const Bookshelf: React.FC = () => {
     return books.filter(book => book.status === 'reading');
   }, [books]);
 
+  // Handle drag start
+  const handleDragStart = (book: Book) => {
+    setDraggedBook(book);
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, book: Book) => {
+    e.preventDefault();
+    if (draggedBook?.id !== book.id) {
+      setDraggedOverBook(book);
+    }
+  };
+
+  // Handle drop
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetBook: Book, groupBooks: Book[]) => {
+    e.preventDefault();
+    
+    if (!draggedBook) return;
+    
+    // Find indexes for reordering
+    const sourceIndex = groupBooks.findIndex(book => book.id === draggedBook.id);
+    const targetIndex = groupBooks.findIndex(book => book.id === targetBook.id);
+    
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+      // Create a new array with the reordered books
+      const newBooks = [...groupBooks];
+      const [movedBook] = newBooks.splice(sourceIndex, 1);
+      newBooks.splice(targetIndex, 0, movedBook);
+      
+      // Update the order in the context
+      reorderBooks(groupBooks.map(b => b.id), newBooks.map(b => b.id));
+    }
+    
+    // Reset drag state
+    setDraggedBook(null);
+    setDraggedOverBook(null);
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-serif">My Bookshelf</h1>
+        <h1 className="text-3xl md:text-4xl font-sans">My Bookshelf</h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-burgundy hover:bg-burgundy/90">
@@ -69,7 +110,7 @@ const Bookshelf: React.FC = () => {
 
       {books.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-lg text-center">
-          <h3 className="text-xl font-serif mb-4">Your bookshelf is empty</h3>
+          <h3 className="text-xl font-sans mb-4">Your bookshelf is empty</h3>
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -88,14 +129,23 @@ const Bookshelf: React.FC = () => {
           {/* Show currently reading section if there are books being read */}
           {currentlyReading.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-xl font-serif border-b border-bookshelf-medium pb-2 mb-3">
+              <h2 className="text-xl font-sans border-b border-gray-300 pb-2 mb-3">
                 Currently Reading
               </h2>
-              <div className="bookshelf rounded-md p-4 relative">
-                <div className="bookshelf-divider absolute left-0 right-0 bottom-0 h-3 rounded-b-md"></div>
+              <div className="modern-bookshelf p-4 relative">
+                <div className="absolute left-0 right-0 bottom-0 h-0.5 bg-gray-300"></div>
                 <div className="flex flex-wrap gap-6 justify-start">
                   {currentlyReading.map(book => (
-                    <BookCover key={book.id} book={book} />
+                    <div 
+                      key={book.id}
+                      draggable
+                      onDragStart={() => handleDragStart(book)}
+                      onDragOver={(e) => handleDragOver(e, book)}
+                      onDrop={(e) => handleDrop(e, book, currentlyReading)}
+                      className={`cursor-move ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+                    >
+                      <BookCover book={book} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -105,14 +155,23 @@ const Bookshelf: React.FC = () => {
           {/* Show chronological bookshelf for read books */}
           {groupedBooks.map((group) => (
             <div key={group.label} className="space-y-2">
-              <h2 className="text-xl font-serif border-b border-bookshelf-medium pb-2 mb-3">
+              <h2 className="text-xl font-sans border-b border-gray-300 pb-2 mb-3">
                 {group.label}
               </h2>
-              <div className="bookshelf rounded-md p-4 relative">
-                <div className="bookshelf-divider absolute left-0 right-0 bottom-0 h-3 rounded-b-md"></div>
+              <div className="modern-bookshelf p-4 relative">
+                <div className="absolute left-0 right-0 bottom-0 h-0.5 bg-gray-300"></div>
                 <div className="flex flex-wrap gap-6 justify-start">
                   {group.books.map(book => (
-                    <BookCover key={book.id} book={book} />
+                    <div 
+                      key={book.id}
+                      draggable
+                      onDragStart={() => handleDragStart(book)}
+                      onDragOver={(e) => handleDragOver(e, book)}
+                      onDrop={(e) => handleDrop(e, book, group.books)}
+                      className={`cursor-move ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+                    >
+                      <BookCover book={book} />
+                    </div>
                   ))}
                 </div>
               </div>

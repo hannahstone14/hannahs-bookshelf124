@@ -8,4 +8,5 @@ export interface Book {
   color?: string;
   genre?: string;
   status: 'read' | 'reading' | 'to-read';
+  order?: number; // New field for ordering
 }

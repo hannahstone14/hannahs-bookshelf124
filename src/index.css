@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -84,47 +84,42 @@
   }
 
   body {
-    @apply bg-paper text-text font-sans;
+    @apply bg-white text-text font-sans;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    @apply font-sans;
   }
 }
 
 @layer utilities {
-  .font-serif {
-    font-family: 'Libre Baskerville', serif;
-  }
-
   .font-sans {
     font-family: 'Inter', sans-serif;
   }
 
   .book-shadow {
-    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
-  }
-
-  .book-spine {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 }
 
-/* Bookshelf styles */
-.bookshelf {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    #D4A76A,
-    #B38B5D 10px,
-    #D4A76A 10px,
-    #D4A76A 20px
-  );
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+/* Modern bookshelf styles */
+.modern-bookshelf {
+  position: relative;
+  padding-bottom: 2rem;
 }
 
-.bookshelf-divider {
-  background-color: #8B5A2B;
-  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+/* Book hover and focus styles */
+.book:hover {
+  transform: translateY(-8px);
+  transition: transform 0.3s ease;
+}
+
+/* Animation for drag and drop */
+@keyframes book-add {
+  '0%': { transform: 'translateY(20px)', opacity: '0' },
+  '100%': { transform: 'translateY(0)', opacity: '1' }
+}
+
+.animate-book-add {
+  animation: book-add 0.4s ease-out;
 }

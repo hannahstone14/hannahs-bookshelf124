@@ -32,8 +32,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
     ];
 
   return (
-    <div className="relative group animate-book-add">
-      <Card className="book-shadow h-64 w-44 transition-all duration-300 transform group-hover:scale-105 flex flex-col overflow-hidden">
+    <div className="relative group transition-all">
+      <Card className="shadow-md h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md">
         <CardContent className="p-0 h-full flex flex-col">
           {book.coverUrl ? (
             <div 
@@ -45,7 +45,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
               className="w-full h-full flex items-center justify-center flex-grow p-4"
               style={{ backgroundColor: bookColor }}
             >
-              <div className="text-white font-serif text-center">
+              <div className="text-white font-sans text-center">
                 <p className="font-bold text-lg line-clamp-3">{book.title}</p>
                 <p className="text-sm mt-2 opacity-80">{book.author}</p>
               </div>
