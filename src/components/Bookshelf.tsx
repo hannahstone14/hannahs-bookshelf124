@@ -18,7 +18,8 @@ import {
   Star,
   MoreVertical,
   Pencil,
-  Trash2
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
@@ -39,7 +40,7 @@ type DisplayStyle = 'shelf' | 'list';
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   
-  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
+  const { books, recommendations, reorderBooks, removeBook, recoverData, hasBackup } = useBookshelf();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -354,6 +355,18 @@ const Bookshelf: React.FC = () => {
         <h1 className="text-3xl font-medium">Hannah's Library</h1>
         
         <div className="flex items-center gap-3">
+          {hasBackup && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={recoverData}
+              className="border-amber-600 text-amber-700 hover:bg-amber-50"
+              title="Restore books from backup if some were lost during refresh"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Recover Books
+            </Button>
+          )}
           <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button 
@@ -417,43 +430,45 @@ const Bookshelf: React.FC = () => {
           </TabsList>
         </Tabs>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-blue-700 text-blue-700"
-            >
-              Sort Books
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-white z-50">
-            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => handleSort('dateRead')}>
-                {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
-                By Date Read
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('title')}>
-                {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                By Title
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('author')}>
-                {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                By Author
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('progress')}>
-                {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
-                By Progress
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('favorite')}>
-                {sortBy === 'favorite' && (sortOrder === 'desc' ? <Star className="h-4 w-4 mr-2" /> : <Star className="h-4 w-4 mr-2 opacity-50" />)}
-                Favorites First
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-3 items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-blue-700 text-blue-700"
+              >
+                Sort Books
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white z-50">
+              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => handleSort('dateRead')}>
+                  {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
+                  By Date Read
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('title')}>
+                  {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                  By Title
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('author')}>
+                  {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                  By Author
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('progress')}>
+                  {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
+                  By Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('favorite')}>
+                  {sortBy === 'favorite' && (sortOrder === 'desc' ? <Star className="h-4 w-4 mr-2" /> : <Star className="h-4 w-4 mr-2 opacity-50" />)}
+                  Favorites First
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {books.length === 0 && recommendations.length === 0 ? (

@@ -5,12 +5,25 @@ import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 
 const Index = () => {
-  const { books } = useBookshelf();
+  const { books, recommendations } = useBookshelf();
 
-  // Log books length to verify data is being loaded
+  // Log books and localStorage data to verify data is being loaded correctly
   useEffect(() => {
-    console.log('Index page loaded with', books.length, 'books');
-  }, [books]);
+    console.log('Index page loaded with', books.length, 'books and', recommendations.length, 'recommendations');
+    
+    // Check localStorage to verify saved data
+    try {
+      const storedBooks = localStorage.getItem('books');
+      const storedRecs = localStorage.getItem('recommendations');
+      const booksBackup = localStorage.getItem('books_backup');
+      
+      console.log('localStorage books:', storedBooks ? JSON.parse(storedBooks).length : 0);
+      console.log('localStorage recommendations:', storedRecs ? JSON.parse(storedRecs).length : 0);
+      console.log('localStorage backup available:', !!booksBackup);
+    } catch (error) {
+      console.error('Error checking localStorage:', error);
+    }
+  }, [books, recommendations]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

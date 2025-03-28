@@ -12,6 +12,8 @@ interface BookshelfContextType {
   reorderBooks: (currentOrder: string[], newOrder: string[]) => void;
   updateProgress: (id: string, progress: number) => void;
   toggleFavorite: (id: string) => void;
+  recoverData: () => void;
+  hasBackup: boolean;
 }
 
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
@@ -41,15 +43,43 @@ const parseDateFields = (data: any) => {
   }
 };
 
-// Helper function to load books from localStorage
+// Create backup of data in a separate localStorage key
+const backupData = (books: Book[], recommendations: Book[]) => {
+  try {
+    const booksToStore = books.map(book => ({
+      ...book,
+      dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
+    }));
+    
+    const recsToStore = recommendations.map(rec => ({
+      ...rec,
+      dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
+    }));
+    
+    localStorage.setItem('books_backup', JSON.stringify(booksToStore));
+    localStorage.setItem('recommendations_backup', JSON.stringify(recsToStore));
+    localStorage.setItem('backup_timestamp', new Date().toISOString());
+    
+    console.log('Data backup created:', booksToStore.length, 'books,', recsToStore.length, 'recommendations');
+  } catch (error) {
+    console.error('Failed to create backup:', error);
+  }
+};
+
+// Helper function to load books from localStorage with enhanced error handling
 const loadBooksFromStorage = () => {
   try {
     const savedBooks = localStorage.getItem('books');
     if (savedBooks) {
-      // Parse the dates back to Date objects
+      // Check if the data is valid JSON
       const parsedBooks = JSON.parse(savedBooks);
+      if (!Array.isArray(parsedBooks)) {
+        console.error('Books data is not an array, trying to recover from backup');
+        return [];
+      }
+      
       return parsedBooks
-        .filter((book: any) => book.status !== 'recommendation')
+        .filter((book: any) => book && typeof book === 'object' && book.status !== 'recommendation')
         .map((book: any) => ({
           ...parseDateFields(book),
           // Ensure backward compatibility with older data
@@ -67,22 +97,29 @@ const loadBooksFromStorage = () => {
   return [];
 };
 
-// Helper function to load recommendations from localStorage
+// Helper function to load recommendations from localStorage with enhanced error handling
 const loadRecommendationsFromStorage = () => {
   try {
     const savedRecs = localStorage.getItem('recommendations');
     if (savedRecs) {
-      // Parse the dates back to Date objects
+      // Check if the data is valid JSON
       const parsedRecs = JSON.parse(savedRecs);
-      return parsedRecs.map((book: any) => ({
-        ...parseDateFields(book),
-        progress: 0,
-        pages: book.pages || 0,
-        genres: book.genres || (book.genre ? [book.genre] : []),
-        favorite: false,
-        color: book.color || null,
-        status: 'recommendation'
-      }));
+      if (!Array.isArray(parsedRecs)) {
+        console.error('Recommendations data is not an array, trying to recover from backup');
+        return [];
+      }
+      
+      return parsedRecs
+        .filter((book: any) => book && typeof book === 'object')
+        .map((book: any) => ({
+          ...parseDateFields(book),
+          progress: 0,
+          pages: book.pages || 0,
+          genres: book.genres || (book.genre ? [book.genre] : []),
+          favorite: false,
+          color: book.color || null,
+          status: 'recommendation'
+        }));
     }
   } catch (error) {
     console.error('Failed to parse recommendations from localStorage:', error);
@@ -90,11 +127,76 @@ const loadRecommendationsFromStorage = () => {
   return [];
 };
 
+// Helper function to check if backup data exists
+const hasBackupData = () => {
+  const backupTimestamp = localStorage.getItem('backup_timestamp');
+  const booksBackup = localStorage.getItem('books_backup');
+  return !!(backupTimestamp && booksBackup);
+};
+
+// Helper function to load backup data
+const loadBackupData = () => {
+  const backupBooks = localStorage.getItem('books_backup');
+  const backupRecs = localStorage.getItem('recommendations_backup');
+  
+  let books: Book[] = [];
+  let recommendations: Book[] = [];
+  
+  if (backupBooks) {
+    try {
+      const parsedBooks = JSON.parse(backupBooks);
+      books = parsedBooks
+        .filter((book: any) => book && typeof book === 'object' && book.status !== 'recommendation')
+        .map((book: any) => ({
+          ...parseDateFields(book),
+          status: book.status || 'read',
+          genres: book.genres || (book.genre ? [book.genre] : []),
+          progress: book.progress || (book.status === 'read' ? 100 : 0),
+          pages: book.pages || 0,
+          favorite: book.favorite || false,
+          color: book.color || null
+        }));
+    } catch (error) {
+      console.error('Failed to parse books backup:', error);
+    }
+  }
+  
+  if (backupRecs) {
+    try {
+      const parsedRecs = JSON.parse(backupRecs);
+      recommendations = parsedRecs
+        .filter((book: any) => book && typeof book === 'object')
+        .map((book: any) => ({
+          ...parseDateFields(book),
+          progress: 0,
+          pages: book.pages || 0,
+          genres: book.genres || (book.genre ? [book.genre] : []),
+          favorite: false,
+          color: book.color || null,
+          status: 'recommendation'
+        }));
+    } catch (error) {
+      console.error('Failed to parse recommendations backup:', error);
+    }
+  }
+  
+  return { books, recommendations };
+};
+
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>(() => loadBooksFromStorage());
   const [recommendations, setRecommendations] = useState<Book[]>(() => loadRecommendationsFromStorage());
+  const [hasBackup, setHasBackup] = useState<boolean>(hasBackupData());
 
-  // Save books to localStorage whenever they change
+  // Create a backup when data is loaded initially
+  useEffect(() => {
+    const hasInitialData = books.length > 0 || recommendations.length > 0;
+    if (hasInitialData) {
+      backupData(books, recommendations);
+    }
+  }, []);
+
+  // Save books to localStorage whenever they change with debounce
   useEffect(() => {
     try {
       const booksToStore = books.map(book => ({
@@ -105,6 +207,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       localStorage.setItem('books', JSON.stringify(booksToStore));
       console.log('Saved books to localStorage:', booksToStore.length);
+      
+      // Create backup data 
+      backupData(books, recommendations);
+      setHasBackup(true);
     } catch (error) {
       console.error('Failed to save books to localStorage:', error);
     }
@@ -121,6 +227,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       localStorage.setItem('recommendations', JSON.stringify(recsToStore));
       console.log('Saved recommendations to localStorage:', recsToStore.length);
+      
+      // Update backup data
+      backupData(books, recommendations);
+      setHasBackup(true);
     } catch (error) {
       console.error('Failed to save recommendations to localStorage:', error);
     }
@@ -132,19 +242,23 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (event.key === 'books' && event.newValue) {
         try {
           const parsedBooks = JSON.parse(event.newValue);
-          setBooks(parsedBooks
-            .filter((book: any) => book.status !== 'recommendation')
-            .map((book: any) => ({
-              ...parseDateFields(book),
-              status: book.status || 'read',
-              genres: book.genres || (book.genre ? [book.genre] : []),
-              progress: book.progress || (book.status === 'read' ? 100 : 0),
-              pages: book.pages || 0,
-              favorite: book.favorite || false,
-              color: book.color || null
-            }))
-          );
-          console.log('Updated books from another tab:', parsedBooks.length);
+          if (Array.isArray(parsedBooks)) {
+            setBooks(parsedBooks
+              .filter((book: any) => book && typeof book === 'object' && book.status !== 'recommendation')
+              .map((book: any) => ({
+                ...parseDateFields(book),
+                status: book.status || 'read',
+                genres: book.genres || (book.genre ? [book.genre] : []),
+                progress: book.progress || (book.status === 'read' ? 100 : 0),
+                pages: book.pages || 0,
+                favorite: book.favorite || false,
+                color: book.color || null
+              }))
+            );
+            console.log('Updated books from another tab:', parsedBooks.length);
+          } else {
+            console.error('Received invalid books data from another tab');
+          }
         } catch (error) {
           console.error('Failed to parse books from storage event:', error);
         }
@@ -153,16 +267,23 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (event.key === 'recommendations' && event.newValue) {
         try {
           const parsedRecs = JSON.parse(event.newValue);
-          setRecommendations(parsedRecs.map((rec: any) => ({
-            ...parseDateFields(rec),
-            progress: 0,
-            pages: rec.pages || 0,
-            genres: rec.genres || (rec.genre ? [rec.genre] : []),
-            favorite: false,
-            color: rec.color || null,
-            status: 'recommendation'
-          })));
-          console.log('Updated recommendations from another tab:', parsedRecs.length);
+          if (Array.isArray(parsedRecs)) {
+            setRecommendations(parsedRecs
+              .filter((rec: any) => rec && typeof rec === 'object')
+              .map((rec: any) => ({
+                ...parseDateFields(rec),
+                progress: 0,
+                pages: rec.pages || 0,
+                genres: rec.genres || (rec.genre ? [rec.genre] : []),
+                favorite: false,
+                color: rec.color || null,
+                status: 'recommendation'
+              }))
+            );
+            console.log('Updated recommendations from another tab:', parsedRecs.length);
+          } else {
+            console.error('Received invalid recommendations data from another tab');
+          }
         } catch (error) {
           console.error('Failed to parse recommendations from storage event:', error);
         }
@@ -174,6 +295,39 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+
+  const recoverData = () => {
+    try {
+      const { books: backupBooks, recommendations: backupRecs } = loadBackupData();
+      
+      if (backupBooks.length > 0 || backupRecs.length > 0) {
+        setBooks(prev => {
+          // Keep the books that are already in the state, as long as they have unique IDs
+          const existingIds = new Set(prev.map(book => book.id));
+          const uniqueBackupBooks = backupBooks.filter(book => !existingIds.has(book.id));
+          
+          const combinedBooks = [...prev, ...uniqueBackupBooks];
+          return combinedBooks;
+        });
+        
+        setRecommendations(prev => {
+          // Keep the recommendations that are already in the state, as long as they have unique IDs
+          const existingIds = new Set(prev.map(rec => rec.id));
+          const uniqueBackupRecs = backupRecs.filter(rec => !existingIds.has(rec.id));
+          
+          const combinedRecs = [...prev, ...uniqueBackupRecs];
+          return combinedRecs;
+        });
+        
+        toast.success(`Recovered ${backupBooks.length} books and ${backupRecs.length} recommendations`);
+      } else {
+        toast.error('No backup data available to recover');
+      }
+    } catch (error) {
+      console.error('Failed to recover data from backup:', error);
+      toast.error('Failed to recover data from backup');
+    }
+  };
 
   const addBook = (book: Omit<Book, 'id'>) => {
     // Generate a persistent color if not provided
@@ -307,7 +461,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     editBook,
     reorderBooks,
     updateProgress,
-    toggleFavorite
+    toggleFavorite,
+    recoverData,
+    hasBackup
   };
 
   return (
