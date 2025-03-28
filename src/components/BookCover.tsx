@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Book } from '@/types/book';
 import { 
@@ -197,13 +196,13 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white z-50 w-48 shadow-lg">
-            <DropdownMenuItem onSelect={handleEditClick}>
+            <DropdownMenuItem onClick={handleEditClick}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               className={book.favorite ? "text-yellow-500" : "text-gray-600"}
-              onSelect={handleFavoriteToggle}
+              onClick={handleFavoriteToggle}
             >
               {book.favorite ? (
                 <>
@@ -229,7 +228,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
             )}
             <DropdownMenuItem 
               className="text-destructive focus:text-destructive"
-              onSelect={handleRemoveClick}
+              onClick={handleRemoveClick}
             >
               <Trash className="h-4 w-4 mr-2" />
               Remove
