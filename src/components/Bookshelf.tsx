@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -31,11 +30,13 @@ import {
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress';
 type ViewTab = 'shelf' | 'list' | 'wishlist' | 'recommendations';
+type DisplayStyle = 'shelf' | 'list';
 
 const Bookshelf: React.FC = () => {
   const { books, recommendations, reorderBooks } = useBookshelf();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
+  const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('shelf');
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
@@ -49,6 +50,18 @@ const Bookshelf: React.FC = () => {
   
   // All books for the main shelf (everything except wishlist)
   const allShelfBooks = books.filter(book => book.status !== 'wishlist');
+  
+  // Update both viewTab and displayStyle when changing tabs
+  const handleTabChange = (value: string) => {
+    const newTab = value as ViewTab;
+    setViewTab(newTab);
+    
+    // If switching to a content tab, keep the display style
+    // If switching between display styles, update it
+    if (newTab === 'shelf' || newTab === 'list') {
+      setDisplayStyle(newTab);
+    }
+  };
   
   // Sort books based on current sort option
   const getSortedBooks = (booksToSort: Book[]) => {
@@ -231,7 +244,7 @@ const Bookshelf: React.FC = () => {
         <Tabs 
           defaultValue="shelf" 
           value={viewTab} 
-          onValueChange={(value) => setViewTab(value as ViewTab)}
+          onValueChange={handleTabChange}
           className="w-[540px]"
         >
           <TabsList className="grid grid-cols-4">
@@ -318,7 +331,7 @@ const Bookshelf: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                viewTab === 'list' ? (
+                displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
                       {sortedRecommendations.map(book => renderListItem(book))}
@@ -342,7 +355,7 @@ const Bookshelf: React.FC = () => {
                   <p className="text-sm text-gray-400 mt-2">Add books to your wishlist to keep track of books you want to buy or read later</p>
                 </div>
               ) : (
-                viewTab === 'list' ? (
+                displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
                       {sortedWishlistBooks.map(book => renderListItem(book))}
@@ -362,7 +375,7 @@ const Bookshelf: React.FC = () => {
                     <BookOpenCheck className="h-5 w-5 mr-2 text-blue-700" />
                     Currently Reading
                   </h2>
-                  {viewTab === 'list' ? (
+                  {displayStyle === 'list' ? (
                     <div className="bg-white shadow rounded-lg overflow-hidden">
                       <div className="divide-y divide-gray-200">
                         {sortedReadingBooks.map(book => renderListItem(book))}
@@ -380,7 +393,7 @@ const Bookshelf: React.FC = () => {
                   <BookOpen className="h-5 w-5 mr-2 text-green-600" />
                   Your Bookshelf
                 </h2>
-                {viewTab === 'list' ? (
+                {displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
                     <div className="divide-y divide-gray-200">
                       {sortedAllBooks.map(book => renderListItem(book))}
