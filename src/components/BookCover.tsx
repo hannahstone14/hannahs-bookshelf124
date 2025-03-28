@@ -67,7 +67,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
 
   return (
     <div className="relative group transition-all">
-      <Card className="shadow-lg h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
+      <Card className="shadow-xl h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
         <CardContent className="p-0 h-full flex flex-col">
           {book.coverUrl ? (
             <div 
@@ -92,15 +92,24 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
             </div>
           )}
 
-          {/* Reading progress bar - always show for reading and partially read books */}
-          {book.status === 'reading' || (book.progress > 0 && book.progress < 100) && (
-            <div className="px-2 py-1 bg-white">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium">Progress</span>
-                <span>{readingProgress}%</span>
+          {/* Reading progress indicator for shelf view */}
+          {book.status === 'reading' && (
+            <>
+              {/* Progress indicator on the cover */}
+              <div 
+                className="absolute top-0 left-0 h-2 bg-blue-500" 
+                style={{ width: `${readingProgress}%` }}
+              />
+              
+              {/* Progress indicator at the bottom */}
+              <div className="px-2 py-1 bg-white">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-medium">Progress</span>
+                  <span>{readingProgress}%</span>
+                </div>
+                <Progress value={readingProgress} className="h-2" />
               </div>
-              <Progress value={readingProgress} className="h-2" />
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

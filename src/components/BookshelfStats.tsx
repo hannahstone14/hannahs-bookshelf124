@@ -2,6 +2,7 @@
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
+import { Book as BookIcon, BookOpen, Bookmark, BookmarkCheck } from 'lucide-react';
 
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
@@ -45,30 +46,26 @@ const BookshelfStats: React.FC = () => {
     : null;
 
   return (
-    <div className="mb-12">
-      <h1 className="text-3xl font-medium mb-6">Your Reading Stats</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="stat-card stat-card-gray">
-          <div className="stat-label">Books Read</div>
-          <div className="stat-value">{totalBooksRead}</div>
+    <div className="mb-8">
+      <div className="flex flex-wrap justify-center gap-6 mb-4">
+        <div className="stat-pill stat-purple">
+          <BookIcon className="h-4 w-4" />
+          <span>{totalBooksRead} Books Read</span>
         </div>
         
-        <div className="stat-card stat-card-purple">
-          <div className="stat-label text-purple-600">Read This Year</div>
-          <div className="stat-value">{booksReadThisYear}</div>
+        <div className="stat-pill stat-blue">
+          <BookOpen className="h-4 w-4" />
+          <span>{booksReadThisYear} This Year</span>
         </div>
         
-        <div className="stat-card stat-card-peach">
-          <div className="stat-label text-orange-600">Favorite Genre</div>
-          <div className="stat-value text-2xl md:text-3xl truncate">{favoriteGenre}</div>
+        <div className="stat-pill stat-orange">
+          <Bookmark className="h-4 w-4" />
+          <span>{favoriteGenre} ★</span>
         </div>
         
-        <div className="stat-card stat-card-blue">
-          <div className="stat-label text-blue-600">Latest Read</div>
-          <div className="stat-value text-2xl md:text-3xl truncate">
-            {latestRead ? latestRead.title : 'None'}
-          </div>
+        <div className="stat-pill stat-green">
+          <BookmarkCheck className="h-4 w-4" />
+          <span>{latestRead ? latestRead.title.slice(0, 20) + (latestRead.title.length > 20 ? '...' : '') : 'None'}</span>
         </div>
       </div>
     </div>
