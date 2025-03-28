@@ -39,7 +39,7 @@ export function YearPicker({
       onValueChange={(value) => onChange(parseInt(value))}
     >
       <SelectTrigger 
-        className={cn("w-[120px]", className)}
+        className={cn("w-full", className)}
       >
         <SelectValue placeholder="Select year" />
       </SelectTrigger>

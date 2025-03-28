@@ -232,8 +232,8 @@ const Bookshelf: React.FC = () => {
         <div className="flex items-center gap-3">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800">
-                <PlusCircle className="h-4 w-4 mr-2" />
+              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-5 h-auto">
+                <PlusCircle className="h-5 w-5 mr-2" />
                 Add Book
               </Button>
             </DialogTrigger>
@@ -312,8 +312,8 @@ const Bookshelf: React.FC = () => {
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800">
-                <PlusCircle className="h-4 w-4 mr-2" />
+              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-5 h-auto">
+                <PlusCircle className="h-5 w-5 mr-2" />
                 Add Your First Book
               </Button>
             </DialogTrigger>
@@ -397,7 +397,7 @@ const Bookshelf: React.FC = () => {
               <div>
                 <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
                   <BookOpen className="h-5 w-5 mr-2 text-green-600" />
-                  Your Bookshelf
+                  Bookshelf
                 </h2>
                 {displayStyle === 'list' ? (
                   <div className="bg-white shadow rounded-lg overflow-hidden">
