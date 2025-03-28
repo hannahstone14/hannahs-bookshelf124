@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Book } from '@/types/book';
 import { 
@@ -13,7 +14,7 @@ import {
 import { useBookshelf } from '@/context/BookshelfContext';
 import { MoreVertical, Trash, Edit, Calendar, BookOpen, Star, StarOff } from 'lucide-react';
 import { format } from 'date-fns';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import AddBookForm from './AddBookForm';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +106,13 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
                   style={{ backgroundColor: statusColor }}
                 />
               )}
+              
+              {/* Favorite indicator - moved to bottom left of cover */}
+              {book.favorite && (
+                <div className="absolute bottom-2 left-2 z-10">
+                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+                </div>
+              )}
             </div>
           )}
 
@@ -121,9 +129,9 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
         </CardContent>
       </Card>
 
-      {/* Favorite star indicator */}
-      {book.favorite && (
-        <div className="absolute top-1 right-1 z-10">
+      {/* Favorite indicator for books with cover images - positioned at bottom left */}
+      {book.favorite && book.coverUrl && (
+        <div className="absolute bottom-1 left-1 z-10">
           <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
         </div>
       )}
@@ -137,25 +145,24 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
         </div>
       )}
       
+      {/* Dialog for editing - always mounted but shown/hidden with the open prop */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogTitle className="sr-only">Edit Book</DialogTitle>
+          <DialogTitle>Edit Book</DialogTitle>
           <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
         </DialogContent>
       </Dialog>
 
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Options menu - fixed position at top right, made more visible */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-7 w-7 bg-white">
+            <Button variant="outline" size="icon" className="h-7 w-7 bg-white shadow-md">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white z-50 w-48">
-            <DropdownMenuItem onSelect={(e) => {
-              e.preventDefault();
-              setShowEdit(true);
-            }}>
+          <DropdownMenuContent align="end" className="bg-white z-50 w-48 shadow-lg">
+            <DropdownMenuItem onSelect={() => setShowEdit(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
