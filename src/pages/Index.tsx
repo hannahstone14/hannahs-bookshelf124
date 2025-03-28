@@ -8,7 +8,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="py-6 bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-semibold">Hannah's Library</h1>
+          <h1 className="text-2xl font-semibold">Bookshelf</h1>
         </div>
       </header>
       

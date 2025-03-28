@@ -242,6 +242,7 @@
 .book-container {
   width: 140px;
   margin-bottom: 10px;
+  transition: transform 0.3s ease, opacity 0.2s ease;
 }
 
 /* Book cover with drop shadow */
@@ -255,4 +256,16 @@
 .book-cover:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+  .book-container {
+    width: 120px;
+  }
+  
+  .book-cover {
+    height: 192px;
+    width: 120px;
+  }
 }

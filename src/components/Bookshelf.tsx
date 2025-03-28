@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -195,7 +196,7 @@ const Bookshelf: React.FC = () => {
   const renderShelfView = (booksToRender: Book[], showStatus: boolean = false) => {
     return (
       <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
-        <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {booksToRender.length > 0 ? (
             booksToRender.map(book => (
               <div 
@@ -215,7 +216,7 @@ const Bookshelf: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="w-full text-center py-6 text-gray-500">
+            <div className="col-span-full text-center py-6 text-gray-500">
               No books to display
             </div>
           )}
@@ -232,8 +233,8 @@ const Bookshelf: React.FC = () => {
         <div className="flex items-center gap-3">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-5 h-auto">
-                <PlusCircle className="h-5 w-5 mr-2" />
+              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto">
+                <PlusCircle className="h-6 w-6 mr-2" />
                 Add Book
               </Button>
             </DialogTrigger>
@@ -312,8 +313,8 @@ const Bookshelf: React.FC = () => {
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-6 py-5 h-auto">
-                <PlusCircle className="h-5 w-5 mr-2" />
+              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto">
+                <PlusCircle className="h-6 w-6 mr-2" />
                 Add Your First Book
               </Button>
             </DialogTrigger>
