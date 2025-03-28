@@ -76,16 +76,23 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return [];
   });
 
+  // Save to localStorage whenever books or recommendations change
   useEffect(() => {
-    // Combine books and recommendations for storage
-    const allBooks = [...books, ...recommendations];
-    
-    // Convert Date objects to ISO strings for storage
-    const booksToStore = allBooks.map(book => ({
-      ...book,
-      dateRead: book.dateRead.toISOString()
-    }));
-    localStorage.setItem('bookshelf', JSON.stringify(booksToStore));
+    try {
+      // Combine books and recommendations for storage
+      const allBooks = [...books, ...recommendations];
+      
+      // Convert Date objects to ISO strings for storage
+      const booksToStore = allBooks.map(book => ({
+        ...book,
+        dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
+      }));
+      
+      localStorage.setItem('bookshelf', JSON.stringify(booksToStore));
+      console.log('Saved books to localStorage:', booksToStore.length);
+    } catch (error) {
+      console.error('Failed to save books to localStorage:', error);
+    }
   }, [books, recommendations]);
 
   const addBook = (book: Omit<Book, 'id'>) => {

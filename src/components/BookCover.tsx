@@ -14,7 +14,7 @@ import {
 import { useBookshelf } from '@/context/BookshelfContext';
 import { MoreVertical, Trash, Edit, Calendar, BookOpen, Star, StarOff } from 'lucide-react';
 import { format } from 'date-fns';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AddBookForm from './AddBookForm';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -143,6 +143,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
       
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="sm:max-w-[425px]">
+          <DialogTitle className="sr-only">Edit Book</DialogTitle>
           <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
         </DialogContent>
       </Dialog>
