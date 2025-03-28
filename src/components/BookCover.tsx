@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useBookshelf } from '@/context/BookshelfContext';
-import { MoreVertical, Trash, Edit, Calendar, BookOpen, BookmarkPlus } from 'lucide-react';
+import { MoreVertical, Trash, Edit, Calendar, BookOpen, Star, StarOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import AddBookForm from './AddBookForm';
@@ -36,6 +36,16 @@ const genreColors: Record<string, { bg: string, text: string }> = {
   'Romance': { bg: 'bg-pink-100', text: 'text-pink-700' },
   'Self-Help': { bg: 'bg-teal-100', text: 'text-teal-700' },
   'Poetry': { bg: 'bg-gray-100', text: 'text-gray-700' },
+  'Thriller': { bg: 'bg-red-100', text: 'text-red-700' },
+  'Horror': { bg: 'bg-gray-800', text: 'text-gray-100' },
+  'Adventure': { bg: 'bg-orange-100', text: 'text-orange-700' },
+  'Young Adult': { bg: 'bg-cyan-100', text: 'text-cyan-700' },
+  'Children': { bg: 'bg-lime-100', text: 'text-lime-700' },
+  'Memoir': { bg: 'bg-amber-100', text: 'text-amber-700' },
+  'Philosophy': { bg: 'bg-violet-100', text: 'text-violet-700' },
+  'Psychology': { bg: 'bg-fuchsia-100', text: 'text-fuchsia-700' },
+  'Science': { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  'Art': { bg: 'bg-rose-100', text: 'text-rose-700' },
 };
 
 // Status color mapping
@@ -43,11 +53,10 @@ const statusColors: Record<string, string> = {
   'read': '#10B981', // Green
   'reading': '#3B82F6', // Blue
   'to-read': '#F59E0B', // Yellow/Orange
-  'wishlist': '#8B5CF6', // Purple
 };
 
 const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
-  const { removeBook, updateProgress } = useBookshelf();
+  const { removeBook, updateProgress, toggleFavorite } = useBookshelf();
   const [showEdit, setShowEdit] = useState(false);
   
   // Generate random color if not provided
@@ -59,9 +68,10 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   // Get reading progress
   const readingProgress = book.progress || 0;
 
-  // Get genre color or default
-  const genreStyle = book.genre && genreColors[book.genre] 
-    ? genreColors[book.genre]
+  // Get primary genre for badge
+  const primaryGenre = book.genres && book.genres.length > 0 ? book.genres[0] : null;
+  const genreStyle = primaryGenre && genreColors[primaryGenre] 
+    ? genreColors[primaryGenre]
     : { bg: 'bg-gray-100', text: 'text-gray-700' };
 
   // Get status color
@@ -114,11 +124,18 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
         </CardContent>
       </Card>
 
-      {/* Genre badge */}
-      {book.genre && (
+      {/* Favorite star indicator */}
+      {book.favorite && (
+        <div className="absolute top-1 right-1 z-10">
+          <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+        </div>
+      )}
+      
+      {/* Primary genre badge */}
+      {primaryGenre && (
         <div className="absolute top-2 left-2">
           <Badge variant="outline" className={`${genreStyle.bg} ${genreStyle.text} border-0 text-xs`}>
-            {book.genre}
+            {primaryGenre}
           </Badge>
         </div>
       )}
@@ -140,6 +157,22 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
                 <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
               </DialogContent>
             </Dialog>
+            <DropdownMenuItem 
+              className={book.favorite ? "text-yellow-500" : "text-gray-600"}
+              onSelect={() => toggleFavorite(book.id)}
+            >
+              {book.favorite ? (
+                <>
+                  <StarOff className="h-4 w-4 mr-2" />
+                  Remove Favorite
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4 mr-2" />
+                  Mark as Favorite
+                </>
+              )}
+            </DropdownMenuItem>
             <DropdownMenuItem className="text-gray-500">
               <Calendar className="h-4 w-4 mr-2" />
               Read: {format(book.dateRead, 'MMM d, yyyy')}
@@ -148,12 +181,6 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
               <DropdownMenuItem className="text-blue-700">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Currently Reading
-              </DropdownMenuItem>
-            )}
-            {book.status === 'wishlist' && (
-              <DropdownMenuItem className="text-purple-600">
-                <BookmarkPlus className="h-4 w-4 mr-2" />
-                Wishlist
               </DropdownMenuItem>
             )}
             <DropdownMenuItem 

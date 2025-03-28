@@ -12,6 +12,7 @@ interface BookshelfContextType {
   editBook: (id: string, bookData: Partial<Book>) => void;
   reorderBooks: (currentOrder: string[], newOrder: string[]) => void;
   updateProgress: (id: string, progress: number) => void;
+  toggleFavorite: (id: string) => void;
 }
 
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
@@ -38,9 +39,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             dateRead: new Date(book.dateRead),
             // Ensure backward compatibility with older data
             status: book.status || 'read',
-            genre: book.genre || undefined,
+            genres: book.genres || (book.genre ? [book.genre] : []),
             progress: book.progress || (book.status === 'read' ? 100 : 0),
-            pages: book.pages || 0
+            pages: book.pages || 0,
+            favorite: book.favorite || false
           }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);
@@ -62,7 +64,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             ...book,
             dateRead: new Date(book.dateRead),
             progress: 0,
-            pages: book.pages || 0
+            pages: book.pages || 0,
+            genres: book.genres || (book.genre ? [book.genre] : []),
+            favorite: false
           }));
       } catch (error) {
         console.error('Failed to parse recommendations from localStorage:', error);
@@ -89,7 +93,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...book,
       id: uuidv4(),
       progress: book.progress || (book.status === 'read' ? 100 : 0),
-      pages: book.pages || 0
+      pages: book.pages || 0,
+      favorite: book.favorite || false,
+      genres: book.genres || []
     };
     
     if (book.status === 'recommendation') {
@@ -151,6 +157,27 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     toast.success('Reading progress updated!');
   };
 
+  const toggleFavorite = (id: string) => {
+    // Check if it's in the main bookshelf
+    if (books.some(book => book.id === id)) {
+      setBooks(currentBooks => 
+        currentBooks.map(book => 
+          book.id === id ? { ...book, favorite: !book.favorite } : book
+        )
+      );
+    } 
+    // Then check if it's in recommendations
+    else if (recommendations.some(rec => rec.id === id)) {
+      setRecommendations(currentRecs => 
+        currentRecs.map(rec => 
+          rec.id === id ? { ...rec, favorite: !rec.favorite } : rec
+        )
+      );
+    }
+    
+    toast.success('Favorite status updated!');
+  };
+
   const reorderBooks = (currentOrder: string[], newOrder: string[]) => {
     setBooks(currentBooks => {
       // Create a new copy of the books array
@@ -184,7 +211,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     removeBook,
     editBook,
     reorderBooks,
-    updateProgress
+    updateProgress,
+    toggleFavorite
   };
 
   return (

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, ImagePlus, BookOpen, ShieldAlert } from 'lucide-react';
+import { CalendarIcon, ImagePlus, BookOpen, ShieldAlert, Star } from 'lucide-react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { cn } from '@/lib/utils';
 import { Book } from '@/types/book';
@@ -28,13 +28,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddBookFormProps {
   onSuccess?: () => void;
   bookToEdit?: Book;
 }
 
-const genreOptions = [
+const presetGenres = [
   'Fiction',
   'Non-Fiction',
   'Science Fiction',
@@ -44,7 +46,17 @@ const genreOptions = [
   'History',
   'Romance',
   'Self-Help',
-  'Poetry'
+  'Poetry',
+  'Thriller',
+  'Horror',
+  'Adventure',
+  'Young Adult',
+  'Children',
+  'Memoir',
+  'Philosophy',
+  'Psychology',
+  'Science',
+  'Art'
 ];
 
 const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
@@ -57,6 +69,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [showRecommenderInput, setShowRecommenderInput] = useState<boolean>(false);
   const [recommenderName, setRecommenderName] = useState<string>('');
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(bookToEdit?.genres || []);
+  const [newGenre, setNewGenre] = useState<string>('');
+  const [isFavorite, setIsFavorite] = useState<boolean>(bookToEdit?.favorite || false);
   
   const form = useForm({
     defaultValues: {
@@ -64,10 +79,11 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       author: bookToEdit?.author || '',
       coverUrl: bookToEdit?.coverUrl || '',
       dateRead: bookToEdit?.dateRead || new Date(),
-      genre: bookToEdit?.genre || '',
+      genres: bookToEdit?.genres || [],
       status: bookToEdit?.status || 'to-read',
       progress: bookToEdit?.progress || 0,
-      pages: bookToEdit?.pages || 0
+      pages: bookToEdit?.pages || 0,
+      favorite: bookToEdit?.favorite || false
     }
   });
 
@@ -124,6 +140,24 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     return true;
   };
 
+  const addGenre = (genre: string) => {
+    if (!genre || selectedGenres.includes(genre)) return;
+    setSelectedGenres([...selectedGenres, genre]);
+    setNewGenre('');
+  };
+
+  const removeGenre = (genre: string) => {
+    setSelectedGenres(selectedGenres.filter(g => g !== genre));
+  };
+
+  const toggleGenre = (genre: string) => {
+    if (selectedGenres.includes(genre)) {
+      removeGenre(genre);
+    } else {
+      addGenre(genre);
+    }
+  };
+
   const onSubmit = (data: any) => {
     // If editing an existing book, skip verification
     if (!bookToEdit) {
@@ -142,7 +176,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
           status: 'recommendation',
           progress: 0,
           pages: parseInt(data.pages) || 0,
-          recommendedBy: recommenderName
+          recommendedBy: recommenderName,
+          genres: selectedGenres,
+          favorite: false
         };
         
         addBook(bookData);
@@ -162,7 +198,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       ...data,
       status: readingStatus,
       progress: readingProgress,
-      pages: parseInt(data.pages) || 0
+      pages: parseInt(data.pages) || 0,
+      genres: selectedGenres,
+      favorite: isFavorite
     };
     
     if (bookToEdit) {
@@ -186,10 +224,11 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       author: '',
       coverUrl: '',
       dateRead: new Date(),
-      genre: '',
+      genres: [],
       status: 'to-read',
       progress: 0,
-      pages: 0
+      pages: 0,
+      favorite: false
     });
     setCoverPreview(null);
     setReadingProgress(0);
@@ -197,6 +236,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     setVerificationCode('');
     setShowRecommenderInput(false);
     setRecommenderName('');
+    setSelectedGenres([]);
+    setNewGenre('');
+    setIsFavorite(false);
   };
 
   return (
@@ -250,8 +292,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
                       placeholder="Number of pages" 
                       min="0"
                       {...field} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="appearance-auto"
                     />
                   </FormControl>
                   <FormMessage />
@@ -259,33 +301,51 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="genre"
-              render={({ field }) => (
-                <FormItem className="mt-4">
-                  <FormLabel>Genre</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
+            <div className="mt-4">
+              <FormLabel>Genres</FormLabel>
+              <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                {selectedGenres.map(genre => (
+                  <Badge 
+                    key={genre} 
+                    className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200"
+                    onClick={() => removeGenre(genre)}
                   >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a genre" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {genreOptions.map(genre => (
-                        <SelectItem key={genre} value={genre}>
-                          {genre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    {genre} ×
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Add custom genre" 
+                  value={newGenre}
+                  onChange={(e) => setNewGenre(e.target.value)}
+                  className="flex-grow"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => addGenre(newGenre)}
+                  className="whitespace-nowrap"
+                >
+                  Add Genre
+                </Button>
+              </div>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500 mb-1">Popular genres:</p>
+                <div className="flex flex-wrap gap-2">
+                  {presetGenres.filter(g => !selectedGenres.includes(g)).slice(0, 8).map(genre => (
+                    <Badge 
+                      key={genre} 
+                      variant="outline"
+                      className="cursor-pointer hover:bg-blue-50"
+                      onClick={() => toggleGenre(genre)}
+                    >
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <FormField
               control={form.control}
@@ -345,7 +405,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
                       <SelectItem value="to-read">To Read</SelectItem>
                       <SelectItem value="reading">Currently Reading</SelectItem>
                       <SelectItem value="read">Finished</SelectItem>
-                      <SelectItem value="wishlist">Wishlist</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -353,7 +412,22 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
               )}
             />
 
-            {readingStatus !== 'wishlist' && (
+            <div className="mt-4 flex items-center space-x-2">
+              <Checkbox 
+                id="favorite" 
+                checked={isFavorite}
+                onCheckedChange={(checked) => setIsFavorite(checked === true)}
+              />
+              <label
+                htmlFor="favorite"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+              >
+                <Star className="h-4 w-4 mr-1 text-yellow-400" />
+                Mark as favorite
+              </label>
+            </div>
+
+            {readingStatus !== 'to-read' && (
               <FormField
                 control={form.control}
                 name="progress"
@@ -474,7 +548,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="bg-blue-700 hover:bg-blue-800">
             {bookToEdit ? 'Save Changes' : showRecommenderInput ? 'Add Recommendation' : 'Add to Bookshelf'}
           </Button>
         </div>
