@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -363,13 +362,14 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
                   <Select 
                     onValueChange={(value: any) => handleStatusChange(value)} 
                     value={readingStatus}
+                    defaultValue="read"
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="to-read">To Read</SelectItem>
                       <SelectItem value="reading">Currently Reading</SelectItem>
                       <SelectItem value="read">Finished</SelectItem>

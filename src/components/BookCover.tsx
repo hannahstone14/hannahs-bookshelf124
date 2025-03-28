@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import AddBookForm from './AddBookForm';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface BookCoverProps {
   book: Book;
@@ -140,23 +141,27 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
         </div>
       )}
       
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <DialogContent className="sm:max-w-[425px]">
+          <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
+        </DialogContent>
+      </Dialog>
+
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
-          <DropdownMenuTrigger className="p-1 bg-white/80 rounded-full shadow-md">
-            <MoreVertical className="h-4 w-4" />
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-7 w-7 bg-white">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <Dialog open={showEdit} onOpenChange={setShowEdit}>
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <AddBookForm bookToEdit={book} onSuccess={() => setShowEdit(false)} />
-              </DialogContent>
-            </Dialog>
+          <DropdownMenuContent align="end" className="bg-white z-50 w-48">
+            <DropdownMenuItem onSelect={(e) => {
+              e.preventDefault();
+              setShowEdit(true);
+            }}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
             <DropdownMenuItem 
               className={book.favorite ? "text-yellow-500" : "text-gray-600"}
               onSelect={() => toggleFavorite(book.id)}

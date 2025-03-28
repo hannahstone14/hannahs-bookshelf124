@@ -303,7 +303,10 @@ const Bookshelf: React.FC = () => {
         <div className="flex items-center gap-3">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto">
+              <Button 
+                className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
                 <PlusCircle className="h-6 w-6 mr-2" />
                 Add Book
               </Button>
@@ -355,11 +358,16 @@ const Bookshelf: React.FC = () => {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="border-blue-700 text-blue-700">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-blue-700 text-blue-700"
+              onClick={(e) => e.preventDefault()}
+            >
               Sort Books
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-white">
+          <DropdownMenuContent align="end" className="w-48 bg-white z-50">
             <DropdownMenuLabel>Sort by</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -394,7 +402,10 @@ const Bookshelf: React.FC = () => {
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto">
+              <Button 
+                className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
                 <PlusCircle className="h-6 w-6 mr-2" />
                 Add Your First Book
               </Button>
