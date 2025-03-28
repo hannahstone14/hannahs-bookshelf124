@@ -10,6 +10,7 @@ interface BookshelfContextType {
   removeBook: (id: string) => void;
   editBook: (id: string, bookData: Partial<Book>) => void;
   reorderBooks: (currentOrder: string[], newOrder: string[]) => void;
+  updateProgress: (id: string, progress: number) => void;
 }
 
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
@@ -34,7 +35,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           dateRead: new Date(book.dateRead),
           // Ensure backward compatibility with older data
           status: book.status || 'read',
-          genre: book.genre || undefined
+          genre: book.genre || undefined,
+          progress: book.progress || (book.status === 'read' ? 100 : 0)
         }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);
@@ -56,7 +58,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addBook = (book: Omit<Book, 'id'>) => {
     const newBook = {
       ...book,
-      id: uuidv4()
+      id: uuidv4(),
+      progress: book.progress || (book.status === 'read' ? 100 : 0)
     };
     setBooks(currentBooks => [newBook, ...currentBooks]);
     toast.success('Book added to your shelf!');
@@ -74,6 +77,22 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       )
     );
     toast.success('Book updated successfully!');
+  };
+
+  const updateProgress = (id: string, progress: number) => {
+    setBooks(currentBooks =>
+      currentBooks.map(book =>
+        book.id === id 
+          ? { 
+              ...book, 
+              progress,
+              // Update status based on progress
+              status: progress === 100 ? 'read' : 'reading'
+            } 
+          : book
+      )
+    );
+    toast.success('Reading progress updated!');
   };
 
   const reorderBooks = (currentOrder: string[], newOrder: string[]) => {
@@ -107,7 +126,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     addBook,
     removeBook,
     editBook,
-    reorderBooks
+    reorderBooks,
+    updateProgress
   };
 
   return (

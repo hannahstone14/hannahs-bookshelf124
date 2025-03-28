@@ -45,7 +45,7 @@ const statusColors: Record<string, string> = {
 };
 
 const BookCover: React.FC<BookCoverProps> = ({ book }) => {
-  const { removeBook } = useBookshelf();
+  const { removeBook, updateProgress } = useBookshelf();
   const [showEdit, setShowEdit] = useState(false);
   
   // Generate random color if not provided
@@ -54,8 +54,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
       Math.floor(Math.random() * 6)
     ];
 
-  // Default to 70% progress for reading books (would be dynamic in a real app)
-  const readingProgress = 70;
+  // Get reading progress
+  const readingProgress = book.progress || 0;
 
   // Get genre color or default
   const genreStyle = book.genre && genreColors[book.genre] 
@@ -67,7 +67,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
 
   return (
     <div className="relative group transition-all">
-      <Card className="shadow-lg h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md">
+      <Card className="shadow-lg h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
         <CardContent className="p-0 h-full flex flex-col">
           {book.coverUrl ? (
             <div 
@@ -92,11 +92,11 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
             </div>
           )}
 
-          {/* Reading progress bar for books being read */}
-          {book.status === 'reading' && (
+          {/* Reading progress bar - always show for reading and partially read books */}
+          {book.status === 'reading' || (book.progress > 0 && book.progress < 100) && (
             <div className="px-2 py-1 bg-white">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium">Reading Progress</span>
+                <span className="font-medium">Progress</span>
                 <span>{readingProgress}%</span>
               </div>
               <Progress value={readingProgress} className="h-2" />

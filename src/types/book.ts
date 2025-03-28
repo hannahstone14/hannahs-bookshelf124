@@ -8,5 +8,6 @@ export interface Book {
   color?: string;
   genre?: string;
   status: 'read' | 'reading' | 'to-read';
-  order?: number; // New field for ordering
+  order?: number;
+  progress: number; // Progress value from 0-100
 }
