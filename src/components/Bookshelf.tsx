@@ -4,14 +4,28 @@ import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, BookOpen, List, MoveVertical, BookOpenCheck, BookmarkPlus } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  PlusCircle, 
+  BookOpen, 
+  List, 
+  BookOpenCheck, 
+  BookmarkPlus, 
+  ArrowDown10, 
+  ArrowDownAZ, 
+  ArrowDownZA, 
+  Percent
+} from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress';
@@ -19,16 +33,20 @@ type SortOption = 'title' | 'author' | 'dateRead' | 'progress';
 const Bookshelf: React.FC = () => {
   const { books, reorderBooks } = useBookshelf();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [viewTab, setViewTab] = useState<'shelf' | 'list' | 'wishlist'>('shelf');
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
-  const [viewMode, setViewMode] = useState<'shelf' | 'list'>('shelf');
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Get books by status
   const readingBooks = books.filter(book => book.status === 'reading');
   const toReadBooks = books.filter(book => book.status === 'to-read');
+  const wishlistBooks = books.filter(book => book.status === 'wishlist');
   const completedBooks = books.filter(book => book.status === 'read');
+  
+  // All books for the main shelf (everything except wishlist)
+  const allShelfBooks = books.filter(book => book.status !== 'wishlist');
   
   // Sort books based on current sort option
   const getSortedBooks = (booksToSort: Book[]) => {
@@ -57,8 +75,8 @@ const Bookshelf: React.FC = () => {
   };
   
   const sortedReadingBooks = getSortedBooks(readingBooks);
-  const sortedToReadBooks = getSortedBooks(toReadBooks);
-  const sortedCompletedBooks = getSortedBooks(completedBooks);
+  const sortedAllBooks = getSortedBooks(allShelfBooks);
+  const sortedWishlistBooks = getSortedBooks(wishlistBooks);
 
   // Handle sorting
   const handleSort = (option: SortOption) => {
@@ -92,6 +110,7 @@ const Bookshelf: React.FC = () => {
     if (!draggedBook) return;
     
     // Find indexes for reordering
+    const displayBooks = viewTab === 'wishlist' ? sortedWishlistBooks : sortedAllBooks;
     const allBooks = getSortedBooks(books);
     const sourceIndex = allBooks.findIndex(book => book.id === draggedBook.id);
     const targetIndex = allBooks.findIndex(book => book.id === targetBook.id);
@@ -141,7 +160,7 @@ const Bookshelf: React.FC = () => {
           )}
         </div>
         {book.status === 'reading' && (
-          <div className="ml-4 text-blue-600 text-sm font-medium">
+          <div className="ml-4 text-blue-700 text-sm font-medium">
             {book.progress}% 
           </div>
         )}
@@ -149,40 +168,24 @@ const Bookshelf: React.FC = () => {
     );
   };
 
-  // Render bookshelf with books
-  const renderBookshelf = (title: string, booksToRender: Book[], icon: React.ReactNode, bgColor: string = "") => {
-    if (booksToRender.length === 0) return null;
-    
+  // Render books in shelf view
+  const renderShelfView = (booksToRender: Book[], showStatus: boolean = false) => {
     return (
-      <div className="space-y-2 mb-10">
-        <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
-          {icon}
-          {title}
-        </h2>
-        {viewMode === 'list' ? (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="divide-y divide-gray-200">
-              {booksToRender.map(book => renderListItem(book))}
+      <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
+        <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
+          {booksToRender.map(book => (
+            <div 
+              key={book.id}
+              draggable
+              onDragStart={() => handleDragStart(book)}
+              onDragOver={(e) => handleDragOver(e, book)}
+              onDrop={(e) => handleDrop(e, book)}
+              className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+            >
+              <BookCover book={book} showStatus={showStatus} />
             </div>
-          </div>
-        ) : (
-          <div className={`enhanced-bookshelf p-4 relative ${bgColor}`}>
-            <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
-              {booksToRender.map(book => (
-                <div 
-                  key={book.id}
-                  draggable
-                  onDragStart={() => handleDragStart(book)}
-                  onDragOver={(e) => handleDragOver(e, book)}
-                  onDrop={(e) => handleDrop(e, book)}
-                  className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
-                >
-                  <BookCover book={book} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     );
   };
@@ -195,7 +198,7 @@ const Bookshelf: React.FC = () => {
         <div className="flex items-center gap-3">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-400 hover:bg-blue-500">
+              <Button className="bg-blue-600 hover:bg-blue-700">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Book
               </Button>
@@ -208,50 +211,55 @@ const Bookshelf: React.FC = () => {
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant={viewMode === 'shelf' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setViewMode('shelf')}
-            className="rounded-l-md rounded-r-none bg-blue-400 hover:bg-blue-500"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            Shelf View
-          </Button>
-          <Button 
-            variant={viewMode === 'list' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setViewMode('list')}
-            className="rounded-l-none rounded-r-md bg-blue-400 hover:bg-blue-500"
-          >
-            <List className="h-4 w-4 mr-2" />
-            List View
-          </Button>
-        </div>
+        <Tabs 
+          defaultValue="shelf" 
+          value={viewTab} 
+          onValueChange={(value) => setViewTab(value as 'shelf' | 'list' | 'wishlist')}
+          className="w-[400px]"
+        >
+          <TabsList className="grid grid-cols-3">
+            <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Shelf View
+            </TabsTrigger>
+            <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <List className="h-4 w-4 mr-2" />
+              List View
+            </TabsTrigger>
+            <TabsTrigger value="wishlist" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <BookmarkPlus className="h-4 w-4 mr-2" />
+              Wishlist
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoveVertical className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" className="border-blue-600 text-blue-600">
               Sort Books
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => handleSort('dateRead')}>
-              {sortBy === 'dateRead' && (sortOrder === 'desc' ? '↓ ' : '↑ ')}
-              By Date Read
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSort('title')}>
-              {sortBy === 'title' && (sortOrder === 'desc' ? '↓ ' : '↑ ')}
-              By Title
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSort('author')}>
-              {sortBy === 'author' && (sortOrder === 'desc' ? '↓ ' : '↑ ')}
-              By Author
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSort('progress')}>
-              {sortBy === 'progress' && (sortOrder === 'desc' ? '↓ ' : '↑ ')}
-              By Progress
-            </DropdownMenuItem>
+            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => handleSort('dateRead')}>
+                {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
+                By Date Read
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('title')}>
+                {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                By Title
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('author')}>
+                {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                By Author
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('progress')}>
+                {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
+                By Progress
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -262,7 +270,7 @@ const Bookshelf: React.FC = () => {
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-400 hover:bg-blue-500">
+              <Button className="bg-blue-600 hover:bg-blue-700">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Your First Book
               </Button>
@@ -273,28 +281,69 @@ const Bookshelf: React.FC = () => {
           </Dialog>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Currently Reading Section */}
-          {renderBookshelf(
-            "Currently Reading", 
-            sortedReadingBooks, 
-            <BookOpenCheck className="h-5 w-5 mr-2 text-blue-600" />,
-            "bg-gradient-to-b from-blue-50 to-transparent rounded-md"
-          )}
-          
-          {/* To Read Section */}
-          {renderBookshelf(
-            "Want to Read", 
-            sortedToReadBooks, 
-            <BookmarkPlus className="h-5 w-5 mr-2 text-amber-600" />,
-            "bg-gradient-to-b from-amber-50 to-transparent rounded-md"
-          )}
-          
-          {/* Completed Books Section */}
-          {renderBookshelf(
-            "Books You've Read", 
-            sortedCompletedBooks, 
-            <BookOpen className="h-5 w-5 mr-2 text-green-600" />
+        <div>
+          {viewTab === 'wishlist' ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-medium flex items-center">
+                <BookmarkPlus className="h-5 w-5 mr-2 text-amber-600" />
+                Books You Want to Own
+              </h2>
+              
+              {wishlistBooks.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-md">
+                  <p className="text-gray-500">Your wishlist is empty</p>
+                  <p className="text-sm text-gray-400 mt-2">Add books to your wishlist to keep track of books you want to buy or read later</p>
+                </div>
+              ) : (
+                viewTab === 'list' ? (
+                  <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="divide-y divide-gray-200">
+                      {sortedWishlistBooks.map(book => renderListItem(book))}
+                    </div>
+                  </div>
+                ) : (
+                  renderShelfView(sortedWishlistBooks)
+                )
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Currently Reading section - always displayed first */}
+              {readingBooks.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
+                    <BookOpenCheck className="h-5 w-5 mr-2 text-blue-700" />
+                    Currently Reading
+                  </h2>
+                  {viewTab === 'list' ? (
+                    <div className="bg-white shadow rounded-lg overflow-hidden">
+                      <div className="divide-y divide-gray-200">
+                        {sortedReadingBooks.map(book => renderListItem(book))}
+                      </div>
+                    </div>
+                  ) : (
+                    renderShelfView(sortedReadingBooks)
+                  )}
+                </div>
+              )}
+              
+              {/* All Books section (when not in wishlist tab) */}
+              <div>
+                <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-green-600" />
+                  Your Bookshelf
+                </h2>
+                {viewTab === 'list' ? (
+                  <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="divide-y divide-gray-200">
+                      {sortedAllBooks.map(book => renderListItem(book))}
+                    </div>
+                  </div>
+                ) : (
+                  renderShelfView(sortedAllBooks, true)
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useBookshelf } from '@/context/BookshelfContext';
-import { MoreVertical, Trash, Edit, Calendar, BookOpen } from 'lucide-react';
+import { MoreVertical, Trash, Edit, Calendar, BookOpen, BookmarkPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import AddBookForm from './AddBookForm';
@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface BookCoverProps {
   book: Book;
+  showStatus?: boolean;
 }
 
 // Genre color mapping
@@ -42,9 +43,10 @@ const statusColors: Record<string, string> = {
   'read': '#10B981', // Green
   'reading': '#3B82F6', // Blue
   'to-read': '#F59E0B', // Yellow/Orange
+  'wishlist': '#8B5CF6', // Purple
 };
 
-const BookCover: React.FC<BookCoverProps> = ({ book }) => {
+const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   const { removeBook, updateProgress } = useBookshelf();
   const [showEdit, setShowEdit] = useState(false);
   
@@ -65,6 +67,11 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
   // Get status color
   const statusColor = statusColors[book.status] || '#8A898C';
 
+  // Show progress bar for reading books
+  const showProgressBar = book.status === 'reading';
+  // Show status indicator for all books when showStatus is true
+  const showStatusIndicator = showStatus;
+
   return (
     <div className="relative group transition-all">
       <Card className="book-cover shadow-xl h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
@@ -84,32 +91,25 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
                 <p className="text-sm mt-2 opacity-80">{book.author}</p>
               </div>
 
-              {/* Status indicator dot - top right corner */}
-              <div 
-                className="absolute top-2 right-2 w-3 h-3 rounded-full"
-                style={{ backgroundColor: statusColor }}
-              />
+              {/* Status indicator when showStatus is true */}
+              {showStatusIndicator && (
+                <div 
+                  className="absolute top-2 right-2 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: statusColor }}
+                />
+              )}
             </div>
           )}
 
-          {/* Reading progress indicator for shelf view */}
-          {book.status === 'reading' && (
-            <>
-              {/* Progress indicator on the cover */}
-              <div 
-                className="absolute top-0 left-0 h-2 bg-blue-500" 
-                style={{ width: `${readingProgress}%` }}
-              />
-              
-              {/* Progress indicator at the bottom */}
-              <div className="px-2 py-1 bg-white">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-medium">Progress</span>
-                  <span>{readingProgress}%</span>
-                </div>
-                <Progress value={readingProgress} className="h-2" />
+          {/* Progress indicator for reading books */}
+          {showProgressBar && (
+            <div className="px-2 py-1 bg-white">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-medium">Progress</span>
+                <span>{readingProgress}%</span>
               </div>
-            </>
+              <Progress value={readingProgress} className="h-2" />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -145,9 +145,15 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
               Read: {format(book.dateRead, 'MMM d, yyyy')}
             </DropdownMenuItem>
             {book.status === 'reading' && (
-              <DropdownMenuItem className="text-blue-500">
+              <DropdownMenuItem className="text-blue-700">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Currently Reading
+              </DropdownMenuItem>
+            )}
+            {book.status === 'wishlist' && (
+              <DropdownMenuItem className="text-purple-600">
+                <BookmarkPlus className="h-4 w-4 mr-2" />
+                Wishlist
               </DropdownMenuItem>
             )}
             <DropdownMenuItem 
