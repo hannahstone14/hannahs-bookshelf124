@@ -60,7 +60,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   const { removeBook, updateProgress, toggleFavorite } = useBookshelf();
   const [showEdit, setShowEdit] = useState(false);
   
-  // Use the persistent color from the book object instead of generating a random one
+  // Use the persistent color from the book object
   const bookColor = book.color || '#3B82F6';
 
   // Get reading progress
@@ -80,6 +80,24 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   // Show status indicator for all books when showStatus is true
   const showStatusIndicator = showStatus;
 
+  // Handle favorite toggle with prevention of event propagation
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(book.id);
+  };
+  
+  // Handle edit click with prevention of event propagation
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEdit(true);
+  };
+
+  // Handle remove with prevention of event propagation
+  const handleRemoveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeBook(book.id);
+  };
+
   return (
     <div className="relative group transition-all">
       <Card className="book-cover shadow-xl h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
@@ -88,7 +106,24 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
             <div 
               className="w-full h-full bg-cover bg-center flex-grow"
               style={{ backgroundImage: `url(${book.coverUrl})` }}
-            />
+            >
+              {/* Favorite indicator for books with cover images */}
+              {book.favorite && (
+                <div className="absolute bottom-2 left-2 z-10">
+                  <Badge variant="outline" className="bg-yellow-400 border-0 p-1">
+                    <Star className="h-4 w-4 text-white fill-white" />
+                  </Badge>
+                </div>
+              )}
+              
+              {/* Status indicator when showStatus is true */}
+              {showStatusIndicator && (
+                <div 
+                  className="absolute top-2 right-2 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: statusColor }}
+                />
+              )}
+            </div>
           ) : (
             <div 
               className="w-full h-full flex items-center justify-center flex-grow p-4 relative"
@@ -107,10 +142,12 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
                 />
               )}
               
-              {/* Favorite indicator - moved to bottom left of cover */}
+              {/* Favorite indicator for books without cover */}
               {book.favorite && (
                 <div className="absolute bottom-2 left-2 z-10">
-                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+                  <Badge variant="outline" className="bg-yellow-400 border-0 p-1">
+                    <Star className="h-4 w-4 text-white fill-white" />
+                  </Badge>
                 </div>
               )}
             </div>
@@ -128,13 +165,6 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
           )}
         </CardContent>
       </Card>
-
-      {/* Favorite indicator for books with cover images - positioned at bottom left */}
-      {book.favorite && book.coverUrl && (
-        <div className="absolute bottom-1 left-1 z-10">
-          <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
-        </div>
-      )}
       
       {/* Primary genre badge */}
       {primaryGenre && (
@@ -153,22 +183,27 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Options menu - fixed position at top right, made more visible */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+      {/* Options menu - fixed position at top right, with improved visibility */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-7 w-7 bg-white shadow-md">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-7 w-7 bg-white shadow-md"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white z-50 w-48 shadow-lg">
-            <DropdownMenuItem onSelect={() => setShowEdit(true)}>
+            <DropdownMenuItem onSelect={handleEditClick}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
               className={book.favorite ? "text-yellow-500" : "text-gray-600"}
-              onSelect={() => toggleFavorite(book.id)}
+              onSelect={handleFavoriteToggle}
             >
               {book.favorite ? (
                 <>
@@ -194,7 +229,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
             )}
             <DropdownMenuItem 
               className="text-destructive focus:text-destructive"
-              onSelect={() => removeBook(book.id)}
+              onSelect={handleRemoveClick}
             >
               <Trash className="h-4 w-4 mr-2" />
               Remove
