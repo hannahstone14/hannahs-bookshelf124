@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -19,8 +18,7 @@ import {
   Star,
   MoreVertical,
   Pencil,
-  Trash2,
-  RotateCcw
+  Trash2
 } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
@@ -42,12 +40,11 @@ type DisplayStyle = 'shelf' | 'list';
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   
-  const { books, recommendations, reorderBooks, removeBook, recoverData, hasBackup } = useBookshelf();
+  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [isRecovering, setIsRecovering] = useState(false);
   
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
   const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('shelf');
@@ -376,19 +373,6 @@ const Bookshelf: React.FC = () => {
         <h1 className="text-3xl font-medium">Hannah's Library</h1>
         
         <div className="flex items-center gap-3">
-          {hasBackup && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRecoverData}
-              disabled={isRecovering}
-              className="border-amber-600 text-amber-700 hover:bg-amber-50"
-              title="Check for book backups if some were lost during refresh"
-            >
-              <RotateCcw className={`h-4 w-4 mr-2 ${isRecovering ? 'animate-spin' : ''}`} />
-              {isRecovering ? 'Checking...' : 'Recover Books'}
-            </Button>
-          )}
           <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button 
@@ -616,4 +600,3 @@ const Bookshelf: React.FC = () => {
 };
 
 export default Bookshelf;
-

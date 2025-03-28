@@ -26,11 +26,11 @@ export const useBookshelf = () => {
   return context;
 };
 
-// Storage keys
-const BOOKS_STORAGE_KEY = 'bookshelf_books_v2';
-const RECOMMENDATIONS_STORAGE_KEY = 'bookshelf_recommendations_v2';
-const BACKUP_STORAGE_KEY = 'bookshelf_backup_v2';
-const LAST_SAVED_KEY = 'bookshelf_last_saved_v2';
+// Storage keys - create unique keys to avoid conflicts
+const BOOKS_STORAGE_KEY = 'bookshelf_books_v3';
+const RECOMMENDATIONS_STORAGE_KEY = 'bookshelf_recommendations_v3';
+const BACKUP_STORAGE_KEY = 'bookshelf_backup_v3';
+const LAST_SAVED_KEY = 'bookshelf_last_saved_v3';
 
 // Helper function to safely parse dates
 const parseDateFields = (book: any): Book => {
@@ -56,7 +56,7 @@ const prepareForStorage = (book: Book) => {
   };
 };
 
-// Save books to multiple localStorage keys with timestamps
+// Save books to multiple localStorage keys with timestamps and additional backups
 const saveToStorage = (books: Book[], recommendations: Book[]) => {
   try {
     console.log(`Saving ${books.length} books and ${recommendations.length} recommendations to storage`);
@@ -65,107 +65,171 @@ const saveToStorage = (books: Book[], recommendations: Book[]) => {
     const booksToStore = books.map(prepareForStorage);
     const recsToStore = recommendations.map(prepareForStorage);
     
-    // Primary storage
-    localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(booksToStore));
-    localStorage.setItem(RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(recsToStore));
-    localStorage.setItem(LAST_SAVED_KEY, timestamp);
-    
-    // Backup storage - full data with timestamp
-    const backupData = {
-      timestamp,
-      books: booksToStore,
-      recommendations: recsToStore
+    // Primary storage with retry mechanism
+    const saveToLocalStorage = (attempt = 1) => {
+      try {
+        // Primary storage
+        localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(booksToStore));
+        localStorage.setItem(RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(recsToStore));
+        localStorage.setItem(LAST_SAVED_KEY, timestamp);
+        
+        // Backup storage - full data with timestamp
+        const backupData = {
+          timestamp,
+          books: booksToStore,
+          recommendations: recsToStore
+        };
+        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify(backupData));
+        
+        // Store in sessionStorage as additional redundancy
+        sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(booksToStore));
+        sessionStorage.setItem(RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(recsToStore));
+        
+        // Store multiple versioned backups - up to 5 most recent
+        const versionedKey = `bookshelf_backup_${Date.now()}`;
+        localStorage.setItem(versionedKey, JSON.stringify(backupData));
+        
+        // Clean up old versioned backups, keep only the 5 most recent
+        const versionedBackups = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('bookshelf_backup_') && key !== BACKUP_STORAGE_KEY) {
+            versionedBackups.push(key);
+          }
+        }
+        
+        if (versionedBackups.length > 5) {
+          // Sort by timestamp in key name (newest first)
+          versionedBackups.sort((a, b) => parseInt(b.split('_').pop() || '0') - parseInt(a.split('_').pop() || '0'));
+          
+          // Remove oldest backups
+          versionedBackups.slice(5).forEach(key => {
+            localStorage.removeItem(key);
+          });
+        }
+        
+        // Create a duplicate with a different prefix as an additional safety measure
+        localStorage.setItem(`library_data_${Date.now()}`, JSON.stringify(backupData));
+        
+        return true;
+      } catch (error) {
+        console.error(`Save attempt ${attempt} failed:`, error);
+        
+        // Retry with exponential backoff, up to 3 attempts
+        if (attempt < 3) {
+          setTimeout(() => {
+            saveToLocalStorage(attempt + 1);
+          }, attempt * 200);
+        }
+        
+        return false;
+      }
     };
-    localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify(backupData));
     
-    // Additional backups with versioning
-    const versionedKey = `bookshelf_backup_${Date.now()}`;
-    localStorage.setItem(versionedKey, JSON.stringify(backupData));
-    
-    // Store in sessionStorage as well for additional redundancy
-    sessionStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(booksToStore));
-    sessionStorage.setItem(RECOMMENDATIONS_STORAGE_KEY, JSON.stringify(recsToStore));
-    
-    console.log('Storage save complete with timestamp:', timestamp);
-    return true;
+    const success = saveToLocalStorage();
+    console.log('Storage save complete with timestamp:', timestamp, 'success:', success);
+    return success;
   } catch (error) {
     console.error('Failed to save to storage:', error);
     return false;
   }
 };
 
-// Load books from storage with fallbacks
+// Load books from storage with enhanced fallbacks and recovery mechanisms
 const loadFromStorage = () => {
-  console.log('Loading data from storage with fallbacks');
+  console.log('Loading data from storage with comprehensive fallbacks');
   
   try {
-    // Try primary storage first
+    // Create an array to hold all potential data sources
+    const dataSources = [];
+    
+    // 1. Try primary storage (localStorage)
     const booksData = localStorage.getItem(BOOKS_STORAGE_KEY);
     const recsData = localStorage.getItem(RECOMMENDATIONS_STORAGE_KEY);
     
     if (booksData) {
-      const parsedBooks = JSON.parse(booksData);
-      if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
-        console.log(`Loaded ${parsedBooks.length} books from primary storage`);
-        const books = parsedBooks.map(parseDateFields);
-        
-        const parsedRecs = recsData ? JSON.parse(recsData) : [];
-        const recommendations = parsedRecs.map(parseDateFields);
-        
-        console.log(`Loaded ${recommendations.length} recommendations from primary storage`);
-        return { books, recommendations };
+      try {
+        const parsedBooks = JSON.parse(booksData);
+        if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
+          const books = parsedBooks.map(parseDateFields);
+          const recommendations = recsData ? JSON.parse(recsData).map(parseDateFields) : [];
+          
+          dataSources.push({
+            source: 'primary',
+            timestamp: localStorage.getItem(LAST_SAVED_KEY) || new Date().toISOString(),
+            books,
+            recommendations,
+            count: books.length + recommendations.length
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing primary storage:', e);
       }
     }
     
-    // Try backup storage if primary fails
+    // 2. Try backup storage
     const backupData = localStorage.getItem(BACKUP_STORAGE_KEY);
     if (backupData) {
-      const parsed = JSON.parse(backupData);
-      if (parsed && parsed.books && Array.isArray(parsed.books)) {
-        console.log(`Loaded ${parsed.books.length} books from backup storage`);
-        const books = parsed.books.map(parseDateFields);
-        const recommendations = (parsed.recommendations || []).map(parseDateFields);
-        
-        // Immediately save back to primary storage for next time
-        saveToStorage(books, recommendations);
-        
-        return { books, recommendations };
+      try {
+        const parsed = JSON.parse(backupData);
+        if (parsed && parsed.books && Array.isArray(parsed.books)) {
+          const books = parsed.books.map(parseDateFields);
+          const recommendations = (parsed.recommendations || []).map(parseDateFields);
+          
+          dataSources.push({
+            source: 'backup',
+            timestamp: parsed.timestamp || new Date().toISOString(),
+            books,
+            recommendations,
+            count: books.length + recommendations.length
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing backup storage:', e);
       }
     }
     
-    // Try sessionStorage as last resort
+    // 3. Try sessionStorage
     const sessionBooksData = sessionStorage.getItem(BOOKS_STORAGE_KEY);
     if (sessionBooksData) {
-      const parsedBooks = JSON.parse(sessionBooksData);
-      if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
-        console.log(`Loaded ${parsedBooks.length} books from session storage`);
-        const books = parsedBooks.map(parseDateFields);
-        
-        const sessionRecsData = sessionStorage.getItem(RECOMMENDATIONS_STORAGE_KEY);
-        const parsedRecs = sessionRecsData ? JSON.parse(sessionRecsData) : [];
-        const recommendations = parsedRecs.map(parseDateFields);
-        
-        // Save back to localStorage
-        saveToStorage(books, recommendations);
-        
-        return { books, recommendations };
+      try {
+        const parsedBooks = JSON.parse(sessionBooksData);
+        if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
+          const books = parsedBooks.map(parseDateFields);
+          const sessionRecsData = sessionStorage.getItem(RECOMMENDATIONS_STORAGE_KEY);
+          const recommendations = sessionRecsData ? JSON.parse(sessionRecsData).map(parseDateFields) : [];
+          
+          dataSources.push({
+            source: 'session',
+            timestamp: new Date().toISOString(),
+            books,
+            recommendations,
+            count: books.length + recommendations.length
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing session storage:', e);
       }
     }
     
-    // If all else fails, try to find any versioned backups
-    const versionedBackups = [];
+    // 4. Find all versioned backups
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith('bookshelf_backup_')) {
+      if (key && (key.startsWith('bookshelf_backup_') || key.startsWith('library_data_'))) {
         try {
           const data = localStorage.getItem(key);
           if (data) {
             const parsed = JSON.parse(data);
             if (parsed && parsed.timestamp && parsed.books) {
-              versionedBackups.push({
-                key,
-                timestamp: new Date(parsed.timestamp),
-                data: parsed
+              const books = parsed.books.map(parseDateFields);
+              const recommendations = (parsed.recommendations || []).map(parseDateFields);
+              
+              dataSources.push({
+                source: key,
+                timestamp: parsed.timestamp,
+                books,
+                recommendations,
+                count: books.length + recommendations.length
               });
             }
           }
@@ -175,19 +239,24 @@ const loadFromStorage = () => {
       }
     }
     
-    if (versionedBackups.length > 0) {
-      // Sort by timestamp, newest first
-      versionedBackups.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-      const latest = versionedBackups[0].data;
+    // Find and use the source with the most books+recommendations
+    if (dataSources.length > 0) {
+      // Sort by count (most first), then by timestamp (newest first)
+      dataSources.sort((a, b) => {
+        if (a.count !== b.count) {
+          return b.count - a.count; // Most items first
+        }
+        // If same count, use newest timestamp
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
       
-      console.log(`Loaded ${latest.books.length} books from versioned backup ${versionedBackups[0].key}`);
-      const books = latest.books.map(parseDateFields);
-      const recommendations = (latest.recommendations || []).map(parseDateFields);
+      const bestSource = dataSources[0];
+      console.log(`Loaded ${bestSource.books.length} books and ${bestSource.recommendations.length} recommendations from ${bestSource.source} storage`);
       
-      // Save back to primary storage
-      saveToStorage(books, recommendations);
+      // Force save back to all storage mechanisms for future consistency
+      saveToStorage(bestSource.books, bestSource.recommendations);
       
-      return { books, recommendations };
+      return { books: bestSource.books, recommendations: bestSource.recommendations };
     }
     
     console.log('No valid data found in any storage location');
@@ -198,7 +267,7 @@ const loadFromStorage = () => {
   }
 };
 
-// Verify all books have valid fields
+// Enhanced book validation to ensure all required fields are present
 const validateBook = (book: any): Book => {
   return {
     id: book.id || uuidv4(),
@@ -227,8 +296,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const recommendationsRef = useRef<Book[]>([]);
   const saveTimeoutRef = useRef<number | null>(null);
   const didInitialLoad = useRef(false);
+  const isFirstRender = useRef(true);
 
-  // Load data on initial mount
+  // Load data on initial mount with multiple safeguards
   useEffect(() => {
     if (didInitialLoad.current) return;
     
@@ -239,41 +309,50 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         const { books: loadedBooks, recommendations: loadedRecs } = loadFromStorage();
         
-        if (loadedBooks.length > 0) {
+        if (loadedBooks && loadedBooks.length > 0) {
           console.log(`Setting initial state with ${loadedBooks.length} books`);
           setBooks(loadedBooks);
           booksRef.current = loadedBooks;
+          
+          if (!isFirstRender.current) {
+            toast.success(`Loaded ${loadedBooks.length} books from storage`);
+          }
         }
         
-        if (loadedRecs.length > 0) {
+        if (loadedRecs && loadedRecs.length > 0) {
           console.log(`Setting initial state with ${loadedRecs.length} recommendations`);
           setRecommendations(loadedRecs);
           recommendationsRef.current = loadedRecs;
         }
         
         setHasBackup(true);
-        toast.success(`Loaded ${loadedBooks.length} books from storage`);
       } catch (error) {
         console.error('Error during initial data load:', error);
         toast.error('Could not load books from storage');
       } finally {
         setIsLoading(false);
         didInitialLoad.current = true;
+        isFirstRender.current = false;
       }
     };
     
-    // Load immediately
+    // Immediate load attempt
     loadData();
     
-    // Also add a safety delay in case there are race conditions with React hydration
-    const safetyTimeout = setTimeout(() => {
-      if (!didInitialLoad.current) {
-        console.log('Safety timeout triggered for initial load');
-        loadData();
-      }
-    }, 500);
+    // Add multiple recovery attempts with different delays to handle race conditions
+    const recoveryAttempts = [100, 300, 600, 1000, 2000];
+    const timeoutIds = recoveryAttempts.map((delay) => 
+      setTimeout(() => {
+        if (!didInitialLoad.current) {
+          console.log(`Recovery attempt with ${delay}ms delay`);
+          loadData();
+        }
+      }, delay)
+    );
     
-    return () => clearTimeout(safetyTimeout);
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
   }, []);
 
   // Keep refs in sync with state
@@ -287,19 +366,19 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Save data whenever books or recommendations change
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isFirstRender.current) return;
     
     // Clear any pending save timeout
     if (saveTimeoutRef.current !== null) {
       window.clearTimeout(saveTimeoutRef.current);
     }
     
-    // Schedule a new save
+    // Schedule a new save with short debounce
     saveTimeoutRef.current = window.setTimeout(() => {
       const savedSuccessfully = saveToStorage(booksRef.current, recommendationsRef.current);
       setHasBackup(savedSuccessfully);
       saveTimeoutRef.current = null;
-    }, 300); // Debounce saves to prevent too many writes
+    }, 100); // Shorter debounce time for more aggressive saving
     
     // Force an immediate save for critical operations
     const forceSave = saveToStorage(books, recommendations);
@@ -312,23 +391,37 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, [books, recommendations, isLoading]);
 
-  // Set up periodic saves as an additional safety measure
+  // Set up more frequent periodic saves
   useEffect(() => {
     if (isLoading) return;
     
     const intervalId = setInterval(() => {
       console.log('Performing periodic save');
       saveToStorage(booksRef.current, recommendationsRef.current);
-    }, 60000); // Every minute
+    }, 15000); // More frequent saves (every 15 seconds)
     
     return () => clearInterval(intervalId);
   }, [isLoading]);
 
-  // Add a beforeunload event to ensure data is saved before the page closes
+  // Save immediately before page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
       console.log('Page unloading, saving data');
-      saveToStorage(booksRef.current, recommendationsRef.current);
+      // Force sync save on page unload
+      try {
+        const booksJson = JSON.stringify(booksRef.current.map(prepareForStorage));
+        const recsJson = JSON.stringify(recommendationsRef.current.map(prepareForStorage));
+        
+        localStorage.setItem(BOOKS_STORAGE_KEY, booksJson);
+        localStorage.setItem(RECOMMENDATIONS_STORAGE_KEY, recsJson);
+        localStorage.setItem(BACKUP_STORAGE_KEY, JSON.stringify({
+          timestamp: new Date().toISOString(),
+          books: booksRef.current.map(prepareForStorage),
+          recommendations: recommendationsRef.current.map(prepareForStorage)
+        }));
+      } catch (e) {
+        console.error('Error during unload save:', e);
+      }
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -381,7 +474,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, [books.length, recommendations.length]);
 
-  // Recover data function - completely redesigned
+  // Enhanced recovery function
   const recoverData = () => {
     console.log('Recovery function called');
     
@@ -393,9 +486,52 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.log(`Recovered ${recoveredBooks.length} books (current: ${books.length})`);
         setBooks(recoveredBooks);
         toast.success(`Recovered ${recoveredBooks.length} books!`);
-      } else if (recoveredBooks.length === books.length) {
+      } else if (recoveredBooks.length === books.length && books.length > 0) {
         console.log(`Same number of books in current state and storage (${books.length})`);
-        toast.info(`Your books are already up to date (${books.length} books)`);
+        // Still force a save to ensure all storage locations are updated
+        saveToStorage(books, recommendations);
+      } else if (books.length > 0 && recoveredBooks.length === 0) {
+        console.log(`Storage empty but we have ${books.length} books in memory - forcing save`);
+        // If storage is empty but we have books in memory, force save them
+        saveToStorage(books, recommendations);
+        toast.success(`Saved ${books.length} books to storage`);
+      } else if (books.length === 0 && recoveredBooks.length === 0) {
+        // Double check by iterating through all localStorage keys
+        let foundData = false;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('book') || key.includes('library'))) {
+            try {
+              const data = localStorage.getItem(key);
+              if (data && data.includes('"books"')) {
+                foundData = true;
+                console.log(`Found potential book data in key: ${key}`);
+                // Try to parse and recover
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.books && Array.isArray(parsed.books) && parsed.books.length > 0) {
+                    const parsedBooks = parsed.books.map(parseDateFields);
+                    setBooks(parsedBooks);
+                    toast.success(`Recovered ${parsedBooks.length} books from backup!`);
+                    
+                    if (parsed.recommendations && Array.isArray(parsed.recommendations)) {
+                      setRecommendations(parsed.recommendations.map(parseDateFields));
+                    }
+                    break;
+                  }
+                } catch (e) {
+                  console.error(`Failed to parse data from ${key}:`, e);
+                }
+              }
+            } catch (e) {
+              console.error(`Error checking key ${key}:`, e);
+            }
+          }
+        }
+        
+        if (!foundData) {
+          toast.info('No books found in any storage location');
+        }
       } else {
         console.log(`Current collection has more books (${books.length}) than recovered (${recoveredBooks.length})`);
         
