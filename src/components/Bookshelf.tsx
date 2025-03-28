@@ -224,6 +224,11 @@ const Bookshelf: React.FC = () => {
     }, 100);
   }, []);
 
+  const handleRecoverData = useCallback(() => {
+    console.log('Recover button clicked in Bookshelf component');
+    recoverData();
+  }, [recoverData]);
+
   const renderListItem = (book: Book) => {
     return (
       <div 
@@ -359,7 +364,7 @@ const Bookshelf: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={recoverData}
+              onClick={handleRecoverData}
               className="border-amber-600 text-amber-700 hover:bg-amber-50"
               title="Restore books from backup if some were lost during refresh"
             >
@@ -371,9 +376,11 @@ const Bookshelf: React.FC = () => {
             <DialogTrigger asChild>
               <Button 
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
+                id="add-book-button"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  console.log('Add book button clicked');
                   if (isMounted.current) {
                     setIsAddDialogOpen(true);
                   }
