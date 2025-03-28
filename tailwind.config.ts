@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				bookshelf: {
+					light: '#D4A76A',
+					medium: '#B38B5D',
+					dark: '#8B5A2B',
+				},
+				paper: '#F9F5EB',
+				text: '#1A2238',
+				burgundy: '#990F3D',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +93,19 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'book-add': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'book-add': 'book-add 0.4s ease-out'
+			},
+			backgroundImage: {
+				'wood-pattern': "url('/wood-pattern.png')"
 			}
 		}
 	},
