@@ -47,25 +47,32 @@ const BookshelfStats: React.FC = () => {
 
   return (
     <div className="mb-8">
-      <div className="flex flex-wrap justify-center gap-6 mb-4">
-        <div className="stat-pill stat-purple">
-          <BookIcon className="h-4 w-4" />
-          <span>{totalBooksRead} Books Read</span>
+      <div className="flex flex-wrap gap-6 mb-4">
+        <div className="flex items-center gap-6">
+          <div className="stat-pill stat-purple">
+            <BookIcon className="h-4 w-4" />
+            <span>{totalBooksRead} Books Read</span>
+          </div>
+          
+          <div className="stat-pill stat-blue">
+            <BookOpen className="h-4 w-4" />
+            <span>{booksReadThisYear} This Year</span>
+          </div>
         </div>
         
-        <div className="stat-pill stat-blue">
-          <BookOpen className="h-4 w-4" />
-          <span>{booksReadThisYear} This Year</span>
-        </div>
-        
-        <div className="stat-pill stat-orange">
-          <Bookmark className="h-4 w-4" />
-          <span>{favoriteGenre} ★</span>
-        </div>
-        
-        <div className="stat-pill stat-green">
-          <BookmarkCheck className="h-4 w-4" />
-          <span>{latestRead ? latestRead.title.slice(0, 20) + (latestRead.title.length > 20 ? '...' : '') : 'None'}</span>
+        <div className="flex-1 flex flex-wrap gap-6">
+          <div className="stat-card stat-card-peach flex-1">
+            <h3 className="stat-label">Favorite Genre</h3>
+            <div className="stat-value">{favoriteGenre}</div>
+          </div>
+          
+          <div className="stat-card stat-card-blue flex-1">
+            <h3 className="stat-label">Last Read</h3>
+            <div className="stat-value text-2xl">
+              {latestRead ? latestRead.title.slice(0, 25) + (latestRead.title.length > 25 ? '...' : '') : 'None'}
+            </div>
+            {latestRead && <div className="text-sm text-gray-600 mt-1">{latestRead.author}</div>}
+          </div>
         </div>
       </div>
     </div>

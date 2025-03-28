@@ -67,7 +67,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book }) => {
 
   return (
     <div className="relative group transition-all">
-      <Card className="shadow-xl h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
+      <Card className="book-cover shadow-xl h-64 w-44 transition-all duration-300 transform hover:translate-y-[-8px] flex flex-col overflow-hidden rounded-md drop-shadow-xl">
         <CardContent className="p-0 h-full flex flex-col">
           {book.coverUrl ? (
             <div 
