@@ -84,17 +84,17 @@
   }
 
   body {
-    @apply bg-white text-text font-sans;
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans;
+    @apply font-sans font-medium tracking-tight;
   }
 }
 
 @layer utilities {
   .font-sans {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   .book-shadow {
@@ -128,4 +128,33 @@
 
 .animate-book-add {
   animation: book-add 0.4s ease-out;
+}
+
+/* Card styles */
+.stat-card {
+  @apply rounded-xl p-6 transition-shadow hover:shadow-md;
+}
+
+.stat-card-gray {
+  @apply bg-gray-100;
+}
+
+.stat-card-purple {
+  @apply bg-purple-50;
+}
+
+.stat-card-peach {
+  @apply bg-orange-50;
+}
+
+.stat-card-blue {
+  @apply bg-blue-50;
+}
+
+.stat-label {
+  @apply text-lg text-gray-600 mb-2;
+}
+
+.stat-value {
+  @apply text-4xl font-medium;
 }

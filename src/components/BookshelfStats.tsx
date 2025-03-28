@@ -1,9 +1,7 @@
 
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
-import { Card, CardContent } from '@/components/ui/card';
 import { Book } from '@/types/book';
-import { Calendar, BookOpen, BarChart2, BookText, BookMarked } from 'lucide-react';
 
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
@@ -11,14 +9,15 @@ const BookshelfStats: React.FC = () => {
   // Get the current year
   const currentYear = new Date().getFullYear();
   
-  // Calculate statistics
+  // Calculate total books read
+  const totalBooksRead = books.filter(book => book.status === 'read').length;
+  
+  // Calculate books read this year
   const booksReadThisYear = books.filter(
     book => book.status === 'read' && book.dateRead.getFullYear() === currentYear
   ).length;
   
-  const currentlyReading = books.filter(book => book.status === 'reading').length;
-  
-  // Find most popular genre
+  // Find most popular/favorite genre
   const genreCounts: Record<string, number> = {};
   books.forEach(book => {
     if (book.genre) {
@@ -26,12 +25,12 @@ const BookshelfStats: React.FC = () => {
     }
   });
   
-  let mostPopularGenre = 'None';
+  let favoriteGenre = 'None';
   let maxCount = 0;
   
   Object.entries(genreCounts).forEach(([genre, count]) => {
     if (count > maxCount) {
-      mostPopularGenre = genre;
+      favoriteGenre = genre;
       maxCount = count;
     }
   });
@@ -46,56 +45,32 @@ const BookshelfStats: React.FC = () => {
     : null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <Card className="bg-paper border-bookshelf-medium/20 shadow-sm hover:shadow transition-shadow">
-        <CardContent className="p-6 flex items-center space-x-4">
-          <div className="bg-burgundy/10 p-3 rounded-full">
-            <Calendar className="h-6 w-6 text-burgundy" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Books Read This Year</p>
-            <h3 className="text-2xl font-serif font-medium">{booksReadThisYear}</h3>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="mb-12">
+      <h1 className="text-3xl font-medium mb-6">Your Reading Stats</h1>
       
-      <Card className="bg-paper border-bookshelf-medium/20 shadow-sm hover:shadow transition-shadow">
-        <CardContent className="p-6 flex items-center space-x-4">
-          <div className="bg-burgundy/10 p-3 rounded-full">
-            <BarChart2 className="h-6 w-6 text-burgundy" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="stat-card stat-card-gray">
+          <div className="stat-label">Books Read</div>
+          <div className="stat-value">{totalBooksRead}</div>
+        </div>
+        
+        <div className="stat-card stat-card-purple">
+          <div className="stat-label text-purple-600">Read This Year</div>
+          <div className="stat-value">{booksReadThisYear}</div>
+        </div>
+        
+        <div className="stat-card stat-card-peach">
+          <div className="stat-label text-orange-600">Favorite Genre</div>
+          <div className="stat-value text-2xl md:text-3xl truncate">{favoriteGenre}</div>
+        </div>
+        
+        <div className="stat-card stat-card-blue">
+          <div className="stat-label text-blue-600">Latest Read</div>
+          <div className="stat-value text-2xl md:text-3xl truncate">
+            {latestRead ? latestRead.title : 'None'}
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Most Popular Genre</p>
-            <h3 className="text-2xl font-serif font-medium">{mostPopularGenre}</h3>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-paper border-bookshelf-medium/20 shadow-sm hover:shadow transition-shadow">
-        <CardContent className="p-6 flex items-center space-x-4">
-          <div className="bg-burgundy/10 p-3 rounded-full">
-            <BookText className="h-6 w-6 text-burgundy" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Latest Read</p>
-            <h3 className="text-2xl font-serif font-medium truncate">
-              {latestRead ? latestRead.title : 'None'}
-            </h3>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-paper border-bookshelf-medium/20 shadow-sm hover:shadow transition-shadow">
-        <CardContent className="p-6 flex items-center space-x-4">
-          <div className="bg-burgundy/10 p-3 rounded-full">
-            <BookOpen className="h-6 w-6 text-burgundy" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Currently Reading</p>
-            <h3 className="text-2xl font-serif font-medium">{currentlyReading}</h3>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

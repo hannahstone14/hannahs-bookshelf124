@@ -4,7 +4,7 @@ import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Grid, BookOpen, MoveVertical } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import { move } from '@/lib/utils';
@@ -14,6 +14,7 @@ const Bookshelf: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'shelf'>('shelf');
 
   // Group books by month and year
   const groupedBooks = React.useMemo(() => {
@@ -94,27 +95,57 @@ const Bookshelf: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-sans">My Bookshelf</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-burgundy hover:bg-burgundy/90">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Book
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <AddBookForm onSuccess={() => setIsAddDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <h1 className="text-3xl font-medium">Your Digital Bookshelf</h1>
+        
+        <div className="flex items-center gap-3">
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Book
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <AddBookForm onSuccess={() => setIsAddDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={viewMode === 'grid' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            className="rounded-l-md rounded-r-none"
+          >
+            <Grid className="h-4 w-4 mr-2" />
+            Grid View
+          </Button>
+          <Button 
+            variant={viewMode === 'shelf' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setViewMode('shelf')}
+            className="rounded-l-none rounded-r-md"
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Shelf View
+          </Button>
+        </div>
+        <Button variant="ghost" size="sm">
+          <MoveVertical className="h-4 w-4 mr-2" />
+          Reorder Books
+        </Button>
       </div>
 
       {books.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-lg text-center">
-          <h3 className="text-xl font-sans mb-4">Your bookshelf is empty</h3>
+          <h3 className="text-xl font-medium mb-4">Your bookshelf is empty</h3>
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-burgundy hover:bg-burgundy/90">
+              <Button>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Your First Book
               </Button>
@@ -129,12 +160,12 @@ const Bookshelf: React.FC = () => {
           {/* Show currently reading section if there are books being read */}
           {currentlyReading.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-xl font-sans border-b border-gray-300 pb-2 mb-3">
+              <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3">
                 Currently Reading
               </h2>
               <div className="modern-bookshelf p-4 relative">
                 <div className="absolute left-0 right-0 bottom-0 h-0.5 bg-gray-300"></div>
-                <div className="flex flex-wrap gap-6 justify-start">
+                <div className={`flex ${viewMode === 'grid' ? 'flex-wrap gap-6' : 'overflow-x-auto space-x-6'} justify-start`}>
                   {currentlyReading.map(book => (
                     <div 
                       key={book.id}
@@ -155,12 +186,12 @@ const Bookshelf: React.FC = () => {
           {/* Show chronological bookshelf for read books */}
           {groupedBooks.map((group) => (
             <div key={group.label} className="space-y-2">
-              <h2 className="text-xl font-sans border-b border-gray-300 pb-2 mb-3">
+              <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3">
                 {group.label}
               </h2>
               <div className="modern-bookshelf p-4 relative">
                 <div className="absolute left-0 right-0 bottom-0 h-0.5 bg-gray-300"></div>
-                <div className="flex flex-wrap gap-6 justify-start">
+                <div className={`flex ${viewMode === 'grid' ? 'flex-wrap gap-6' : 'overflow-x-auto space-x-6'} justify-start`}>
                   {group.books.map(book => (
                     <div 
                       key={book.id}
