@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,53 +41,58 @@ const parseDateFields = (data: any) => {
   }
 };
 
-export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(() => {
-    try {
-      const savedBooks = localStorage.getItem('books');
-      if (savedBooks) {
-        // Parse the dates back to Date objects
-        const parsedBooks = JSON.parse(savedBooks);
-        return parsedBooks
-          .filter((book: any) => book.status !== 'recommendation')
-          .map((book: any) => ({
-            ...parseDateFields(book),
-            // Ensure backward compatibility with older data
-            status: book.status || 'read',
-            genres: book.genres || (book.genre ? [book.genre] : []),
-            progress: book.progress || (book.status === 'read' ? 100 : 0),
-            pages: book.pages || 0,
-            favorite: book.favorite || false,
-            color: book.color || null
-          }));
-      }
-    } catch (error) {
-      console.error('Failed to parse books from localStorage:', error);
-    }
-    return [];
-  });
-
-  const [recommendations, setRecommendations] = useState<Book[]>(() => {
-    try {
-      const savedRecs = localStorage.getItem('recommendations');
-      if (savedRecs) {
-        // Parse the dates back to Date objects
-        const parsedRecs = JSON.parse(savedRecs);
-        return parsedRecs.map((book: any) => ({
+// Helper function to load books from localStorage
+const loadBooksFromStorage = () => {
+  try {
+    const savedBooks = localStorage.getItem('books');
+    if (savedBooks) {
+      // Parse the dates back to Date objects
+      const parsedBooks = JSON.parse(savedBooks);
+      return parsedBooks
+        .filter((book: any) => book.status !== 'recommendation')
+        .map((book: any) => ({
           ...parseDateFields(book),
-          progress: 0,
-          pages: book.pages || 0,
+          // Ensure backward compatibility with older data
+          status: book.status || 'read',
           genres: book.genres || (book.genre ? [book.genre] : []),
-          favorite: false,
-          color: book.color || null,
-          status: 'recommendation'
+          progress: book.progress || (book.status === 'read' ? 100 : 0),
+          pages: book.pages || 0,
+          favorite: book.favorite || false,
+          color: book.color || null
         }));
-      }
-    } catch (error) {
-      console.error('Failed to parse recommendations from localStorage:', error);
     }
-    return [];
-  });
+  } catch (error) {
+    console.error('Failed to parse books from localStorage:', error);
+  }
+  return [];
+};
+
+// Helper function to load recommendations from localStorage
+const loadRecommendationsFromStorage = () => {
+  try {
+    const savedRecs = localStorage.getItem('recommendations');
+    if (savedRecs) {
+      // Parse the dates back to Date objects
+      const parsedRecs = JSON.parse(savedRecs);
+      return parsedRecs.map((book: any) => ({
+        ...parseDateFields(book),
+        progress: 0,
+        pages: book.pages || 0,
+        genres: book.genres || (book.genre ? [book.genre] : []),
+        favorite: false,
+        color: book.color || null,
+        status: 'recommendation'
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to parse recommendations from localStorage:', error);
+  }
+  return [];
+};
+
+export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [books, setBooks] = useState<Book[]>(() => loadBooksFromStorage());
+  const [recommendations, setRecommendations] = useState<Book[]>(() => loadRecommendationsFromStorage());
 
   // Save books to localStorage whenever they change
   useEffect(() => {
@@ -121,6 +125,55 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.error('Failed to save recommendations to localStorage:', error);
     }
   }, [recommendations]);
+
+  // Listen for storage events from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'books' && event.newValue) {
+        try {
+          const parsedBooks = JSON.parse(event.newValue);
+          setBooks(parsedBooks
+            .filter((book: any) => book.status !== 'recommendation')
+            .map((book: any) => ({
+              ...parseDateFields(book),
+              status: book.status || 'read',
+              genres: book.genres || (book.genre ? [book.genre] : []),
+              progress: book.progress || (book.status === 'read' ? 100 : 0),
+              pages: book.pages || 0,
+              favorite: book.favorite || false,
+              color: book.color || null
+            }))
+          );
+          console.log('Updated books from another tab:', parsedBooks.length);
+        } catch (error) {
+          console.error('Failed to parse books from storage event:', error);
+        }
+      }
+      
+      if (event.key === 'recommendations' && event.newValue) {
+        try {
+          const parsedRecs = JSON.parse(event.newValue);
+          setRecommendations(parsedRecs.map((rec: any) => ({
+            ...parseDateFields(rec),
+            progress: 0,
+            pages: rec.pages || 0,
+            genres: rec.genres || (rec.genre ? [rec.genre] : []),
+            favorite: false,
+            color: rec.color || null,
+            status: 'recommendation'
+          })));
+          console.log('Updated recommendations from another tab:', parsedRecs.length);
+        } catch (error) {
+          console.error('Failed to parse recommendations from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const addBook = (book: Omit<Book, 'id'>) => {
     // Generate a persistent color if not provided

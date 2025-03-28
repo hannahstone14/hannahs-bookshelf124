@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -37,25 +37,38 @@ type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
 type DisplayStyle = 'shelf' | 'list';
 
 const Bookshelf: React.FC = () => {
+  const isMounted = useRef(true);
+  
   const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
   const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('shelf');
+  
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
+  
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
   
   const readingBooks = books.filter(book => book.status === 'reading');
   const toReadBooks = books.filter(book => book.status === 'to-read');
   const completedBooks = books.filter(book => book.status === 'read');
-  
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
   useEffect(() => {
+    if (!isMounted.current) return;
+    
     let displayedBooks: Book[] = [];
     
     switch(viewTab) {
@@ -98,7 +111,11 @@ const Bookshelf: React.FC = () => {
         case 'dateRead':
           if (!a.dateRead) return sortOrder === 'asc' ? -1 : 1;
           if (!b.dateRead) return sortOrder === 'asc' ? 1 : -1;
-          comparison = new Date(a.dateRead).getTime() - new Date(b.dateRead).getTime();
+          
+          const dateA = a.dateRead instanceof Date ? a.dateRead.getTime() : new Date(a.dateRead).getTime();
+          const dateB = b.dateRead instanceof Date ? b.dateRead.getTime() : new Date(b.dateRead).getTime();
+          
+          comparison = dateA - dateB;
           break;
         case 'progress':
           comparison = a.progress - b.progress;
@@ -159,8 +176,14 @@ const Bookshelf: React.FC = () => {
   }, [draggedBook, viewTab, toReadBooks, allShelfBooks, books, getSortedBooks, reorderBooks]);
 
   const handleEdit = useCallback((book: Book) => {
+    if (!isMounted.current) return;
+    
     setSelectedBook(book);
-    setIsEditDialogOpen(true);
+    setTimeout(() => {
+      if (isMounted.current) {
+        setIsEditDialogOpen(true);
+      }
+    }, 0);
   }, []);
 
   const handleDelete = useCallback((bookId: string) => {
@@ -168,23 +191,36 @@ const Bookshelf: React.FC = () => {
   }, [removeBook]);
 
   const handleAddDialogOpenChange = useCallback((open: boolean) => {
+    if (!isMounted.current) return;
     setIsAddDialogOpen(open);
   }, []);
 
   const handleEditDialogOpenChange = useCallback((open: boolean) => {
+    if (!isMounted.current) return;
     setIsEditDialogOpen(open);
     if (!open) {
-      setSelectedBook(null);
+      setTimeout(() => {
+        if (isMounted.current) {
+          setSelectedBook(null);
+        }
+      }, 100);
     }
   }, []);
 
   const handleAddSuccess = useCallback(() => {
+    if (!isMounted.current) return;
     setIsAddDialogOpen(false);
   }, []);
 
   const handleEditSuccess = useCallback(() => {
+    if (!isMounted.current) return;
     setIsEditDialogOpen(false);
-    setSelectedBook(null);
+    
+    setTimeout(() => {
+      if (isMounted.current) {
+        setSelectedBook(null);
+      }
+    }, 100);
   }, []);
 
   const renderListItem = (book: Book) => {
@@ -324,7 +360,10 @@ const Bookshelf: React.FC = () => {
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsAddDialogOpen(true);
+                  e.preventDefault();
+                  if (isMounted.current) {
+                    setIsAddDialogOpen(true);
+                  }
                 }}
               >
                 <PlusCircle className="h-6 w-6 mr-2" />
@@ -425,7 +464,13 @@ const Bookshelf: React.FC = () => {
             <DialogTrigger asChild>
               <Button 
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
-                onClick={() => setIsAddDialogOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (isMounted.current) {
+                    setIsAddDialogOpen(true);
+                  }
+                }}
               >
                 <PlusCircle className="h-6 w-6 mr-2" />
                 Add Your First Book
