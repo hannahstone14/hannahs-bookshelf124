@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -32,6 +33,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress' | 'favorite';
 type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
@@ -231,6 +233,9 @@ const Bookshelf: React.FC = () => {
     setIsRecovering(true);
     console.log('Recover button clicked in Bookshelf component');
     
+    // Show a toast to indicate recovery started
+    toast.info('Checking for book backups...');
+    
     recoverData();
     
     setTimeout(() => {
@@ -378,10 +383,10 @@ const Bookshelf: React.FC = () => {
               onClick={handleRecoverData}
               disabled={isRecovering}
               className="border-amber-600 text-amber-700 hover:bg-amber-50"
-              title="Restore books from backup if some were lost during refresh"
+              title="Check for book backups if some were lost during refresh"
             >
               <RotateCcw className={`h-4 w-4 mr-2 ${isRecovering ? 'animate-spin' : ''}`} />
-              {isRecovering ? 'Recovering...' : 'Recover Books'}
+              {isRecovering ? 'Checking...' : 'Recover Books'}
             </Button>
           )}
           <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
@@ -611,3 +616,4 @@ const Bookshelf: React.FC = () => {
 };
 
 export default Bookshelf;
+
