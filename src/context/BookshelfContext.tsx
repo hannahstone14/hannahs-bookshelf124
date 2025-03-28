@@ -30,7 +30,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const parsedBooks = JSON.parse(savedBooks);
         return parsedBooks.map((book: any) => ({
           ...book,
-          dateRead: new Date(book.dateRead)
+          dateRead: new Date(book.dateRead),
+          // Ensure backward compatibility with older data
+          status: book.status || 'read',
+          genre: book.genre || undefined
         }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);

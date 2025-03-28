@@ -14,9 +14,12 @@ const Bookshelf: React.FC = () => {
 
   // Group books by month and year
   const groupedBooks = React.useMemo(() => {
+    // Filter to only show read books for the chronological bookshelf
+    const readBooks = books.filter(book => book.status === 'read' || !book.status);
+    
     const groups: { [key: string]: Book[] } = {};
     
-    books.forEach(book => {
+    readBooks.forEach(book => {
       const date = book.dateRead;
       const key = `${date.getFullYear()}-${date.getMonth()}`;
       
@@ -40,6 +43,11 @@ const Bookshelf: React.FC = () => {
           books: groups[key]
         };
       });
+  }, [books]);
+
+  // Extract currently reading books
+  const currentlyReading = React.useMemo(() => {
+    return books.filter(book => book.status === 'reading');
   }, [books]);
 
   return (
@@ -77,6 +85,24 @@ const Bookshelf: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-10">
+          {/* Show currently reading section if there are books being read */}
+          {currentlyReading.length > 0 && (
+            <div className="space-y-2">
+              <h2 className="text-xl font-serif border-b border-bookshelf-medium pb-2 mb-3">
+                Currently Reading
+              </h2>
+              <div className="bookshelf rounded-md p-4 relative">
+                <div className="bookshelf-divider absolute left-0 right-0 bottom-0 h-3 rounded-b-md"></div>
+                <div className="flex flex-wrap gap-6 justify-start">
+                  {currentlyReading.map(book => (
+                    <BookCover key={book.id} book={book} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Show chronological bookshelf for read books */}
           {groupedBooks.map((group) => (
             <div key={group.label} className="space-y-2">
               <h2 className="text-xl font-serif border-b border-bookshelf-medium pb-2 mb-3">

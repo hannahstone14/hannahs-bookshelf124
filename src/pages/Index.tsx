@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Bookshelf from '@/components/Bookshelf';
+import BookshelfStats from '@/components/BookshelfStats';
 
 const Index = () => {
   return (
@@ -12,7 +13,10 @@ const Index = () => {
       </header>
       
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
-        <Bookshelf />
+        <div className="max-w-6xl mx-auto">
+          <BookshelfStats />
+          <Bookshelf />
+        </div>
       </main>
       
       <footer className="py-6 border-t border-bookshelf-medium/30 text-center text-sm text-gray-600">

@@ -6,4 +6,6 @@ export interface Book {
   coverUrl: string;
   dateRead: Date;
   color?: string;
+  genre?: string;
+  status: 'read' | 'reading' | 'to-read';
 }
