@@ -40,7 +40,7 @@ type DisplayStyle = 'shelf' | 'list';
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   
-  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
+  const { books, recommendations, reorderBooks, removeBook, recoverData } = useBookshelf();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -223,24 +223,6 @@ const Bookshelf: React.FC = () => {
       }
     }, 100);
   }, []);
-
-  const handleRecoverData = useCallback(() => {
-    if (isRecovering) return;
-    
-    setIsRecovering(true);
-    console.log('Recover button clicked in Bookshelf component');
-    
-    // Show a toast to indicate recovery started
-    toast.info('Checking for book backups...');
-    
-    recoverData();
-    
-    setTimeout(() => {
-      if (isMounted.current) {
-        setIsRecovering(false);
-      }
-    }, 2000);
-  }, [recoverData, isRecovering]);
 
   const renderListItem = (book: Book) => {
     return (
