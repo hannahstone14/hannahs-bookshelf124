@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Book } from '@/types/book';
 import { 
@@ -60,11 +59,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
   const { removeBook, updateProgress, toggleFavorite } = useBookshelf();
   const [showEdit, setShowEdit] = useState(false);
   
-  // Generate random color if not provided
-  const bookColor = book.color || 
-    ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'][
-      Math.floor(Math.random() * 6)
-    ];
+  // Use the persistent color from the book object instead of generating a random one
+  const bookColor = book.color || '#3B82F6';
 
   // Get reading progress
   const readingProgress = book.progress || 0;
@@ -181,7 +177,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus = false }) => {
             </DropdownMenuItem>
             <DropdownMenuItem className="text-gray-500">
               <Calendar className="h-4 w-4 mr-2" />
-              Read: {format(book.dateRead, 'MMM d, yyyy')}
+              Read: {format(book.dateRead instanceof Date ? book.dateRead : new Date(), 'MMM d, yyyy')}
             </DropdownMenuItem>
             {book.status === 'reading' && (
               <DropdownMenuItem className="text-blue-700">

@@ -36,13 +36,14 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           .filter((book: any) => book.status !== 'recommendation')
           .map((book: any) => ({
             ...book,
-            dateRead: new Date(book.dateRead),
+            dateRead: book.dateRead ? new Date(book.dateRead) : new Date(),
             // Ensure backward compatibility with older data
             status: book.status || 'read',
             genres: book.genres || (book.genre ? [book.genre] : []),
             progress: book.progress || (book.status === 'read' ? 100 : 0),
             pages: book.pages || 0,
-            favorite: book.favorite || false
+            favorite: book.favorite || false,
+            color: book.color || null
           }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);
@@ -62,11 +63,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           .filter((book: any) => book.status === 'recommendation')
           .map((book: any) => ({
             ...book,
-            dateRead: new Date(book.dateRead),
+            dateRead: book.dateRead ? new Date(book.dateRead) : new Date(),
             progress: 0,
             pages: book.pages || 0,
             genres: book.genres || (book.genre ? [book.genre] : []),
-            favorite: false
+            favorite: false,
+            color: book.color || null
           }));
       } catch (error) {
         console.error('Failed to parse recommendations from localStorage:', error);
@@ -96,13 +98,20 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [books, recommendations]);
 
   const addBook = (book: Omit<Book, 'id'>) => {
+    // Generate a persistent color if not provided
+    const bookColor = book.color || 
+      ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'][
+        Math.floor(Math.random() * 6)
+      ];
+    
     const newBook = {
       ...book,
       id: uuidv4(),
       progress: book.progress || (book.status === 'read' ? 100 : 0),
       pages: book.pages || 0,
       favorite: book.favorite || false,
-      genres: book.genres || []
+      genres: book.genres || [],
+      color: bookColor // Store the color persistently
     };
     
     if (book.status === 'recommendation') {

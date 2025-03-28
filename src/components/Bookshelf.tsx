@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -57,7 +56,6 @@ const Bookshelf: React.FC = () => {
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
   useEffect(() => {
-    // Update displayed books whenever the sorting or view tab changes
     let displayedBooks: Book[] = [];
     
     switch(viewTab) {
@@ -98,7 +96,6 @@ const Bookshelf: React.FC = () => {
           comparison = a.author.localeCompare(b.author);
           break;
         case 'dateRead':
-          // Handle potential null dates gracefully
           if (!a.dateRead) return sortOrder === 'asc' ? -1 : 1;
           if (!b.dateRead) return sortOrder === 'asc' ? 1 : -1;
           comparison = a.dateRead.getTime() - b.dateRead.getTime();
@@ -301,7 +298,7 @@ const Bookshelf: React.FC = () => {
         <h1 className="text-3xl font-medium">Hannah's Library</h1>
         
         <div className="flex items-center gap-3">
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog>
             <DialogTrigger asChild>
               <Button 
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
@@ -312,6 +309,7 @@ const Bookshelf: React.FC = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
+              <DialogTitle>Add New Book</DialogTitle>
               <AddBookForm onSuccess={() => setIsAddDialogOpen(false)} />
             </DialogContent>
           </Dialog>
@@ -320,6 +318,7 @@ const Bookshelf: React.FC = () => {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
+          <DialogTitle>Edit Book</DialogTitle>
           {selectedBook && (
             <AddBookForm 
               onSuccess={() => setIsEditDialogOpen(false)} 
@@ -400,7 +399,7 @@ const Bookshelf: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-lg text-center">
           <h3 className="text-xl font-medium mb-4">Your bookshelf is empty</h3>
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog>
             <DialogTrigger asChild>
               <Button 
                 className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
@@ -411,6 +410,7 @@ const Bookshelf: React.FC = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
+              <DialogTitle>Add Your First Book</DialogTitle>
               <AddBookForm onSuccess={() => setIsAddDialogOpen(false)} />
             </DialogContent>
           </Dialog>
