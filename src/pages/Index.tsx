@@ -1,9 +1,17 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
+import { useBookshelf } from '@/context/BookshelfContext';
 
 const Index = () => {
+  const { books } = useBookshelf();
+
+  // Log books length to verify data is being loaded
+  useEffect(() => {
+    console.log('Index page loaded with', books.length, 'books');
+  }, [books]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="py-6 bg-white shadow-sm">

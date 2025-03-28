@@ -28,6 +28,7 @@ export const useBookshelf = () => {
 // Helper function to safely parse dates
 const parseDateFields = (data: any) => {
   try {
+    // Ensure dateRead is a proper Date object
     return {
       ...data,
       dateRead: data.dateRead ? new Date(data.dateRead) : new Date(),
@@ -94,6 +95,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const booksToStore = books.map(book => ({
         ...book,
+        // Convert Date objects to ISO strings before storing
         dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
       }));
       
@@ -109,6 +111,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const recsToStore = recommendations.map(rec => ({
         ...rec,
+        // Convert Date objects to ISO strings before storing
         dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
       }));
       
