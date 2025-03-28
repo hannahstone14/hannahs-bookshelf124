@@ -2,7 +2,19 @@
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
-import { BookOpen, BookOpenCheck, BookmarkCheck } from 'lucide-react';
+import { BookOpen, BookOpenCheck, BookmarkCheck, Archive, Coffee, Bookmark, BookMarked, Stars, Rocket, Brain, BookCopy } from 'lucide-react';
+
+// Map of genre to icon component
+const genreIconMap: Record<string, React.ReactNode> = {
+  'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
+  'Non-Fiction': <Brain className="h-4 w-4 text-purple-500" />,
+  'Science Fiction': <Rocket className="h-4 w-4 text-green-500" />,
+  'Fantasy': <Stars className="h-4 w-4 text-amber-500" />,
+  'Mystery': <BookMarked className="h-4 w-4 text-red-500" />,
+  'History': <Archive className="h-4 w-4 text-brown-500" />,
+  'Romance': <Bookmark className="h-4 w-4 text-pink-500" />,
+  'Self-Help': <Coffee className="h-4 w-4 text-teal-500" />
+};
 
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
@@ -66,6 +78,11 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
+  // Get icon for a genre
+  const getGenreIcon = (genre: string) => {
+    return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
+  };
+
   return (
     <div className="mb-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -109,7 +126,7 @@ const BookshelfStats: React.FC = () => {
                       index === 1 ? 'bg-gray-100 text-gray-600' : 
                       'bg-amber-100 text-amber-600'
                     }`}>
-                      {index + 1}
+                      {getGenreIcon(item.genre)}
                     </div>
                     <span className="font-medium">{item.genre}</span>
                   </div>

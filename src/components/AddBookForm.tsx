@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -11,10 +10,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon, ImagePlus, BookOpen, ShieldAlert, Star } from 'lucide-react';
+import { ImagePlus, BookOpen, ShieldAlert, Star } from 'lucide-react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { cn } from '@/lib/utils';
 import { Book } from '@/types/book';
@@ -30,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import DateReadPicker from './DateReadPicker';
 
 interface AddBookFormProps {
   onSuccess?: () => void;
@@ -87,12 +84,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     }
   });
 
-  // Update status based on progress
   const handleProgressChange = (value: number[]) => {
     const progress = value[0];
     setReadingProgress(progress);
     
-    // Automatically update the reading status based on progress
     if (progress === 100) {
       setReadingStatus('read');
     } else if (progress > 0) {
@@ -102,11 +97,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     }
   };
 
-  // Handle status change
   const handleStatusChange = (status: 'to-read' | 'reading' | 'read' | 'wishlist') => {
     setReadingStatus(status);
     
-    // Automatically update progress based on status
     if (status === 'read') {
       setReadingProgress(100);
     } else if (status === 'to-read') {
@@ -159,9 +152,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
   };
 
   const onSubmit = (data: any) => {
-    // If editing an existing book, skip verification
     if (!bookToEdit) {
-      // For new books, verify the code
       const isVerified = handleVerification();
       
       if (!isVerified) {
@@ -170,7 +161,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
           return;
         }
         
-        // Add as recommendation
         const bookData = {
           ...data,
           status: 'recommendation',
@@ -193,7 +183,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       }
     }
     
-    // Regular book addition or edit
     const bookData = {
       ...data,
       status: readingStatus,
@@ -353,34 +342,12 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
               render={({ field }) => (
                 <FormItem className="mt-4">
                   <FormLabel>Date Read</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <DateReadPicker 
+                      date={field.value} 
+                      onDateChange={field.onChange} 
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -455,7 +422,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
               />
             )}
 
-            {/* Verification Code - only show for new books */}
             {!bookToEdit && (
               <div className="mt-4">
                 <FormLabel className="flex items-center">
@@ -475,7 +441,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
               </div>
             )}
 
-            {/* Recommender Name Input (conditional) */}
             {showRecommenderInput && (
               <div className="mt-4">
                 <FormLabel>Your Name</FormLabel>
