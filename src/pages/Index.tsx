@@ -1,11 +1,23 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const { books, recommendations } = useBookshelf();
+  const { books, recommendations, recoverData } = useBookshelf();
+
+  // Force data recovery on initial page load
+  useEffect(() => {
+    // Ensure we attempt to recover data on initial page load
+    console.log('Index page mounted, checking for data recovery');
+    const timeoutId = setTimeout(() => {
+      recoverData();
+    }, 200);
+    
+    return () => clearTimeout(timeoutId);
+  }, [recoverData]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
