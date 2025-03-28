@@ -62,7 +62,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       dateRead: bookToEdit?.dateRead || new Date(),
       genre: bookToEdit?.genre || '',
       status: bookToEdit?.status || 'to-read',
-      progress: bookToEdit?.progress || 0
+      progress: bookToEdit?.progress || 0,
+      pages: bookToEdit?.pages || 0
     }
   });
 
@@ -115,7 +116,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     const bookData = {
       ...data,
       status: readingStatus,
-      progress: readingProgress
+      progress: readingProgress,
+      pages: parseInt(data.pages) || 0
     };
     
     if (bookToEdit) {
@@ -136,7 +138,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
         dateRead: new Date(),
         genre: '',
         status: 'to-read',
-        progress: 0
+        progress: 0,
+        pages: 0
       });
       setCoverPreview(null);
       setReadingProgress(0);
@@ -177,6 +180,26 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
                   <FormLabel>Author</FormLabel>
                   <FormControl>
                     <Input placeholder="Author Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="pages"
+              render={({ field }) => (
+                <FormItem className="mt-4">
+                  <FormLabel>Number of Pages</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="Number of pages" 
+                      min="0"
+                      {...field} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -359,7 +382,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" className="bg-burgundy hover:bg-burgundy/90">
+          <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
             {bookToEdit ? 'Save Changes' : 'Add to Bookshelf'}
           </Button>
         </div>

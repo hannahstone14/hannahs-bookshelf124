@@ -10,4 +10,5 @@ export interface Book {
   status: 'read' | 'reading' | 'to-read';
   order?: number;
   progress: number; // Progress value from 0-100
+  pages: number; // Total number of pages in the book
 }

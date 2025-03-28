@@ -36,7 +36,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           // Ensure backward compatibility with older data
           status: book.status || 'read',
           genre: book.genre || undefined,
-          progress: book.progress || (book.status === 'read' ? 100 : 0)
+          progress: book.progress || (book.status === 'read' ? 100 : 0),
+          pages: book.pages || 0
         }));
       } catch (error) {
         console.error('Failed to parse books from localStorage:', error);
@@ -59,7 +60,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const newBook = {
       ...book,
       id: uuidv4(),
-      progress: book.progress || (book.status === 'read' ? 100 : 0)
+      progress: book.progress || (book.status === 'read' ? 100 : 0),
+      pages: book.pages || 0
     };
     setBooks(currentBooks => [newBook, ...currentBooks]);
     toast.success('Book added to your shelf!');
