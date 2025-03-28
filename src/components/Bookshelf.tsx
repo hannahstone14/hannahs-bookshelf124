@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -16,7 +15,10 @@ import {
   ArrowDownZA, 
   Percent,
   LightbulbIcon,
-  Star
+  Star,
+  MoreVertical,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
@@ -35,8 +37,10 @@ type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
 type DisplayStyle = 'shelf' | 'list';
 
 const Bookshelf: React.FC = () => {
-  const { books, recommendations, reorderBooks } = useBookshelf();
+  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
   const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('shelf');
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
@@ -134,6 +138,15 @@ const Bookshelf: React.FC = () => {
     setDraggedOverBook(null);
   };
 
+  const handleEdit = (book: Book) => {
+    setSelectedBook(book);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (bookId: string) => {
+    removeBook(bookId);
+  };
+
   const renderListItem = (book: Book) => {
     return (
       <div 
@@ -189,6 +202,23 @@ const Bookshelf: React.FC = () => {
             {book.progress}% 
           </div>
         )}
+        <div className="ml-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => handleEdit(book)}>
+                <Pencil className="h-4 w-4 mr-2" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDelete(book.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     );
   };
@@ -205,8 +235,25 @@ const Bookshelf: React.FC = () => {
                 onDragStart={() => handleDragStart(book)}
                 onDragOver={(e) => handleDragOver(e, book)}
                 onDrop={(e) => handleDrop(e, book)}
-                className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+                className={`cursor-move book-container relative group ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
               >
+                <div className="absolute right-1 top-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-7 w-7 bg-white">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleEdit(book)}>
+                        <Pencil className="h-4 w-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(book.id)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Remove
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <BookCover book={book} showStatus={showStatus} />
                 {book.recommendedBy && (
                   <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
@@ -244,6 +291,17 @@ const Bookshelf: React.FC = () => {
           </Dialog>
         </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          {selectedBook && (
+            <AddBookForm 
+              onSuccess={() => setIsEditDialogOpen(false)} 
+              bookToEdit={selectedBook}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-between items-center mb-6">
         <Tabs 

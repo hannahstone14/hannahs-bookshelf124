@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -59,9 +60,9 @@ const presetGenres = [
 const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
   const { addBook, editBook } = useBookshelf();
   const [coverPreview, setCoverPreview] = useState<string | null>(bookToEdit?.coverUrl || null);
-  const [readingProgress, setReadingProgress] = useState<number>(bookToEdit?.progress || 0);
+  const [readingProgress, setReadingProgress] = useState<number>(bookToEdit?.progress || (bookToEdit ? 0 : 100));
   const [readingStatus, setReadingStatus] = useState<'to-read' | 'reading' | 'read' | 'wishlist'>(
-    bookToEdit?.status as any || 'to-read'
+    bookToEdit?.status as any || 'read'
   );
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [showRecommenderInput, setShowRecommenderInput] = useState<boolean>(false);
@@ -77,8 +78,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       coverUrl: bookToEdit?.coverUrl || '',
       dateRead: bookToEdit?.dateRead || new Date(),
       genres: bookToEdit?.genres || [],
-      status: bookToEdit?.status || 'to-read',
-      progress: bookToEdit?.progress || 0,
+      status: bookToEdit?.status || 'read',
+      progress: bookToEdit?.progress || (bookToEdit ? 0 : 100),
       pages: bookToEdit?.pages || 0,
       favorite: bookToEdit?.favorite || false
     }
@@ -214,14 +215,14 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       coverUrl: '',
       dateRead: new Date(),
       genres: [],
-      status: 'to-read',
-      progress: 0,
+      status: 'read',
+      progress: 100,
       pages: 0,
       favorite: false
     });
     setCoverPreview(null);
-    setReadingProgress(0);
-    setReadingStatus('to-read');
+    setReadingProgress(100);
+    setReadingStatus('read');
     setVerificationCode('');
     setShowRecommenderInput(false);
     setRecommenderName('');
