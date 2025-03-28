@@ -4,16 +4,14 @@ import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, BookOpen, List, MoveVertical, BookOpenCheck } from 'lucide-react';
+import { PlusCircle, BookOpen, List, MoveVertical, BookOpenCheck, BookmarkPlus } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
-import { move } from '@/lib/utils';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress';
@@ -27,10 +25,12 @@ const Bookshelf: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  // Get reading books for the "Currently Reading" section
+  // Get books by status
   const readingBooks = books.filter(book => book.status === 'reading');
+  const toReadBooks = books.filter(book => book.status === 'to-read');
+  const completedBooks = books.filter(book => book.status === 'read');
   
-  // Sort all books based on current sort option
+  // Sort books based on current sort option
   const getSortedBooks = (booksToSort: Book[]) => {
     return [...booksToSort].sort((a, b) => {
       let comparison = 0;
@@ -56,8 +56,9 @@ const Bookshelf: React.FC = () => {
     });
   };
   
-  const sortedBooks = getSortedBooks(books);
   const sortedReadingBooks = getSortedBooks(readingBooks);
+  const sortedToReadBooks = getSortedBooks(toReadBooks);
+  const sortedCompletedBooks = getSortedBooks(completedBooks);
 
   // Handle sorting
   const handleSort = (option: SortOption) => {
@@ -91,17 +92,18 @@ const Bookshelf: React.FC = () => {
     if (!draggedBook) return;
     
     // Find indexes for reordering
-    const sourceIndex = sortedBooks.findIndex(book => book.id === draggedBook.id);
-    const targetIndex = sortedBooks.findIndex(book => book.id === targetBook.id);
+    const allBooks = getSortedBooks(books);
+    const sourceIndex = allBooks.findIndex(book => book.id === draggedBook.id);
+    const targetIndex = allBooks.findIndex(book => book.id === targetBook.id);
     
     if (sourceIndex !== -1 && targetIndex !== -1) {
       // Create a new array with the reordered books
-      const newBooks = [...sortedBooks];
+      const newBooks = [...allBooks];
       const [movedBook] = newBooks.splice(sourceIndex, 1);
       newBooks.splice(targetIndex, 0, movedBook);
       
       // Update the order in the context
-      reorderBooks(sortedBooks.map(b => b.id), newBooks.map(b => b.id));
+      reorderBooks(allBooks.map(b => b.id), newBooks.map(b => b.id));
     }
     
     // Reset drag state
@@ -147,6 +149,44 @@ const Bookshelf: React.FC = () => {
     );
   };
 
+  // Render bookshelf with books
+  const renderBookshelf = (title: string, booksToRender: Book[], icon: React.ReactNode, bgColor: string = "") => {
+    if (booksToRender.length === 0) return null;
+    
+    return (
+      <div className="space-y-2 mb-10">
+        <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
+          {icon}
+          {title}
+        </h2>
+        {viewMode === 'list' ? (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="divide-y divide-gray-200">
+              {booksToRender.map(book => renderListItem(book))}
+            </div>
+          </div>
+        ) : (
+          <div className={`enhanced-bookshelf p-4 relative ${bgColor}`}>
+            <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
+              {booksToRender.map(book => (
+                <div 
+                  key={book.id}
+                  draggable
+                  onDragStart={() => handleDragStart(book)}
+                  onDragOver={(e) => handleDragOver(e, book)}
+                  onDrop={(e) => handleDrop(e, book)}
+                  className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+                >
+                  <BookCover book={book} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -155,7 +195,7 @@ const Bookshelf: React.FC = () => {
         <div className="flex items-center gap-3">
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-500 hover:bg-blue-600">
+              <Button className="bg-blue-400 hover:bg-blue-500">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Book
               </Button>
@@ -173,7 +213,7 @@ const Bookshelf: React.FC = () => {
             variant={viewMode === 'shelf' ? 'default' : 'outline'} 
             size="sm"
             onClick={() => setViewMode('shelf')}
-            className="rounded-l-md rounded-r-none bg-blue-500 hover:bg-blue-600"
+            className="rounded-l-md rounded-r-none bg-blue-400 hover:bg-blue-500"
           >
             <BookOpen className="h-4 w-4 mr-2" />
             Shelf View
@@ -182,7 +222,7 @@ const Bookshelf: React.FC = () => {
             variant={viewMode === 'list' ? 'default' : 'outline'} 
             size="sm"
             onClick={() => setViewMode('list')}
-            className="rounded-l-none rounded-r-md bg-blue-500 hover:bg-blue-600"
+            className="rounded-l-none rounded-r-md bg-blue-400 hover:bg-blue-500"
           >
             <List className="h-4 w-4 mr-2" />
             List View
@@ -192,7 +232,7 @@ const Bookshelf: React.FC = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
               <MoveVertical className="h-4 w-4 mr-2" />
-              Reorder Books
+              Sort Books
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
@@ -222,7 +262,7 @@ const Bookshelf: React.FC = () => {
           <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-500 hover:bg-blue-600">
+              <Button className="bg-blue-400 hover:bg-blue-500">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Your First Book
               </Button>
@@ -233,76 +273,28 @@ const Bookshelf: React.FC = () => {
           </Dialog>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-4">
           {/* Currently Reading Section */}
-          {readingBooks.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="text-xl font-medium border-b border-blue-200 pb-2 mb-3 flex items-center">
-                <BookOpenCheck className="h-5 w-5 mr-2 text-blue-600" />
-                Currently Reading
-              </h2>
-              {viewMode === 'list' ? (
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                  <div className="divide-y divide-gray-200">
-                    {sortedReadingBooks.map(book => renderListItem(book))}
-                  </div>
-                </div>
-              ) : (
-                <div className="enhanced-bookshelf p-4 relative bg-gradient-to-b from-blue-50 to-transparent rounded-md">
-                  <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
-                    {sortedReadingBooks.map(book => (
-                      <div 
-                        key={book.id}
-                        draggable
-                        onDragStart={() => handleDragStart(book)}
-                        onDragOver={(e) => handleDragOver(e, book)}
-                        onDrop={(e) => handleDrop(e, book)}
-                        className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
-                      >
-                        <BookCover book={book} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          {renderBookshelf(
+            "Currently Reading", 
+            sortedReadingBooks, 
+            <BookOpenCheck className="h-5 w-5 mr-2 text-blue-600" />,
+            "bg-gradient-to-b from-blue-50 to-transparent rounded-md"
           )}
           
-          {/* List View */}
-          {viewMode === 'list' && (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 font-medium">
-                All Books
-              </div>
-              <div className="divide-y divide-gray-200">
-                {sortedBooks.map(book => renderListItem(book))}
-              </div>
-            </div>
+          {/* To Read Section */}
+          {renderBookshelf(
+            "Want to Read", 
+            sortedToReadBooks, 
+            <BookmarkPlus className="h-5 w-5 mr-2 text-amber-600" />,
+            "bg-gradient-to-b from-amber-50 to-transparent rounded-md"
           )}
           
-          {/* Shelf View */}
-          {viewMode === 'shelf' && (
-            <div className="space-y-2">
-              <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3">
-                Your Bookshelf
-              </h2>
-              <div className="enhanced-bookshelf p-4 relative">
-                <div className="flex overflow-x-auto space-x-6 justify-start pb-4">
-                  {sortedBooks.map(book => (
-                    <div 
-                      key={book.id}
-                      draggable
-                      onDragStart={() => handleDragStart(book)}
-                      onDragOver={(e) => handleDragOver(e, book)}
-                      onDrop={(e) => handleDrop(e, book)}
-                      className={`cursor-move book-container ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
-                    >
-                      <BookCover book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {/* Completed Books Section */}
+          {renderBookshelf(
+            "Books You've Read", 
+            sortedCompletedBooks, 
+            <BookOpen className="h-5 w-5 mr-2 text-green-600" />
           )}
         </div>
       )}
