@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +27,12 @@ export const useBookshelf = () => {
   return context;
 };
 
+// Define database name and version for consistency
+const DB_NAME = 'bookshelfData';
+const DB_VERSION = 1;
+const BOOKS_STORE = 'books';
+const RECOMMENDATIONS_STORE = 'recommendations';
+
 // Helper function to safely parse dates
 const parseDateFields = (data: any) => {
   try {
@@ -43,9 +50,57 @@ const parseDateFields = (data: any) => {
   }
 };
 
-// Create backup of data in a separate localStorage key
-const backupData = (books: Book[], recommendations: Book[]) => {
+// Initialize IndexedDB
+const initializeDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!window.indexedDB) {
+        console.error('IndexedDB not supported by browser');
+        reject("IndexedDB not supported");
+        return;
+      }
+      
+      const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onupgradeneeded = (event) => {
+        const db = request.result;
+        
+        // Create object stores if they don't exist
+        if (!db.objectStoreNames.contains(BOOKS_STORE)) {
+          db.createObjectStore(BOOKS_STORE, { keyPath: 'id' });
+          console.log(`Created ${BOOKS_STORE} store`);
+        }
+        
+        if (!db.objectStoreNames.contains(RECOMMENDATIONS_STORE)) {
+          db.createObjectStore(RECOMMENDATIONS_STORE, { keyPath: 'id' });
+          console.log(`Created ${RECOMMENDATIONS_STORE} store`);
+        }
+        
+        console.log('IndexedDB schema upgraded to version', DB_VERSION);
+      };
+      
+      request.onsuccess = () => {
+        console.log('IndexedDB connection opened successfully');
+        resolve(request.result);
+      };
+      
+      request.onerror = () => {
+        console.error('Error opening IndexedDB:', request.error);
+        reject(request.error);
+      };
+    } catch (error) {
+      console.error('Exception during IndexedDB initialization:', error);
+      reject(error);
+    }
+  });
+};
+
+// Save books to IndexedDB
+const saveToIndexedDB = async (books: Book[], recommendations: Book[]): Promise<boolean> => {
   try {
+    const db = await initializeDB();
+    
+    // Prepare books for storage (clone and handle Date objects)
     const booksToStore = books.map(book => ({
       ...book,
       dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
@@ -56,6 +111,150 @@ const backupData = (books: Book[], recommendations: Book[]) => {
       dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
     }));
     
+    // Save books
+    const booksTx = db.transaction([BOOKS_STORE], 'readwrite');
+    const booksStore = booksTx.objectStore(BOOKS_STORE);
+    
+    // Clear existing data first
+    await new Promise<void>((resolve, reject) => {
+      const clearRequest = booksStore.clear();
+      clearRequest.onsuccess = () => resolve();
+      clearRequest.onerror = () => reject(clearRequest.error);
+    });
+    
+    // Add all books
+    for (const book of booksToStore) {
+      booksStore.put(book);
+    }
+    
+    // Save recommendations
+    const recsTx = db.transaction([RECOMMENDATIONS_STORE], 'readwrite');
+    const recsStore = recsTx.objectStore(RECOMMENDATIONS_STORE);
+    
+    // Clear existing recommendations
+    await new Promise<void>((resolve, reject) => {
+      const clearRequest = recsStore.clear();
+      clearRequest.onsuccess = () => resolve();
+      clearRequest.onerror = () => reject(clearRequest.error);
+    });
+    
+    // Add all recommendations
+    for (const rec of recsToStore) {
+      recsStore.put(rec);
+    }
+    
+    // Wait for transactions to complete
+    await Promise.all([
+      new Promise<void>((resolve, reject) => {
+        booksTx.oncomplete = () => {
+          console.log(`Saved ${booksToStore.length} books to IndexedDB`);
+          resolve();
+        };
+        booksTx.onerror = () => reject(booksTx.error);
+      }),
+      new Promise<void>((resolve, reject) => {
+        recsTx.oncomplete = () => {
+          console.log(`Saved ${recsToStore.length} recommendations to IndexedDB`);
+          resolve();
+        };
+        recsTx.onerror = () => reject(recsTx.error);
+      })
+    ]);
+    
+    db.close();
+    return true;
+  } catch (error) {
+    console.error('Failed to save to IndexedDB:', error);
+    return false;
+  }
+};
+
+// Load books from IndexedDB
+const loadFromIndexedDB = async (): Promise<{ books: Book[], recommendations: Book[] }> => {
+  try {
+    const db = await initializeDB();
+    
+    // Load books
+    const books = await new Promise<Book[]>((resolve, reject) => {
+      try {
+        if (!db.objectStoreNames.contains(BOOKS_STORE)) {
+          console.log(`${BOOKS_STORE} store doesn't exist yet`);
+          resolve([]);
+          return;
+        }
+        
+        const tx = db.transaction([BOOKS_STORE], 'readonly');
+        const store = tx.objectStore(BOOKS_STORE);
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          const loadedBooks = request.result || [];
+          console.log(`Loaded ${loadedBooks.length} books from IndexedDB`);
+          resolve(loadedBooks.map((book: any) => parseDateFields(book)));
+        };
+        
+        request.onerror = () => {
+          console.error('Error loading books from IndexedDB:', request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error('Exception during books load from IndexedDB:', error);
+        reject(error);
+      }
+    });
+    
+    // Load recommendations
+    const recommendations = await new Promise<Book[]>((resolve, reject) => {
+      try {
+        if (!db.objectStoreNames.contains(RECOMMENDATIONS_STORE)) {
+          console.log(`${RECOMMENDATIONS_STORE} store doesn't exist yet`);
+          resolve([]);
+          return;
+        }
+        
+        const tx = db.transaction([RECOMMENDATIONS_STORE], 'readonly');
+        const store = tx.objectStore(RECOMMENDATIONS_STORE);
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          const loadedRecs = request.result || [];
+          console.log(`Loaded ${loadedRecs.length} recommendations from IndexedDB`);
+          resolve(loadedRecs.map((rec: any) => parseDateFields(rec)));
+        };
+        
+        request.onerror = () => {
+          console.error('Error loading recommendations from IndexedDB:', request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        console.error('Exception during recommendations load from IndexedDB:', error);
+        reject(error);
+      }
+    });
+    
+    db.close();
+    return { books, recommendations };
+  } catch (error) {
+    console.error('Failed to load from IndexedDB:', error);
+    return { books: [], recommendations: [] };
+  }
+};
+
+// Create backup of data in localStorage and IndexedDB
+const backupData = async (books: Book[], recommendations: Book[]) => {
+  try {
+    // Prepare data for storage
+    const booksToStore = books.map(book => ({
+      ...book,
+      dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
+    }));
+    
+    const recsToStore = recommendations.map(rec => ({
+      ...rec,
+      dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
+    }));
+    
+    // Save to localStorage
     localStorage.setItem('books_backup', JSON.stringify(booksToStore));
     localStorage.setItem('recommendations_backup', JSON.stringify(recsToStore));
     localStorage.setItem('backup_timestamp', new Date().toISOString());
@@ -66,76 +265,13 @@ const backupData = (books: Book[], recommendations: Book[]) => {
     sessionStorage.setItem('books_backup', JSON.stringify(booksToStore));
     sessionStorage.setItem('recommendations_backup', JSON.stringify(recsToStore));
     
-    // Initialize IndexedDB for more robust storage
-    try {
-      const initializeDB = () => {
-        return new Promise<IDBDatabase>((resolve, reject) => {
-          if (!window.indexedDB) {
-            reject("IndexedDB not supported");
-            return;
-          }
-          
-          const request = window.indexedDB.open('bookshelfBackup', 1);
-          
-          request.onupgradeneeded = (event) => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains('books')) {
-              db.createObjectStore('books', { keyPath: 'id' });
-            }
-            if (!db.objectStoreNames.contains('recommendations')) {
-              db.createObjectStore('recommendations', { keyPath: 'id' });
-            }
-            console.log('IndexedDB schema upgraded');
-          };
-          
-          request.onsuccess = () => {
-            console.log('IndexedDB opened successfully');
-            resolve(request.result);
-          };
-          
-          request.onerror = (event) => {
-            console.error('Error opening IndexedDB:', request.error);
-            reject(request.error);
-          };
-        });
-      };
-      
-      initializeDB().then(db => {
-        const transaction = db.transaction(['books', 'recommendations'], 'readwrite');
-        
-        const booksStore = transaction.objectStore('books');
-        const recsStore = transaction.objectStore('recommendations');
-        
-        // Clear existing data
-        booksStore.clear();
-        recsStore.clear();
-        
-        // Add all books one by one to avoid transaction issues
-        booksToStore.forEach(book => {
-          booksStore.add(book);
-        });
-        
-        // Add all recommendations
-        recsToStore.forEach(rec => {
-          recsStore.add(rec);
-        });
-        
-        transaction.oncomplete = () => {
-          console.log('Data successfully stored in IndexedDB');
-          db.close();
-        };
-        
-        transaction.onerror = (event) => {
-          console.error('Transaction error:', transaction.error);
-        };
-      }).catch(error => {
-        console.error('Failed to initialize IndexedDB:', error);
-      });
-    } catch (err) {
-      console.error('IndexedDB backup failed:', err);
-    }
+    // Also back up to IndexedDB
+    await saveToIndexedDB(books, recommendations);
+    
+    return true;
   } catch (error) {
     console.error('Failed to create backup:', error);
+    return false;
   }
 };
 
@@ -208,18 +344,6 @@ const hasBackupData = () => {
     const booksBackup = localStorage.getItem('books_backup');
     const sessionBooksBackup = sessionStorage.getItem('books_backup');
     
-    // Also check IndexedDB asynchronously but return based on local storage first
-    if (window.indexedDB) {
-      const dbRequest = window.indexedDB.open('bookshelfBackup', 1);
-      dbRequest.onsuccess = function() {
-        const db = dbRequest.result;
-        if (db.objectStoreNames.contains('books')) {
-          return true;
-        }
-        db.close();
-      };
-    }
-    
     return !!(backupTimestamp && (booksBackup || sessionBooksBackup));
   } catch (error) {
     console.error('Error checking for backup data:', error);
@@ -227,347 +351,187 @@ const hasBackupData = () => {
   }
 };
 
-// Helper function to load backup data from all available sources
-const loadBackupData = () => {
-  console.log('Attempting to load backup data...');
-  
-  let books: Book[] = [];
-  let recommendations: Book[] = [];
-  
-  // Try to recover from localStorage first
-  try {
-    const backupBooks = localStorage.getItem('books_backup');
-    const backupRecs = localStorage.getItem('recommendations_backup');
-    
-    if (backupBooks) {
-      const parsedBooks = JSON.parse(backupBooks);
-      console.log('Found backup in localStorage with', parsedBooks.length, 'books');
-      
-      books = parsedBooks
-        .filter((book: any) => book && typeof book === 'object' && book.status !== 'recommendation')
-        .map((book: any) => ({
-          ...parseDateFields(book),
-          status: book.status || 'read',
-          genres: book.genres || (book.genre ? [book.genre] : []),
-          progress: book.progress || (book.status === 'read' ? 100 : 0),
-          pages: book.pages || 0,
-          favorite: book.favorite || false,
-          color: book.color || null
-        }));
-    }
-    
-    if (backupRecs) {
-      const parsedRecs = JSON.parse(backupRecs);
-      console.log('Found backup in localStorage with', parsedRecs.length, 'recommendations');
-      
-      recommendations = parsedRecs
-        .filter((book: any) => book && typeof book === 'object')
-        .map((book: any) => ({
-          ...parseDateFields(book),
-          progress: 0,
-          pages: book.pages || 0,
-          genres: book.genres || (book.genre ? [book.genre] : []),
-          favorite: false,
-          color: book.color || null,
-          status: 'recommendation'
-        }));
-    }
-  } catch (error) {
-    console.error('Failed to recover from localStorage backup:', error);
-  }
-  
-  // If no books recovered yet, try sessionStorage
-  if (books.length === 0) {
-    try {
-      const sessionBackupBooks = sessionStorage.getItem('books_backup');
-      if (sessionBackupBooks) {
-        const parsedBooks = JSON.parse(sessionBackupBooks);
-        console.log('Found backup in sessionStorage with', parsedBooks.length, 'books');
-        
-        books = parsedBooks
-          .filter((book: any) => book && typeof book === 'object' && book.status !== 'recommendation')
-          .map((book: any) => ({
-            ...parseDateFields(book),
-            status: book.status || 'read',
-            genres: book.genres || (book.genre ? [book.genre] : []),
-            progress: book.progress || (book.status === 'read' ? 100 : 0),
-            pages: book.pages || 0,
-            favorite: book.favorite || false,
-            color: book.color || null
-          }));
-      }
-      
-      const sessionBackupRecs = sessionStorage.getItem('recommendations_backup');
-      if (sessionBackupRecs) {
-        const parsedRecs = JSON.parse(sessionBackupRecs);
-        console.log('Found backup in sessionStorage with', parsedRecs.length, 'recommendations');
-        
-        recommendations = parsedRecs
-          .filter((book: any) => book && typeof book === 'object')
-          .map((book: any) => ({
-            ...parseDateFields(book),
-            progress: 0,
-            pages: book.pages || 0,
-            genres: book.genres || (book.genre ? [book.genre] : []),
-            favorite: false,
-            color: book.color || null,
-            status: 'recommendation'
-          }));
-      }
-    } catch (error) {
-      console.error('Failed to recover from sessionStorage backup:', error);
-    }
-  }
-  
-  // If still no books recovered, try IndexedDB as last resort
-  if (books.length === 0 && window.indexedDB) {
-    return new Promise<{books: Book[], recommendations: Book[]}>((resolve) => {
-      const dbRequest = window.indexedDB.open('bookshelfBackup', 1);
-      
-      dbRequest.onsuccess = function() {
-        const db = dbRequest.result;
-        let idbBooks: Book[] = [];
-        let idbRecs: Book[] = [];
-        let booksLoaded = false;
-        let recsLoaded = false;
-        
-        const checkAllLoaded = () => {
-          if (booksLoaded && recsLoaded) {
-            if (idbBooks.length > 0) {
-              console.log('Loaded', idbBooks.length, 'books from IndexedDB');
-              books = idbBooks;
-            }
-            if (idbRecs.length > 0) {
-              console.log('Loaded', idbRecs.length, 'recommendations from IndexedDB');
-              recommendations = idbRecs;
-            }
-            db.close();
-            resolve({ books, recommendations });
-          }
-        };
-        
-        if (db.objectStoreNames.contains('books')) {
-          const bookTx = db.transaction('books', 'readonly');
-          const bookStore = bookTx.objectStore('books');
-          const bookRequest = bookStore.getAll();
-          
-          bookRequest.onsuccess = function() {
-            if (bookRequest.result && bookRequest.result.length > 0) {
-              console.log('Found backup in IndexedDB with', bookRequest.result.length, 'books');
-              idbBooks = bookRequest.result.map((book: any) => parseDateFields(book));
-            }
-            booksLoaded = true;
-            checkAllLoaded();
-          };
-          
-          bookRequest.onerror = function() {
-            console.error('Error loading books from IndexedDB:', bookRequest.error);
-            booksLoaded = true;
-            checkAllLoaded();
-          };
-        } else {
-          booksLoaded = true;
-          checkAllLoaded();
-        }
-        
-        if (db.objectStoreNames.contains('recommendations')) {
-          const recTx = db.transaction('recommendations', 'readonly');
-          const recStore = recTx.objectStore('recommendations');
-          const recRequest = recStore.getAll();
-          
-          recRequest.onsuccess = function() {
-            if (recRequest.result && recRequest.result.length > 0) {
-              console.log('Found backup in IndexedDB with', recRequest.result.length, 'recommendations');
-              idbRecs = recRequest.result.map((rec: any) => parseDateFields(rec));
-            }
-            recsLoaded = true;
-            checkAllLoaded();
-          };
-          
-          recRequest.onerror = function() {
-            console.error('Error loading recommendations from IndexedDB:', recRequest.error);
-            recsLoaded = true;
-            checkAllLoaded();
-          };
-        } else {
-          recsLoaded = true;
-          checkAllLoaded();
-        }
-      };
-      
-      dbRequest.onerror = function() {
-        console.error('Error opening IndexedDB:', dbRequest.error);
-        resolve({ books, recommendations });
-      };
-      
-      // Handle the case where the database doesn't exist yet
-      dbRequest.onupgradeneeded = function() {
-        console.log('IndexedDB needs upgrade, no existing data');
-        const db = dbRequest.result;
-        if (!db.objectStoreNames.contains('books')) {
-          db.createObjectStore('books', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('recommendations')) {
-          db.createObjectStore('recommendations', { keyPath: 'id' });
-        }
-      };
-    }).then(result => {
-      return result;
-    }).catch(error => {
-      console.error('Failed to load from IndexedDB:', error);
-      return { books, recommendations };
-    });
-  }
-  
-  return { books, recommendations };
-};
-
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(() => {
-    const loadedBooks = loadBooksFromStorage();
-    console.log('Initial load found', loadedBooks.length, 'books in localStorage');
-    
-    if (loadedBooks.length === 0) {
-      // If no books in main storage, try to recover from backup immediately
-      console.log('No books found in main storage, attempting recovery from backup');
-      try {
-        // Synchronously try localStorage backup first for immediate rendering
-        const backupBooks = localStorage.getItem('books_backup');
-        if (backupBooks) {
-          const parsedBooks = JSON.parse(backupBooks);
-          if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
-            console.log('Recovered', parsedBooks.length, 'books from localStorage backup');
-            return parsedBooks.map((book: any) => parseDateFields(book));
-          }
-        }
-        
-        // Return empty array, but we'll try other backups asynchronously
-        return [];
-      } catch (error) {
-        console.error('Failed to recover from backup:', error);
-        return [];
-      }
-    }
-    return loadedBooks;
-  });
-  
-  const [recommendations, setRecommendations] = useState<Book[]>(() => {
-    const loadedRecs = loadRecommendationsFromStorage();
-    if (loadedRecs.length === 0) {
-      // If no recommendations in main storage, try to recover from backup
-      console.log('No recommendations found in main storage, attempting recovery from backup');
-      try {
-        // Synchronously try localStorage backup first
-        const backupRecs = localStorage.getItem('recommendations_backup');
-        if (backupRecs) {
-          const parsedRecs = JSON.parse(backupRecs);
-          if (Array.isArray(parsedRecs) && parsedRecs.length > 0) {
-            console.log('Recovered', parsedRecs.length, 'recommendations from localStorage backup');
-            return parsedRecs.map((rec: any) => parseDateFields(rec));
-          }
-        }
-        
-        // Return empty array
-        return [];
-      } catch (error) {
-        console.error('Failed to recover recommendations from backup:', error);
-        return [];
-      }
-    }
-    return loadedRecs;
-  });
-  
-  const [hasBackup, setHasBackup] = useState<boolean>(hasBackupData());
+  const [books, setBooks] = useState<Book[]>([]);
+  const [recommendations, setRecommendations] = useState<Book[]>([]);
+  const [hasBackup, setHasBackup] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Try to load from IndexedDB asynchronously on initial load
+  // Initial load from all storage sources
   useEffect(() => {
-    const tryAsyncBackupLoad = async () => {
-      if (books.length === 0) {
-        console.log('Attempting asynchronous backup recovery...');
-        const result = await Promise.resolve(loadBackupData());
+    const loadAllData = async () => {
+      setIsLoading(true);
+      console.log('Initial data load started');
+
+      try {
+        // Try to load from IndexedDB first (most reliable)
+        const idbData = await loadFromIndexedDB();
+        let finalBooks: Book[] = [];
+        let finalRecs: Book[] = [];
         
-        if (result.books && result.books.length > 0) {
-          console.log('Async recovery found', result.books.length, 'books');
-          setBooks(result.books);
-          toast.success(`Recovered ${result.books.length} books from backup storage`);
+        if (idbData.books.length > 0) {
+          console.log(`Loaded ${idbData.books.length} books from IndexedDB`);
+          finalBooks = idbData.books;
+        } else {
+          // If no IndexedDB data, try localStorage
+          const localBooks = loadBooksFromStorage();
+          console.log(`Loaded ${localBooks.length} books from localStorage`);
+          
+          if (localBooks.length > 0) {
+            finalBooks = localBooks;
+          } else {
+            // Try backups if main storage is empty
+            const backupBooks = localStorage.getItem('books_backup');
+            if (backupBooks) {
+              try {
+                const parsedBooks = JSON.parse(backupBooks);
+                if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
+                  console.log(`Recovered ${parsedBooks.length} books from backup`);
+                  finalBooks = parsedBooks.map((book: any) => parseDateFields(book));
+                }
+              } catch (error) {
+                console.error('Error parsing backup books:', error);
+              }
+            }
+          }
         }
         
-        if (result.recommendations && result.recommendations.length > 0) {
-          console.log('Async recovery found', result.recommendations.length, 'recommendations');
-          setRecommendations(result.recommendations);
+        // Same process for recommendations
+        if (idbData.recommendations.length > 0) {
+          console.log(`Loaded ${idbData.recommendations.length} recommendations from IndexedDB`);
+          finalRecs = idbData.recommendations;
+        } else {
+          const localRecs = loadRecommendationsFromStorage();
+          console.log(`Loaded ${localRecs.length} recommendations from localStorage`);
+          
+          if (localRecs.length > 0) {
+            finalRecs = localRecs;
+          } else {
+            const backupRecs = localStorage.getItem('recommendations_backup');
+            if (backupRecs) {
+              try {
+                const parsedRecs = JSON.parse(backupRecs);
+                if (Array.isArray(parsedRecs) && parsedRecs.length > 0) {
+                  console.log(`Recovered ${parsedRecs.length} recommendations from backup`);
+                  finalRecs = parsedRecs.map((rec: any) => parseDateFields(rec));
+                }
+              } catch (error) {
+                console.error('Error parsing backup recommendations:', error);
+              }
+            }
+          }
         }
+        
+        // Set state with our loaded data
+        setBooks(finalBooks);
+        setRecommendations(finalRecs);
+        
+        // Create a backup of whatever we loaded to ensure it's saved everywhere
+        if (finalBooks.length > 0 || finalRecs.length > 0) {
+          await backupData(finalBooks, finalRecs);
+          saveBooksToLocalStorage(finalBooks);
+          saveRecommendationsToLocalStorage(finalRecs);
+          setHasBackup(true);
+        }
+        
+        console.log('Initial data load completed with', finalBooks.length, 'books and', finalRecs.length, 'recommendations');
+      } catch (error) {
+        console.error('Error during initial data load:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    tryAsyncBackupLoad();
-  }, [books.length]);
-
-  // Create a backup when data is loaded initially
-  useEffect(() => {
-    const hasInitialData = books.length > 0 || recommendations.length > 0;
-    if (hasInitialData) {
-      backupData(books, recommendations);
-      setHasBackup(true);
-    }
+    loadAllData();
   }, []);
 
-  // Save books to localStorage whenever they change
-  useEffect(() => {
-    const saveBooks = () => {
-      try {
-        const booksToStore = books.map(book => ({
-          ...book,
-          // Convert Date objects to ISO strings before storing
-          dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
-        }));
-        
-        localStorage.setItem('books', JSON.stringify(booksToStore));
-        console.log('Saved books to localStorage:', booksToStore.length);
-        
-        // Create backup immediately after saving
-        backupData(books, recommendations);
-        setHasBackup(true);
-      } catch (error) {
-        console.error('Failed to save books to localStorage:', error);
-        // If primary save fails, try backup directly
-        try {
-          backupData(books, recommendations);
-          setHasBackup(true);
-        } catch (backupError) {
-          console.error('Even backup failed:', backupError);
-        }
-      }
-    };
-    
-    saveBooks();
-  }, [books, recommendations]);
-
-  // Save recommendations to localStorage whenever they change
-  useEffect(() => {
+  // Save books to localStorage
+  const saveBooksToLocalStorage = (booksToSave: Book[]) => {
     try {
-      const recsToStore = recommendations.map(rec => ({
+      const booksToStore = booksToSave.map(book => ({
+        ...book,
+        dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
+      }));
+      
+      localStorage.setItem('books', JSON.stringify(booksToStore));
+      console.log('Saved books to localStorage:', booksToStore.length);
+      return true;
+    } catch (error) {
+      console.error('Failed to save books to localStorage:', error);
+      return false;
+    }
+  };
+
+  // Save recommendations to localStorage
+  const saveRecommendationsToLocalStorage = (recsToSave: Book[]) => {
+    try {
+      const recsToStore = recsToSave.map(rec => ({
         ...rec,
-        // Convert Date objects to ISO strings before storing
         dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
       }));
       
       localStorage.setItem('recommendations', JSON.stringify(recsToStore));
       console.log('Saved recommendations to localStorage:', recsToStore.length);
-      
-      // Update backup data
-      backupData(books, recommendations);
-      setHasBackup(true);
+      return true;
     } catch (error) {
       console.error('Failed to save recommendations to localStorage:', error);
-      // If primary save fails, try backup directly
-      try {
-        backupData(books, recommendations);
-        setHasBackup(true);
-      } catch (backupError) {
-        console.error('Even backup failed:', backupError);
-      }
+      return false;
     }
-  }, [recommendations, books]);
+  };
+
+  // Save books to all storage mechanisms whenever they change
+  useEffect(() => {
+    if (isLoading || books.length === 0) return;
+    
+    const saveAllBooks = async () => {
+      console.log('Saving', books.length, 'books to all storage mechanisms');
+      
+      // Save to localStorage (fastest, but less reliable)
+      const localSaved = saveBooksToLocalStorage(books);
+      
+      // Save to IndexedDB (more reliable, but slower)
+      const idbSaved = await saveToIndexedDB(books, recommendations);
+      
+      // Create backups
+      const backupCreated = await backupData(books, recommendations);
+      
+      if (localSaved && idbSaved && backupCreated) {
+        console.log('Successfully saved books to all storage mechanisms');
+        setHasBackup(true);
+      } else {
+        console.warn('Some storage mechanisms failed when saving books');
+      }
+    };
+    
+    saveAllBooks();
+  }, [books, isLoading]);
+
+  // Save recommendations to all storage mechanisms whenever they change
+  useEffect(() => {
+    if (isLoading || recommendations.length === 0) return;
+    
+    const saveAllRecs = async () => {
+      console.log('Saving', recommendations.length, 'recommendations to all storage mechanisms');
+      
+      // Save to localStorage
+      const localSaved = saveRecommendationsToLocalStorage(recommendations);
+      
+      // Save to IndexedDB
+      const idbSaved = await saveToIndexedDB(books, recommendations);
+      
+      // Create backups
+      const backupCreated = await backupData(books, recommendations);
+      
+      if (localSaved && idbSaved && backupCreated) {
+        console.log('Successfully saved recommendations to all storage mechanisms');
+        setHasBackup(true);
+      } else {
+        console.warn('Some storage mechanisms failed when saving recommendations');
+      }
+    };
+    
+    saveAllRecs();
+  }, [recommendations, books, isLoading]);
 
   // Listen for storage events from other tabs/windows
   useEffect(() => {
@@ -589,10 +553,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               }))
             );
             console.log('Updated books from another tab:', parsedBooks.length);
-            
-            // Also update the backup when data changes in another tab
-            backupData(parsedBooks, recommendations);
-            setHasBackup(true);
           } else {
             console.error('Received invalid books data from another tab');
           }
@@ -618,10 +578,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               }))
             );
             console.log('Updated recommendations from another tab:', parsedRecs.length);
-            
-            // Also update the backup when data changes in another tab
-            backupData(books, parsedRecs);
-            setHasBackup(true);
           } else {
             console.error('Received invalid recommendations data from another tab');
           }
@@ -635,101 +591,145 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [books, recommendations]);
+  }, []);
 
-  // Check for backup data periodically and verify the data persists
+  // Verify storage integrity periodically
   useEffect(() => {
-    // Initial verification
-    const verify = () => {
-      const storedBooks = localStorage.getItem('books');
-      if (!storedBooks || JSON.parse(storedBooks).length < books.length) {
-        console.log('Detected data inconsistency, rewriting localStorage');
-        const booksToStore = books.map(book => ({
-          ...book,
-          dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
-        }));
-        localStorage.setItem('books', JSON.stringify(booksToStore));
-      }
-      
-      // Create a backup if needed
-      const backupExists = hasBackupData();
-      setHasBackup(backupExists);
-      
-      if (!backupExists && (books.length > 0 || recommendations.length > 0)) {
-        console.log('No backup found but data exists, creating new backup');
-        backupData(books, recommendations);
+    const verifyDataIntegrity = async () => {
+      try {
+        // Check if IndexedDB data matches our state
+        const idbData = await loadFromIndexedDB();
+        const storedBooks = localStorage.getItem('books');
+        const parsedStoredBooks = storedBooks ? JSON.parse(storedBooks) : [];
+        
+        // If we have books in state but not in storage, save them again
+        if (books.length > 0 && (idbData.books.length < books.length || parsedStoredBooks.length < books.length)) {
+          console.log('Data integrity check: Detected missing books in storage, saving again');
+          await saveToIndexedDB(books, recommendations);
+          saveBooksToLocalStorage(books);
+          saveRecommendationsToLocalStorage(recommendations);
+          await backupData(books, recommendations);
+        }
+        
         setHasBackup(true);
-      } else if (books.length > 0) {
-        // Always keep backup fresh with latest data
-        backupData(books, recommendations);
+      } catch (error) {
+        console.error('Error verifying data integrity:', error);
       }
     };
     
-    verify();
-    
-    // Set up the interval
-    const intervalId = setInterval(verify, 30000); // Check every 30 seconds
+    // Verify immediately and then every 30 seconds
+    verifyDataIntegrity();
+    const intervalId = setInterval(verifyDataIntegrity, 30000);
     
     return () => clearInterval(intervalId);
   }, [books, recommendations]);
 
   const recoverData = async () => {
     console.log('Recovery function called');
+    setIsLoading(true);
+    
     try {
-      const result = await Promise.resolve(loadBackupData());
-      const backupBooks = result.books;
-      const backupRecs = result.recommendations;
+      // Try all possible data sources
+      const idbData = await loadFromIndexedDB();
+      let recoveredBooks: Book[] = [];
+      let recoveredRecs: Book[] = [];
       
-      console.log('Recovery found:', backupBooks.length, 'books and', backupRecs.length, 'recommendations');
-      
-      if (backupBooks.length > 0 || backupRecs.length > 0) {
-        // Use the backup that has more items
-        if (backupBooks.length >= books.length) {
-          setBooks(backupBooks);
-          console.log('Books recovered:', backupBooks.length);
-          toast.success(`Recovered ${backupBooks.length} books from backup`);
-          
-          // Force immediate localStorage update
-          const booksToStore = backupBooks.map(book => ({
-            ...book,
-            dateRead: book.dateRead instanceof Date ? book.dateRead.toISOString() : book.dateRead
-          }));
-          localStorage.setItem('books', JSON.stringify(booksToStore));
-        } else {
-          console.log('Current books collection is larger than backup, not replacing');
-          toast.info(`Current collection (${books.length} books) appears more complete than backup (${backupBooks.length} books)`);
-        }
-        
-        if (backupRecs.length >= recommendations.length) {
-          setRecommendations(backupRecs);
-          console.log('Recommendations recovered:', backupRecs.length);
-          if (backupRecs.length > 0) {
-            toast.success(`Recovered ${backupRecs.length} recommendations from backup`);
-          }
-          
-          // Force immediate localStorage update
-          const recsToStore = backupRecs.map(rec => ({
-            ...rec,
-            dateRead: rec.dateRead instanceof Date ? rec.dateRead.toISOString() : rec.dateRead
-          }));
-          localStorage.setItem('recommendations', JSON.stringify(recsToStore));
-        } else {
-          console.log('Current recommendations collection is larger than backup, not replacing');
-        }
-        
-        // Create a fresh backup of whatever we have now
-        setTimeout(() => {
-          const updatedBooks = backupBooks.length >= books.length ? backupBooks : books;
-          const updatedRecs = backupRecs.length >= recommendations.length ? backupRecs : recommendations;
-          backupData(updatedBooks, updatedRecs);
-        }, 1000);
-      } else {
-        console.log('No backup data available to recover');
-        toast.error('No backup data available to recover');
+      // Check IndexedDB data
+      if (idbData.books.length > 0) {
+        console.log(`Found ${idbData.books.length} books in IndexedDB`);
+        recoveredBooks = idbData.books;
       }
+      
+      if (idbData.recommendations.length > 0) {
+        console.log(`Found ${idbData.recommendations.length} recommendations in IndexedDB`);
+        recoveredRecs = idbData.recommendations;
+      }
+      
+      // Check localStorage backups if IndexedDB didn't have data
+      if (recoveredBooks.length === 0) {
+        const backupBooks = localStorage.getItem('books_backup');
+        if (backupBooks) {
+          try {
+            const parsedBooks = JSON.parse(backupBooks);
+            if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
+              console.log(`Found ${parsedBooks.length} books in localStorage backup`);
+              recoveredBooks = parsedBooks.map((book: any) => parseDateFields(book));
+            }
+          } catch (error) {
+            console.error('Error parsing backup books:', error);
+          }
+        }
+      }
+      
+      if (recoveredRecs.length === 0) {
+        const backupRecs = localStorage.getItem('recommendations_backup');
+        if (backupRecs) {
+          try {
+            const parsedRecs = JSON.parse(backupRecs);
+            if (Array.isArray(parsedRecs) && parsedRecs.length > 0) {
+              console.log(`Found ${parsedRecs.length} recommendations in localStorage backup`);
+              recoveredRecs = parsedRecs.map((rec: any) => parseDateFields(rec));
+            }
+          } catch (error) {
+            console.error('Error parsing backup recommendations:', error);
+          }
+        }
+      }
+      
+      // Check sessionStorage as last resort
+      if (recoveredBooks.length === 0) {
+        const sessionBackup = sessionStorage.getItem('books_backup');
+        if (sessionBackup) {
+          try {
+            const parsedBooks = JSON.parse(sessionBackup);
+            if (Array.isArray(parsedBooks) && parsedBooks.length > 0) {
+              console.log(`Found ${parsedBooks.length} books in sessionStorage backup`);
+              recoveredBooks = parsedBooks.map((book: any) => parseDateFields(book));
+            }
+          } catch (error) {
+            console.error('Error parsing sessionStorage backup books:', error);
+          }
+        }
+      }
+      
+      // Use recovered data if it's better than what we have
+      if (recoveredBooks.length > books.length) {
+        console.log(`Recovering ${recoveredBooks.length} books (current: ${books.length})`);
+        setBooks(recoveredBooks);
+        toast.success(`Recovered ${recoveredBooks.length} books from backup`);
+        
+        // Force immediate storage update
+        saveBooksToLocalStorage(recoveredBooks);
+        await saveToIndexedDB(recoveredBooks, recoveredRecs);
+      } else {
+        console.log(`Current collection has more books (${books.length}) than backup (${recoveredBooks.length})`);
+        toast.info(`Current collection (${books.length} books) appears more complete than backup`);
+      }
+      
+      if (recoveredRecs.length > recommendations.length) {
+        console.log(`Recovering ${recoveredRecs.length} recommendations (current: ${recommendations.length})`);
+        setRecommendations(recoveredRecs);
+        
+        if (recoveredRecs.length > 0) {
+          toast.success(`Recovered ${recoveredRecs.length} recommendations from backup`);
+        }
+        
+        // Force immediate storage update
+        saveRecommendationsToLocalStorage(recoveredRecs);
+      }
+      
+      // Create a fresh backup of whatever we have now
+      await backupData(
+        recoveredBooks.length > books.length ? recoveredBooks : books,
+        recoveredRecs.length > recommendations.length ? recoveredRecs : recommendations
+      );
+      
+      setHasBackup(true);
     } catch (error) {
       console.error('Failed to recover data from backup:', error);
       toast.error('Failed to recover data from backup: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -747,7 +747,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       pages: book.pages || 0,
       favorite: book.favorite || false,
       genres: book.genres || [],
-      color: bookColor, // Store the color persistently
+      color: bookColor,
       dateRead: book.dateRead || new Date()
     };
     
@@ -869,6 +869,15 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     recoverData,
     hasBackup
   };
+
+  // Show loading state if we're still loading initial data
+  if (isLoading) {
+    return (
+      <BookshelfContext.Provider value={value}>
+        {children}
+      </BookshelfContext.Provider>
+    );
+  }
 
   return (
     <BookshelfContext.Provider value={value}>

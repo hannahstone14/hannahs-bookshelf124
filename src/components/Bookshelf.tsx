@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -45,6 +45,7 @@ const Bookshelf: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [isRecovering, setIsRecovering] = useState(false);
   
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
   const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('shelf');
@@ -56,7 +57,7 @@ const Bookshelf: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     return () => {
       isMounted.current = false;
     };
@@ -67,7 +68,7 @@ const Bookshelf: React.FC = () => {
   const completedBooks = books.filter(book => book.status === 'read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isMounted.current) return;
     
     let displayedBooks: Book[] = [];
@@ -225,9 +226,19 @@ const Bookshelf: React.FC = () => {
   }, []);
 
   const handleRecoverData = useCallback(() => {
+    if (isRecovering) return;
+    
+    setIsRecovering(true);
     console.log('Recover button clicked in Bookshelf component');
+    
     recoverData();
-  }, [recoverData]);
+    
+    setTimeout(() => {
+      if (isMounted.current) {
+        setIsRecovering(false);
+      }
+    }, 2000);
+  }, [recoverData, isRecovering]);
 
   const renderListItem = (book: Book) => {
     return (
@@ -365,11 +376,12 @@ const Bookshelf: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={handleRecoverData}
+              disabled={isRecovering}
               className="border-amber-600 text-amber-700 hover:bg-amber-50"
               title="Restore books from backup if some were lost during refresh"
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Recover Books
+              <RotateCcw className={`h-4 w-4 mr-2 ${isRecovering ? 'animate-spin' : ''}`} />
+              {isRecovering ? 'Recovering...' : 'Recover Books'}
             </Button>
           )}
           <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
@@ -380,7 +392,6 @@ const Bookshelf: React.FC = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  console.log('Add book button clicked');
                   if (isMounted.current) {
                     setIsAddDialogOpen(true);
                   }
