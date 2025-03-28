@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
@@ -10,7 +9,7 @@ import {
   BookOpen, 
   List, 
   BookOpenCheck, 
-  BookBookmark, 
+  Bookmark, 
   ArrowDown10, 
   ArrowDownAZ, 
   ArrowDownZA, 
@@ -44,27 +43,21 @@ const Bookshelf: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  // Get books by status
   const readingBooks = books.filter(book => book.status === 'reading');
   const toReadBooks = books.filter(book => book.status === 'to-read');
   const completedBooks = books.filter(book => book.status === 'read');
   
-  // All books for the main shelf (everything except to-read)
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
-  // Update both viewTab and displayStyle when changing tabs
   const handleTabChange = (value: string) => {
     const newTab = value as ViewTab;
     setViewTab(newTab);
     
-    // If switching to a content tab, keep the display style
-    // If switching between display styles, update it
     if (newTab === 'shelf' || newTab === 'list') {
       setDisplayStyle(newTab);
     }
   };
   
-  // Sort books based on current sort option
   const getSortedBooks = (booksToSort: Book[]) => {
     return [...booksToSort].sort((a, b) => {
       let comparison = 0;
@@ -98,24 +91,19 @@ const Bookshelf: React.FC = () => {
   const sortedToReadBooks = getSortedBooks(toReadBooks);
   const sortedRecommendations = getSortedBooks(recommendations);
 
-  // Handle sorting
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {
-      // Toggle sort order if same option is selected
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      // Set new sort option and default to descending
       setSortBy(option);
       setSortOrder('desc');
     }
   };
 
-  // Handle drag start
   const handleDragStart = (book: Book) => {
     setDraggedBook(book);
   };
 
-  // Handle drag over
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, book: Book) => {
     e.preventDefault();
     if (draggedBook?.id !== book.id) {
@@ -123,34 +111,28 @@ const Bookshelf: React.FC = () => {
     }
   };
 
-  // Handle drop
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetBook: Book) => {
     e.preventDefault();
     
     if (!draggedBook) return;
     
-    // Find indexes for reordering
     const displayBooks = viewTab === 'to-read' ? sortedToReadBooks : sortedAllBooks;
     const allBooks = getSortedBooks(books);
     const sourceIndex = allBooks.findIndex(book => book.id === draggedBook.id);
     const targetIndex = allBooks.findIndex(book => book.id === targetBook.id);
     
     if (sourceIndex !== -1 && targetIndex !== -1) {
-      // Create a new array with the reordered books
       const newBooks = [...allBooks];
       const [movedBook] = newBooks.splice(sourceIndex, 1);
       newBooks.splice(targetIndex, 0, movedBook);
       
-      // Update the order in the context
       reorderBooks(allBooks.map(b => b.id), newBooks.map(b => b.id));
     }
     
-    // Reset drag state
     setDraggedBook(null);
     setDraggedOverBook(null);
   };
 
-  // Render book item for list view
   const renderListItem = (book: Book) => {
     return (
       <div 
@@ -210,7 +192,6 @@ const Bookshelf: React.FC = () => {
     );
   };
 
-  // Render books in shelf view
   const renderShelfView = (booksToRender: Book[], showStatus: boolean = false) => {
     return (
       <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
@@ -280,7 +261,7 @@ const Bookshelf: React.FC = () => {
               List View
             </TabsTrigger>
             <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <BookBookmark className="h-4 w-4 mr-2" />
+              <Bookmark className="h-4 w-4 mr-2" />
               To Read
             </TabsTrigger>
             <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
@@ -372,7 +353,7 @@ const Bookshelf: React.FC = () => {
           ) : viewTab === 'to-read' ? (
             <div className="space-y-4">
               <h2 className="text-xl font-medium flex items-center">
-                <BookBookmark className="h-5 w-5 mr-2 text-amber-600" />
+                <Bookmark className="h-5 w-5 mr-2 text-amber-600" />
                 Books To Read
               </h2>
               
@@ -395,7 +376,6 @@ const Bookshelf: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Currently Reading section - always displayed first */}
               {readingBooks.length > 0 && (
                 <div>
                   <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
@@ -414,7 +394,6 @@ const Bookshelf: React.FC = () => {
                 </div>
               )}
               
-              {/* All Books section (when not in to-read tab) */}
               <div>
                 <h2 className="text-xl font-medium border-b border-gray-200 pb-2 mb-3 flex items-center">
                   <BookOpen className="h-5 w-5 mr-2 text-green-600" />

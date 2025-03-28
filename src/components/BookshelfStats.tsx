@@ -44,8 +44,10 @@ const BookshelfStats: React.FC = () => {
   // Calculate genre counts for top 3 genres
   const genreCounts: Record<string, number> = {};
   books.forEach(book => {
-    if (book.genre) {
-      genreCounts[book.genre] = (genreCounts[book.genre] || 0) + 1;
+    if (book.genres && book.genres.length > 0) {
+      book.genres.forEach(genre => {
+        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+      });
     }
   });
   
@@ -148,7 +150,7 @@ const BookshelfStats: React.FC = () => {
               <h4 className="text-xl font-medium">{latestRead.title}</h4>
               <p className="text-gray-600">{latestRead.author}</p>
               <p className="text-gray-400 text-sm mt-1">
-                {latestRead.pages} pages · {latestRead.genre || 'No genre'}
+                {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
               </p>
             </div>
           </div>
