@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from '@/components/ui/sonner';
+import { toast } from "sonner";
 
 interface BookshelfContextType {
   books: Book[];

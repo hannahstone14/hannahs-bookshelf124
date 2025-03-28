@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -18,7 +17,7 @@ import { CalendarIcon, ImagePlus } from 'lucide-react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { cn } from '@/lib/utils';
 import { Book } from '@/types/book';
-import { toast } from '@/components/ui/sonner';
+import { toast } from "sonner";
 
 interface AddBookFormProps {
   onSuccess?: () => void;
@@ -68,7 +67,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     }
     
     if (!bookToEdit) {
-      // Only reset if adding a new book, not editing
       form.reset({
         title: '',
         author: '',
