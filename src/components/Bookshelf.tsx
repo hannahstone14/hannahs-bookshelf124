@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -42,7 +41,6 @@ const Bookshelf: React.FC = () => {
   const completedBooks = books.filter(book => book.status === 'read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
-  // Count unique series
   const seriesBooks = books.filter(book => book.isSeries);
   const uniqueSeriesNames = new Set();
   
@@ -50,7 +48,6 @@ const Bookshelf: React.FC = () => {
     if (book.seriesName) {
       uniqueSeriesNames.add(book.seriesName);
     } else {
-      // If no series name, use book id as a unique identifier for the series
       uniqueSeriesNames.add(book.id);
     }
   });
@@ -67,7 +64,6 @@ const Bookshelf: React.FC = () => {
         displayedBooks = getSortedBooks(toReadBooks);
         break;
       case 'recommendations':
-        // Only show recommendations, not regular books
         displayedBooks = getSortedBooks(recommendations);
         break;
       case 'shelf':
@@ -123,8 +119,6 @@ const Bookshelf: React.FC = () => {
     });
   }, [sortBy, sortOrder]);
   
-  const sortedReadingBooks = getSortedBooks(readingBooks);
-
   const handleSort = useCallback((option: SortOption) => {
     if (sortBy === option) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -133,7 +127,7 @@ const Bookshelf: React.FC = () => {
       setSortOrder('desc');
     }
   }, [sortBy, sortOrder]);
-
+  
   const handleDragStart = useCallback((book: Book) => {
     setDraggedBook(book);
   }, []);
@@ -217,9 +211,15 @@ const Bookshelf: React.FC = () => {
     }
   }, []);
 
+  const sortedReadingBooks = getSortedBooks(readingBooks);
+
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <BookshelfHeader />
+      <BookshelfHeader 
+        onAddBook={handleAddBookClick} 
+        totalBooks={books.length}
+        totalCompleteSeries={seriesCount}
+      />
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
