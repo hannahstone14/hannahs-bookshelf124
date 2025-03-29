@@ -10,7 +10,6 @@ import {
   ArrowDownZA, 
   Percent,
   Star,
-  PlusCircle,
   SortAsc
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,7 +33,6 @@ interface BookshelfTabsProps {
   sortBy: SortOption;
   sortOrder: 'asc' | 'desc';
   onSort: (option: SortOption) => void;
-  onAddBook: () => void;
 }
 
 const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
@@ -42,8 +40,7 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
   onTabChange,
   sortBy,
   sortOrder,
-  onSort,
-  onAddBook
+  onSort
 }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
@@ -73,19 +70,6 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        
-        <Button 
-          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
-          id="add-book-button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onAddBook();
-          }}
-        >
-          <PlusCircle className="h-5 w-5 mr-2" />
-          Add Book
-        </Button>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

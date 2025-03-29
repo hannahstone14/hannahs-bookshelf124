@@ -143,7 +143,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
               </div>
               <Progress 
                 value={(seriesProgress.booksRead / seriesProgress.totalInSeries) * 100} 
-                className="h-1.5 bg-gray-200" 
+                className="h-1.5 bg-gray-200"
+                indicatorClassName="bg-purple-500" 
               />
             </div>
           )}

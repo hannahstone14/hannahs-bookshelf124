@@ -8,6 +8,8 @@ import BookshelfHeader from './bookshelf/BookshelfHeader';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
 import EmptyBookshelf from './bookshelf/EmptyBookshelf';
 import BookshelfSection from './bookshelf/BookshelfSection';
+import { Button } from './ui/button';
+import { PlusCircle } from 'lucide-react';
 
 type DisplayStyle = 'shelf' | 'list';
 
@@ -217,10 +219,21 @@ const Bookshelf: React.FC = () => {
     <div className="w-full max-w-6xl mx-auto">
       <BookshelfHeader 
         onAddBook={handleAddBookClick} 
-        onSort={() => handleSort(sortBy)}
+        onSort={handleSort}
         totalBooks={books.length}
         totalCompleteSeries={seriesCount}
       />
+
+      <div className="flex justify-end mb-4">
+        <Button 
+          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
+          id="add-book-button"
+          onClick={handleAddBookClick}
+        >
+          <PlusCircle className="h-5 w-5 mr-2" />
+          Add Book
+        </Button>
+      </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
