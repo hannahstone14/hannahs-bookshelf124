@@ -6,7 +6,7 @@ import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import BookshelfHeader from './bookshelf/BookshelfHeader';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
-import EmptyBookshelf from './bookshelf/EmptyBookshelf';
+import EmptyBookshelf from './bookshelf/BookshelfEmptyState';
 import BookshelfSection from './bookshelf/BookshelfSection';
 
 type DisplayStyle = 'shelf' | 'list';
@@ -29,7 +29,8 @@ const Bookshelf: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
-  const [isFilteringSeries, setIsFilteringSeries] = useState(false);
+  // Remove the series filtering state:
+  // const [isFilteringSeries, setIsFilteringSeries] = useState(false);
 
   React.useEffect(() => {
     return () => {
@@ -42,11 +43,12 @@ const Bookshelf: React.FC = () => {
   const completedBooks = books.filter(book => book.status === 'read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
+  // Still calculate series count for informational purposes
   const seriesBooks = books.filter(book => book.isSeries === true);
   
   const seriesCount = new Set(
     seriesBooks
-      .filter(book => book.seriesName) // Only count books with series names
+      .filter(book => book.seriesName)
       .map(book => book.seriesName)
   ).size;
   
@@ -69,12 +71,13 @@ const Bookshelf: React.FC = () => {
         break;
     }
     
-    if (isFilteringSeries) {
-      displayedBooks = displayedBooks.filter(book => book.isSeries);
-    }
+    // Remove series filtering
+    // if (isFilteringSeries) {
+    //   displayedBooks = displayedBooks.filter(book => book.isSeries);
+    // }
     
     setBooksToDisplay(displayedBooks);
-  }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks, isFilteringSeries]);
+  }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks]);
 
   const handleTabChange = useCallback((value: string) => {
     const newTab = value as ViewTab;
@@ -130,9 +133,10 @@ const Bookshelf: React.FC = () => {
     }
   }, [sortBy, sortOrder]);
   
-  const handleFilterSeries = useCallback(() => {
-    setIsFilteringSeries(prev => !prev);
-  }, []);
+  // Remove the handleFilterSeries function
+  // const handleFilterSeries = useCallback(() => {
+  //  setIsFilteringSeries(prev => !prev);
+  // }, []);
 
   const handleDragStart = useCallback((book: Book) => {
     setDraggedBook(book);
@@ -220,10 +224,11 @@ const Bookshelf: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <BookshelfHeader 
-        onAddBook={handleAddBookClick} 
-        totalSeries={seriesCount}
-        onFilterSeries={handleFilterSeries}
-        isFilteringSeries={isFilteringSeries}
+        onAddBook={handleAddBookClick}
+        // Remove the series filtering props:
+        // totalSeries={seriesCount}
+        // onFilterSeries={handleFilterSeries}
+        // isFilteringSeries={isFilteringSeries}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
@@ -263,18 +268,7 @@ const Bookshelf: React.FC = () => {
             onSort={handleSort}
           />
 
-          {isFilteringSeries && seriesBooks.length > 0 && (
-            <div className="mb-6">
-              <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded-md">
-                <div className="flex items-center">
-                  <BookMarked className="h-5 w-5 text-purple-500 mr-2" />
-                  <span className="font-medium text-purple-800">
-                    Showing {isFilteringSeries ? "only series books" : "all books"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Remove the series filtering notice */}
 
           {viewTab === 'recommendations' ? (
             <BookshelfSection
@@ -310,7 +304,7 @@ const Bookshelf: React.FC = () => {
             />
           ) : (
             <div className="space-y-6">
-              {readingBooks.length > 0 && !isFilteringSeries && (
+              {readingBooks.length > 0 && (
                 <BookshelfSection
                   title="Currently Reading"
                   icon={BookOpenCheck}
@@ -327,9 +321,9 @@ const Bookshelf: React.FC = () => {
               )}
               
               <BookshelfSection
-                title={isFilteringSeries ? "Series Books" : "Bookshelf"}
-                icon={isFilteringSeries ? BookMarked : BookOpen}
-                iconColor={isFilteringSeries ? "text-purple-600" : "text-green-600"}
+                title="Bookshelf"
+                icon={BookOpen}
+                iconColor="text-green-600"
                 books={booksToDisplay}
                 displayStyle={displayStyle}
                 onEdit={handleEdit}

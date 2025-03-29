@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -47,7 +46,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
     defaultValues: {
       title: bookToEdit?.title || '',
       author: bookToEdit?.author || '',
-      status: bookToEdit?.status || 'to-read',
+      status: bookToEdit?.status || 'read',
       progress: bookToEdit?.progress || 0,
       coverUrl: bookToEdit?.coverUrl || '',
       pages: bookToEdit?.pages || undefined,
@@ -60,13 +59,11 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
     },
   });
 
-  // Watch for values that might affect the form
   const status = form.watch('status');
   const isSeries = form.watch('isSeries');
   
   const onSubmit = async (data: z.infer<typeof bookFormSchema>) => {
     try {
-      // Prepare the book data
       const bookData: Omit<Book, 'id'> = {
         title: data.title,
         author: data.author,
@@ -83,14 +80,12 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         seriesPosition: data.isSeries ? data.seriesPosition : undefined,
       };
       
-      // If it's part of a series and we have total books, add all books in the series
       if (data.isSeries && totalSeriesBooks > 1 && totalSeriesPages > 0) {
         await addBook(bookData, totalSeriesBooks, totalSeriesPages);
       } else {
         await addBook(bookData);
       }
       
-      // Reset form and close dialog
       form.reset();
       if (onClose) onClose();
       if (onSuccess) onSuccess();
@@ -99,19 +94,16 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
     }
   };
 
-  // Handle form cancel
   const handleCancel = () => {
     form.reset();
     if (onClose) onClose();
   };
 
-  // Toggling series options
   const handleSeriesToggle = (checked: boolean) => {
     setShowSeriesOptions(checked);
     form.setValue('isSeries', checked);
     
     if (checked) {
-      // Auto-populate series name with title if empty
       const currentTitle = form.getValues('title');
       if (currentTitle && !form.getValues('seriesName')) {
         form.setValue('seriesName', currentTitle);
@@ -132,7 +124,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Title */}
               <FormField
                 control={form.control}
                 name="title"
@@ -147,7 +138,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
-              {/* Author */}
               <FormField
                 control={form.control}
                 name="author"
@@ -162,7 +152,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
-              {/* Status */}
               <FormField
                 control={form.control}
                 name="status"
@@ -200,7 +189,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
-              {/* Date Read - Only show for 'read' status */}
               {status === 'read' && (
                 <FormField
                   control={form.control}
@@ -218,7 +206,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 />
               )}
               
-              {/* Pages */}
               <FormField
                 control={form.control}
                 name="pages"
@@ -238,7 +225,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
-              {/* Progress - Only show for 'reading' status */}
               {status === 'reading' && (
                 <FormField
                   control={form.control}
@@ -260,7 +246,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 />
               )}
               
-              {/* Cover URL */}
               <FormField
                 control={form.control}
                 name="coverUrl"
@@ -278,7 +263,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
-              {/* Recommended By */}
               <FormField
                 control={form.control}
                 name="recommendedBy"
@@ -294,7 +278,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
               />
             </div>
             
-            {/* Series Checkbox */}
             <FormField
               control={form.control}
               name="isSeries"
@@ -322,7 +305,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
               )}
             />
             
-            {/* Series Options */}
             {showSeriesOptions && (
               <div className="border rounded-md p-4 space-y-4">
                 <h3 className="font-medium flex items-center">
@@ -330,7 +312,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Series Name */}
                   <FormField
                     control={form.control}
                     name="seriesName"
@@ -348,7 +329,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                     )}
                   />
                   
-                  {/* Series Position */}
                   <FormField
                     control={form.control}
                     name="seriesPosition"
@@ -369,7 +349,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                     )}
                   />
                   
-                  {/* Total Books in Series */}
                   <FormItem>
                     <FormLabel>Total Books in Series</FormLabel>
                     <FormControl>
@@ -386,7 +365,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                     </FormDescription>
                   </FormItem>
                   
-                  {/* Total Pages in Series */}
                   {totalSeriesBooks > 1 && (
                     <FormItem>
                       <FormLabel>Total Pages in Series</FormLabel>

@@ -18,8 +18,16 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       {book.coverUrl ? (
         <div className={cn(
           "relative",
-          book.isSeries && "border-2 border-purple-500 rounded-md shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+          book.isSeries && "border-2 border-purple-500 rounded-md"
         )}>
+          {/* Layer effect for series books */}
+          {book.isSeries && (
+            <>
+              <div className="absolute -right-2 -bottom-2 w-28 h-44 bg-purple-200 rounded-md -z-10 rotate-2" />
+              <div className="absolute -right-1 -bottom-1 w-30 h-46 bg-purple-300 rounded-md -z-20 rotate-1" />
+            </>
+          )}
+          
           <img
             src={book.coverUrl}
             alt={book.title}
@@ -38,10 +46,18 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         <div
           className={cn(
             "w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative",
-            book.isSeries && "border-2 border-purple-500 bg-gradient-to-b from-purple-50 to-transparent shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+            book.isSeries && "border-2 border-purple-500 bg-gradient-to-b from-purple-50 to-transparent"
           )}
           style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
         >
+          {/* Layer effect for series books without cover */}
+          {book.isSeries && (
+            <>
+              <div className="absolute -right-2 -bottom-2 w-28 h-44 bg-purple-200 rounded-md -z-10 rotate-2" />
+              <div className="absolute -right-1 -bottom-1 w-30 h-46 bg-purple-300 rounded-md -z-20 rotate-1" />
+            </>
+          )}
+          
           <span className={cn(
             "text-lg font-bold",
             book.isSeries ? "text-purple-700" : "text-white"
