@@ -6,9 +6,16 @@ import { Plus, ArrowUpDown } from 'lucide-react';
 interface BookshelfHeaderProps {
   onAddBook: () => void;
   onSort: () => void;
+  totalBooks?: number;
+  totalCompleteSeries?: number;
 }
 
-const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({ onAddBook, onSort }) => {
+const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({ 
+  onAddBook, 
+  onSort, 
+  totalBooks, 
+  totalCompleteSeries 
+}) => {
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex-1">

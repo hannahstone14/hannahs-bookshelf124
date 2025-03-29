@@ -217,6 +217,7 @@ const Bookshelf: React.FC = () => {
     <div className="w-full max-w-6xl mx-auto">
       <BookshelfHeader 
         onAddBook={handleAddBookClick} 
+        onSort={() => handleSort(sortBy)}
         totalBooks={books.length}
         totalCompleteSeries={seriesCount}
       />
