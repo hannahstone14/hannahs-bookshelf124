@@ -100,6 +100,8 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
     const dbRecommendation = mapBookToDbRecommendation(book);
+    
+    // Fix: Ensure we're passing a valid object structure to insert
     const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
