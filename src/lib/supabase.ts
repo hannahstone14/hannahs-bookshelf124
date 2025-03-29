@@ -20,65 +20,82 @@ function createMockSupabaseClient() {
     'For now, using mock client that returns empty data.'
   );
   
-  // Create a more comprehensive mock with properly chained methods
+  // Create a more comprehensive mock with properly typed methods
   return {
-    from: () => ({
-      select: () => ({
-        order: () => ({
-          data: [],
-          error: null,
-          then: (callback: Function) => Promise.resolve(callback({ data: [], error: null }))
-        }),
-        eq: () => ({
-          single: () => Promise.resolve({ data: null, error: null }),
-          data: null,
-          error: null
-        }),
-        single: () => Promise.resolve({ data: null, error: null }),
-        data: [],
-        error: null,
-        then: (callback: Function) => Promise.resolve(callback({ data: [], error: null }))
-      }),
-      insert: () => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: null, error: null })
-        }),
-        data: null, 
-        error: null,
-        then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
-      }),
-      update: () => ({
-        eq: () => ({
-          select: () => ({
+    from: (table: string) => ({
+      select: (columns: string = '*') => {
+        const response = Promise.resolve({ data: [], error: null });
+        return {
+          ...response,
+          order: () => response,
+          eq: () => ({
+            ...response,
             single: () => Promise.resolve({ data: null, error: null })
           }),
-          data: null,
-          error: null,
-          then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
-        })
-      }),
-      delete: () => ({
-        eq: () => ({
-          data: null,
-          error: null,
-          then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
-        })
-      }),
-      eq: () => ({
-        select: () => Promise.resolve({ data: null, error: null }),
-        data: null,
-        error: null
-      }),
-      order: () => ({
-        select: () => Promise.resolve({ data: [], error: null })
-      })
+          single: () => Promise.resolve({ data: null, error: null })
+        };
+      },
+      insert: (data: any) => {
+        const response = Promise.resolve({ data: null, error: null });
+        return {
+          ...response,
+          select: () => ({
+            ...response,
+            single: () => Promise.resolve({ data: null, error: null })
+          })
+        };
+      },
+      update: (data: any) => {
+        const response = Promise.resolve({ data: null, error: null });
+        return {
+          ...response,
+          eq: () => ({
+            ...response,
+            select: () => ({
+              ...response,
+              single: () => Promise.resolve({ data: null, error: null })
+            })
+          })
+        };
+      },
+      delete: () => {
+        const response = Promise.resolve({ data: null, error: null });
+        return {
+          ...response,
+          eq: () => response
+        };
+      },
+      eq: (column: string, value: any) => {
+        const response = Promise.resolve({ data: null, error: null });
+        return {
+          ...response,
+          select: () => response
+        };
+      },
+      order: (column: string, options: any) => {
+        const response = Promise.resolve({ data: [], error: null });
+        return {
+          ...response,
+          select: () => response
+        };
+      }
     }),
-    channel: () => ({
-      on: () => ({
-        subscribe: () => ({ unsubscribe: () => {} })
-      }),
-      subscribe: () => ({ unsubscribe: () => {} })
-    }),
-    removeChannel: () => {}
+    // Mock the channel functionality to avoid TypeScript errors
+    channel: (name: string) => {
+      const channel = {
+        on: (event: string, filter: any, callback: Function) => {
+          console.log(`Mock channel ${name} subscribed to ${event}`);
+          return {
+            subscribe: () => ({ unsubscribe: () => {} })
+          };
+        },
+        subscribe: () => {
+          console.log(`Mock channel ${name} subscribed`);
+          return { unsubscribe: () => {} };
+        }
+      };
+      return channel;
+    },
+    removeChannel: (channel: any) => {}
   };
 }

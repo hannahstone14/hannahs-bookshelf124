@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { v4 as uuidv4 } from 'uuid';
@@ -64,17 +65,17 @@ export const getAllBooks = async (): Promise<Book[]> => {
   }
   
   try {
-    const result = await supabase
-      .from(BOOKS_TABLE)
-      .select('*');
-      
-    if (result.error) {
-      console.error('Error fetching books:', result.error);
-      throw result.error;
+    // Fix the promise chain issue by extracting each result separately
+    const query = supabase.from(BOOKS_TABLE).select('*');
+    const orderResult = await Promise.resolve(query);
+    
+    if (orderResult.error) {
+      console.error('Error fetching books:', orderResult.error);
+      throw orderResult.error;
     }
     
     // Sort by order
-    const sortedData = (result.data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const sortedData = (orderResult.data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
     
     return sortedData.map(convertDBToBook);
   } catch (error) {
@@ -97,17 +98,17 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
   }
   
   try {
-    const result = await supabase
-      .from(RECOMMENDATIONS_TABLE)
-      .select('*');
+    // Fix the promise chain issue by extracting each result separately
+    const query = supabase.from(RECOMMENDATIONS_TABLE).select('*');
+    const orderResult = await Promise.resolve(query);
     
-    if (result.error) {
-      console.error('Error fetching recommendations:', result.error);
-      throw result.error;
+    if (orderResult.error) {
+      console.error('Error fetching recommendations:', orderResult.error);
+      throw orderResult.error;
     }
     
     // Sort by date_read (descending)
-    const sortedData = (result.data || []).sort((a, b) => 
+    const sortedData = (orderResult.data || []).sort((a, b) => 
       new Date(b.date_read).getTime() - new Date(a.date_read).getTime()
     );
     
@@ -146,9 +147,8 @@ export const addBook = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
     const tableName = book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE;
     
-    const result = await supabase
-      .from(tableName)
-      .insert(newBook);
+    // Fix the promise chain issue by simplifying the insert operation
+    const result = await Promise.resolve(supabase.from(tableName).insert(newBook));
       
     // Fetch the inserted record
     if (result.error) {
@@ -202,10 +202,8 @@ export const updateBook = async (id: string, bookData: Partial<Book>, isRecommen
   
   try {
     // First check if the book exists in the specified table
-    const checkResult = await supabase
-      .from(tableName)
-      .select('*')
-      .eq('id', id);
+    const checkQuery = supabase.from(tableName).select('*').eq('id', id);
+    const checkResult = await Promise.resolve(checkQuery);
     
     const existingBook = checkResult.data?.[0];
     
@@ -229,10 +227,9 @@ export const updateBook = async (id: string, bookData: Partial<Book>, isRecommen
     if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
     if (bookData.order !== undefined) updateData.order = bookData.order;
     
-    const updateResult = await supabase
-      .from(tableName)
-      .update(updateData)
-      .eq('id', id);
+    // Fix the promise chain issue by simplifying the update operation
+    const updateQuery = supabase.from(tableName).update(updateData).eq('id', id);
+    const updateResult = await Promise.resolve(updateQuery);
     
     if (updateResult.error) {
       console.error('Error updating book:', updateResult.error);
@@ -276,10 +273,9 @@ export const deleteBook = async (id: string, isRecommendation: boolean = false):
   }
   
   try {
-    const { error } = await supabase
-      .from(isRecommendation ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
-      .delete()
-      .eq('id', id);
+    // Fix the promise chain issue by simplifying the delete operation
+    const deleteQuery = supabase.from(isRecommendation ? RECOMMENDATIONS_TABLE : BOOKS_TABLE).delete().eq('id', id);
+    const { error } = await Promise.resolve(deleteQuery);
     
     if (error) {
       console.error('Error deleting book:', error);
@@ -331,16 +327,14 @@ export const updateBookOrder = async (orderedIds: string[]): Promise<void> => {
   }
   
   try {
-    // Create a batch of updates using an array of promises
-    const updates = orderedIds.map((id, index) => {
-      return supabase
-        .from(BOOKS_TABLE)
-        .update({ order: index })
-        .eq('id', id);
+    // Create a batch of updates
+    const updatePromises = orderedIds.map((id, index) => {
+      const query = supabase.from(BOOKS_TABLE).update({ order: index }).eq('id', id);
+      return Promise.resolve(query);
     });
     
     // Execute all updates concurrently
-    await Promise.all(updates);
+    await Promise.all(updatePromises);
   } catch (error) {
     console.error('Error in updateBookOrder:', error);
     throw error;

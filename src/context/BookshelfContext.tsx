@@ -132,45 +132,52 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     if (isSupabaseConfigured) {
       try {
-        const booksSubscription = supabase
-          .channel('books-changes')
-          .on('postgres_changes', { 
-            event: '*', 
-            schema: 'public', 
-            table: 'books' 
-          }, async (payload) => {
-            console.log('Real-time books update:', payload);
-            const updatedBooks = await bookService.getAllBooks();
-            if (isMounted.current) {
-              setBooks(updatedBooks);
+        let booksSubscription: any = null;
+        let recommendationsSubscription: any = null;
+        
+        if (typeof supabase.channel === 'function') {
+          try {
+            booksSubscription = supabase.channel('books-changes');
+            if (booksSubscription && typeof booksSubscription.on === 'function') {
+              booksSubscription = booksSubscription.on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'books' },
+                async () => {
+                  console.log('Real-time books update received');
+                  const updatedBooks = await bookService.getAllBooks();
+                  if (isMounted.current) {
+                    setBooks(updatedBooks);
+                  }
+                }
+              ).subscribe();
             }
-          })
-          .subscribe();
-          
-        const recommendationsSubscription = supabase
-          .channel('recommendations-changes')
-          .on('postgres_changes', { 
-            event: '*', 
-            schema: 'public', 
-            table: 'recommendations' 
-          }, async (payload) => {
-            console.log('Real-time recommendations update:', payload);
-            const updatedRecommendations = await bookService.getAllRecommendations();
-            if (isMounted.current) {
-              setRecommendations(updatedRecommendations);
+            
+            recommendationsSubscription = supabase.channel('recommendations-changes');
+            if (recommendationsSubscription && typeof recommendationsSubscription.on === 'function') {
+              recommendationsSubscription = recommendationsSubscription.on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'recommendations' },
+                async () => {
+                  console.log('Real-time recommendations update received');
+                  const updatedRecommendations = await bookService.getAllRecommendations();
+                  if (isMounted.current) {
+                    setRecommendations(updatedRecommendations);
+                  }
+                }
+              ).subscribe();
             }
-          })
-          .subscribe();
+          } catch (subError) {
+            console.error('Error setting up real-time subscriptions:', subError);
+          }
+        }
         
         return () => {
           isMounted.current = false;
-          if (typeof supabase.removeChannel === 'function') {
-            try {
-              supabase.removeChannel(booksSubscription);
-              supabase.removeChannel(recommendationsSubscription);
-            } catch (error) {
-              console.error('Error removing channels:', error);
-            }
+          if (booksSubscription && typeof booksSubscription.unsubscribe === 'function') {
+            booksSubscription.unsubscribe();
+          }
+          if (recommendationsSubscription && typeof recommendationsSubscription.unsubscribe === 'function') {
+            recommendationsSubscription.unsubscribe();
           }
         };
       } catch (error) {
