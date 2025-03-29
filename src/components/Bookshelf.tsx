@@ -229,7 +229,11 @@ const Bookshelf: React.FC = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogTitle>Add New Book</DialogTitle>
-          <AddBookForm onSuccess={handleAddSuccess} />
+          <AddBookForm 
+            isOpen={isAddDialogOpen} 
+            onClose={() => setIsAddDialogOpen(false)} 
+            onSuccess={handleAddSuccess} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -238,6 +242,8 @@ const Bookshelf: React.FC = () => {
           <DialogTitle>Edit Book</DialogTitle>
           {selectedBook && (
             <AddBookForm 
+              isOpen={isEditDialogOpen}
+              onClose={() => setIsEditDialogOpen(false)}
               onSuccess={handleEditSuccess} 
               bookToEdit={selectedBook}
             />

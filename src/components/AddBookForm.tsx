@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { BookIcon, BookMarked } from 'lucide-react';
-import { DateReadPicker } from './DateReadPicker';
+import DateReadPicker from './DateReadPicker';
 
 // Create a schema for form validation
 const bookFormSchema = z.object({
@@ -30,30 +30,33 @@ const bookFormSchema = z.object({
 });
 
 interface AddBookFormProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
+  bookToEdit?: Book;
 }
 
-const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
+const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, bookToEdit }) => {
   const { addBook } = useBookshelf();
-  const [showSeriesOptions, setShowSeriesOptions] = useState(false);
+  const [showSeriesOptions, setShowSeriesOptions] = useState(bookToEdit?.isSeries || false);
   const [totalSeriesBooks, setTotalSeriesBooks] = useState<number>(0);
   const [totalSeriesPages, setTotalSeriesPages] = useState<number>(0);
   
   const form = useForm<z.infer<typeof bookFormSchema>>({
     resolver: zodResolver(bookFormSchema),
     defaultValues: {
-      title: '',
-      author: '',
-      status: 'to-read',
-      progress: 0,
-      coverUrl: '',
-      pages: undefined,
-      genres: [],
-      recommendedBy: '',
-      isSeries: false,
-      seriesName: '',
-      seriesPosition: 1,
+      title: bookToEdit?.title || '',
+      author: bookToEdit?.author || '',
+      status: bookToEdit?.status || 'to-read',
+      progress: bookToEdit?.progress || 0,
+      coverUrl: bookToEdit?.coverUrl || '',
+      pages: bookToEdit?.pages || undefined,
+      genres: bookToEdit?.genres || [],
+      recommendedBy: bookToEdit?.recommendedBy || '',
+      isSeries: bookToEdit?.isSeries || false,
+      seriesName: bookToEdit?.seriesName || '',
+      seriesPosition: bookToEdit?.seriesPosition || 1,
+      dateRead: bookToEdit?.dateRead || undefined,
     },
   });
 
@@ -74,7 +77,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
         dateRead: data.dateRead || new Date(),
         genres: data.genres || [],
         recommendedBy: data.recommendedBy || '',
-        favorite: false,
+        favorite: bookToEdit?.favorite || false,
         isSeries: data.isSeries,
         seriesName: data.isSeries ? (data.seriesName || data.title) : undefined,
         seriesPosition: data.isSeries ? data.seriesPosition : undefined,
@@ -89,7 +92,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
       
       // Reset form and close dialog
       form.reset();
-      onClose();
+      if (onClose) onClose();
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Error adding book:', error);
     }
@@ -98,7 +102,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
   // Handle form cancel
   const handleCancel = () => {
     form.reset();
-    onClose();
+    if (onClose) onClose();
   };
 
   // Toggling series options
@@ -119,9 +123,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent className="sm:max-w-md md:max-w-xl overflow-y-auto max-h-screen">
         <DialogHeader>
-          <DialogTitle>Add a New Book</DialogTitle>
+          <DialogTitle>{bookToEdit ? 'Edit Book' : 'Add a New Book'}</DialogTitle>
           <DialogDescription>
-            Enter the details of the book you want to add to your shelf.
+            Enter the details of the book you want to {bookToEdit ? 'update' : 'add to your shelf'}.
           </DialogDescription>
         </DialogHeader>
         
@@ -206,7 +210,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
                       <FormLabel>Date Read</FormLabel>
                       <DateReadPicker 
                         date={field.value} 
-                        setDate={(date) => field.onChange(date)} 
+                        onDateChange={(date) => field.onChange(date)} 
                       />
                       <FormMessage />
                     </FormItem>
@@ -411,7 +415,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose }) => {
               <Button type="button" variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button type="submit">Add Book</Button>
+              <Button type="submit">{bookToEdit ? 'Update' : 'Add'} Book</Button>
             </DialogFooter>
           </form>
         </Form>
