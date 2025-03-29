@@ -1,57 +1,49 @@
-
 import { Book } from '@/types/book';
+import { Tables } from '@/integrations/supabase/types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper to prepare books for DB insertion
-export const prepareBookForDB = (book: Omit<Book, 'id'> | Book): any => {
-  const bookId = 'id' in book ? book.id : uuidv4();
+// Prepare a book object for insertion into the Supabase database
+export const prepareBookForDB = (book: Omit<Book, 'id'>): Tables<'books'>['Insert'] => {
+  const newBookId = uuidv4();
   
   return {
-    id: bookId,
+    id: newBookId,
     title: book.title,
     author: book.author,
-    cover_url: book.coverUrl,
+    cover_url: book.coverUrl || null,
+    date_read: book.dateRead ? new Date(book.dateRead).toISOString() : null,
+    genres: book.genres || [],
     status: book.status,
     progress: book.progress,
-    pages: book.pages,
-    genres: book.genres,
-    favorite: book.favorite,
-    color: book.color,
-    date_read: book.dateRead ? new Date(book.dateRead).toISOString() : new Date().toISOString(),
+    pages: book.pages || null,
     recommended_by: book.recommendedBy || null,
-    order: book.order || 0
+    favorite: book.favorite || false,
+    order: book.order || null,
+    color: book.color || null,
+    is_series: book.isSeries || false,
+    series_name: book.seriesName || null,
+    series_position: book.seriesPosition || null
   };
 };
 
-// Helper to convert DB response to Book object
-export const convertDBToBook = (dbBook: any): Book => {
-  // Ensure dateRead is a valid Date object
-  let dateRead: Date;
-  try {
-    dateRead = dbBook.date_read ? new Date(dbBook.date_read) : new Date();
-    // Validate the date is valid
-    if (isNaN(dateRead.getTime())) {
-      console.warn(`Invalid date for book ${dbBook.title}, using current date`);
-      dateRead = new Date(); // Fallback to current date if invalid
-    }
-  } catch (error) {
-    console.error(`Error parsing date for book ${dbBook.title}:`, error);
-    dateRead = new Date(); // Fallback to current date on error
-  }
-
+// Convert a book object from the Supabase database to the Book type
+export const convertDBToBook = (dbBook: Tables<'books'>['Row']): Book => {
   return {
     id: dbBook.id,
     title: dbBook.title,
     author: dbBook.author,
-    coverUrl: dbBook.cover_url,
-    status: dbBook.status,
-    progress: dbBook.progress,
-    pages: dbBook.pages,
+    coverUrl: dbBook.cover_url || '',
+    dateRead: dbBook.date_read ? new Date(dbBook.date_read) : new Date(),
     genres: dbBook.genres || [],
-    favorite: !!dbBook.favorite,
-    color: dbBook.color,
-    dateRead: dateRead,
-    recommendedBy: dbBook.recommended_by,
-    order: dbBook.order || 0
+    status: dbBook.status as Book['status'],
+    progress: dbBook.progress,
+    pages: dbBook.pages || 0,
+    recommendedBy: dbBook.recommended_by || '',
+    favorite: dbBook.favorite || false,
+    order: dbBook.order || 0,
+    color: dbBook.color || undefined,
+    isSeries: dbBook.is_series || false,
+    seriesName: dbBook.series_name || undefined,
+    seriesPosition: dbBook.series_position || undefined
   };
 };

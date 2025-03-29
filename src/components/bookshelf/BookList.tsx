@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Star, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Star, MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
 import { Book } from '@/types/book';
 import { Button } from '@/components/ui/button';
 import { 
@@ -52,10 +52,22 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
                   <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                 </div>
               )}
+              {book.isSeries && (
+                <div className="absolute -top-1 -left-1">
+                  <div className="bg-purple-600 text-white p-0.5 rounded-full">
+                    <BookMarked className="h-3 w-3" />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <h3 className="font-medium">{book.title}</h3>
               <p className="text-sm text-gray-500">{book.author}</p>
+              {book.isSeries && book.seriesName && (
+                <p className="text-xs text-purple-600 font-medium">
+                  {book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}
+                </p>
+              )}
               {book.pages && (
                 <p className="text-xs text-gray-400">{book.pages} pages</p>
               )}

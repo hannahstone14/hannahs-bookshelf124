@@ -13,4 +13,7 @@ export interface Book {
   pages: number; // Total number of pages in the book
   recommendedBy?: string; // Person who recommended the book
   favorite: boolean; // New property to mark favorite books
+  isSeries: boolean; // New property to mark if book is part of a series
+  seriesName?: string; // Optional name of the series
+  seriesPosition?: number; // Optional position in the series
 }

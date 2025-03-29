@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
 import { Book } from '@/types/book';
 import BookCover from '@/components/BookCover';
 import { Button } from '@/components/ui/button';
@@ -70,11 +70,28 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               </DropdownMenu>
             </div>
             <BookCover book={book} showStatus={showStatus} />
-            {book.recommendedBy && (
-              <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
-                From: {book.recommendedBy}
+            
+            {/* Series indicator */}
+            {book.isSeries && (
+              <div className="absolute top-1 left-1 bg-purple-600 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center">
+                <BookMarked className="h-3 w-3 mr-1" />
+                {book.seriesPosition ? `#${book.seriesPosition}` : 'Series'}
               </div>
             )}
+            
+            <div className="mt-1 text-center">
+              {book.isSeries && book.seriesName && (
+                <div className="text-xs text-purple-600 font-medium truncate max-w-full">
+                  {book.seriesName}
+                </div>
+              )}
+              
+              {book.recommendedBy && (
+                <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
+                  From: {book.recommendedBy}
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

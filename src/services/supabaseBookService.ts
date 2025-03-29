@@ -105,6 +105,9 @@ export const updateBook = async (
     if (bookData.dateRead !== undefined) updateData.date_read = new Date(bookData.dateRead).toISOString();
     if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
     if (bookData.order !== undefined) updateData.order = bookData.order;
+    if (bookData.isSeries !== undefined) updateData.is_series = bookData.isSeries;
+    if (bookData.seriesName !== undefined) updateData.series_name = bookData.seriesName;
+    if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
     
     const { error: updateError } = await supabase
       .from(tableName)

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ImagePlus, BookOpen, ShieldAlert, Star } from 'lucide-react';
+import { ImagePlus, BookOpen, ShieldAlert, Star, BookMarked } from 'lucide-react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { cn } from '@/lib/utils';
 import { Book } from '@/types/book';
@@ -69,6 +69,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
   const [selectedGenres, setSelectedGenres] = useState<string[]>(bookToEdit?.genres || []);
   const [newGenre, setNewGenre] = useState<string>('');
   const [isFavorite, setIsFavorite] = useState<boolean>(bookToEdit?.favorite || false);
+  const [isSeries, setIsSeries] = useState<boolean>(bookToEdit?.isSeries || false);
+  const [seriesName, setSeriesName] = useState<string>(bookToEdit?.seriesName || '');
+  const [seriesPosition, setSeriesPosition] = useState<number | undefined>(bookToEdit?.seriesPosition);
   
   const form = useForm({
     defaultValues: {
@@ -80,7 +83,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       status: bookToEdit?.status || 'read',
       progress: bookToEdit?.progress || (bookToEdit ? 0 : 100),
       pages: bookToEdit?.pages || 0,
-      favorite: bookToEdit?.favorite || false
+      favorite: bookToEdit?.favorite || false,
+      isSeries: bookToEdit?.isSeries || false,
+      seriesName: bookToEdit?.seriesName || '',
+      seriesPosition: bookToEdit?.seriesPosition || undefined
     }
   });
 
@@ -168,7 +174,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
           pages: parseInt(data.pages) || 0,
           recommendedBy: recommenderName,
           genres: selectedGenres,
-          favorite: false
+          favorite: false,
+          isSeries: false
         };
         
         addBook(bookData);
@@ -189,7 +196,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       progress: readingProgress,
       pages: parseInt(data.pages) || 0,
       genres: selectedGenres,
-      favorite: isFavorite
+      favorite: isFavorite,
+      isSeries: isSeries,
+      seriesName: isSeries ? seriesName : undefined,
+      seriesPosition: isSeries ? (seriesPosition || undefined) : undefined
     };
     
     if (bookToEdit) {
@@ -217,7 +227,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
       status: 'read',
       progress: 100,
       pages: 0,
-      favorite: false
+      favorite: false,
+      isSeries: false,
+      seriesName: '',
+      seriesPosition: undefined
     });
     setCoverPreview(null);
     setReadingProgress(100);
@@ -228,6 +241,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
     setSelectedGenres([]);
     setNewGenre('');
     setIsFavorite(false);
+    setIsSeries(false);
+    setSeriesName('');
+    setSeriesPosition(undefined);
   };
 
   return (
@@ -289,6 +305,48 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ onSuccess, bookToEdit }) => {
                 </FormItem>
               )}
             />
+
+            <div className="mt-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox 
+                  id="isSeries" 
+                  checked={isSeries}
+                  onCheckedChange={(checked) => setIsSeries(checked === true)}
+                />
+                <label
+                  htmlFor="isSeries"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+                >
+                  <BookMarked className="h-4 w-4 mr-1 text-purple-500" />
+                  Part of a series
+                </label>
+              </div>
+              
+              {isSeries && (
+                <div className="bg-purple-50 p-3 rounded-md space-y-4 mt-2">
+                  <div>
+                    <FormLabel htmlFor="seriesName">Series Name</FormLabel>
+                    <Input 
+                      id="seriesName"
+                      placeholder="e.g. Harry Potter" 
+                      value={seriesName}
+                      onChange={(e) => setSeriesName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <FormLabel htmlFor="seriesPosition">Book # in Series</FormLabel>
+                    <Input 
+                      id="seriesPosition"
+                      type="number" 
+                      placeholder="e.g. 1, 2, 3" 
+                      min="1"
+                      value={seriesPosition || ''}
+                      onChange={(e) => setSeriesPosition(e.target.value ? parseInt(e.target.value) : undefined)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="mt-4">
               <FormLabel>Genres</FormLabel>
