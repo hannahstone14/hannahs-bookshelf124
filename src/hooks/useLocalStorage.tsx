@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
-import { isTestBook, purgeTestBooks } from '@/services/storageService';
+import { isTestBook } from '@/lib/supabase';
+import { purgeTestBooks } from '@/services/storageService';
 
 export const useLocalStorage = () => {
   const [books, setBooks] = useState<Book[]>([]);
