@@ -257,7 +257,6 @@ const Bookshelf: React.FC = () => {
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSort={handleSort}
-            onAddBook={handleAddBookClick}
           />
 
           {viewTab === 'recommendations' ? (
