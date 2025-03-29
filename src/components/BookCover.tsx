@@ -13,8 +13,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   // Get an appropriate color for the layered effect based on cover or book color
   const [layerColors, setLayerColors] = useState({
     primary: '#9b87f5',  // Default purple primary color
-    secondary: '#7E69AB', // Default purple secondary color
-    tertiary: '#6E59A5'   // Default purple tertiary color
+    secondary: '#CCCCCC', // Subtle gray for secondary layer
+    tertiary: '#DDDDDD'   // Even lighter gray for tertiary layer
   });
 
   // Create a modified title that adds "Series" for series books
@@ -27,8 +27,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       const baseColor = book.color;
       setLayerColors({
         primary: baseColor,
-        secondary: adjustColorBrightness(baseColor, -15),  // Slightly darker
-        tertiary: adjustColorBrightness(baseColor, -30)    // Even darker
+        secondary: convertToGrayTone(baseColor, 0.5),  // Grayer variant with medium opacity
+        tertiary: convertToGrayTone(baseColor, 0.3)    // Grayer variant with lower opacity
       });
     }
   }, [book.color]);
@@ -49,21 +49,40 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   };
 
+  // Convert color to a more gray tone for subtle layering
+  const convertToGrayTone = (hex: string, opacity: number) => {
+    // Convert hex to RGB
+    let r = parseInt(hex.slice(1, 3), 16);
+    let g = parseInt(hex.slice(3, 5), 16);
+    let b = parseInt(hex.slice(5, 7), 16);
+    
+    // Calculate gray value (weighted average for perceived brightness)
+    const grayValue = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    
+    // Create a gray color with slight tint from original
+    const grayR = Math.round(grayValue * 0.8 + r * 0.2);
+    const grayG = Math.round(grayValue * 0.8 + g * 0.2);
+    const grayB = Math.round(grayValue * 0.8 + b * 0.2);
+    
+    // Convert back to hex with opacity
+    return `rgba(${grayR}, ${grayG}, ${grayB}, ${opacity})`;
+  };
+
   return (
     <div className={cn(
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - visible behind the cover */}
+      {/* Layer effect for series books - subtle gray layers */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md z-0 rotate-3 shadow-md opacity-75" 
-            style={{ backgroundColor: layerColors.tertiary }}
+            className="absolute -right-2 -bottom-2 w-32 h-48 rounded-md z-0 rotate-2 shadow-sm" 
+            style={{ backgroundColor: layerColors.tertiary, opacity: 0.4 }}
           />
           <div 
-            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-1.5 shadow-md opacity-85" 
-            style={{ backgroundColor: layerColors.secondary }}
+            className="absolute -right-1 -bottom-1 w-32 h-48 rounded-md z-0 rotate-1 shadow-sm" 
+            style={{ backgroundColor: layerColors.secondary, opacity: 0.5 }}
           />
         </>
       )}
