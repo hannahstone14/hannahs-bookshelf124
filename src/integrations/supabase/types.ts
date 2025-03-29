@@ -9,7 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      books: {
+        Row: {
+          author: string
+          color: string | null
+          cover_url: string | null
+          created_at: string | null
+          date_read: string | null
+          favorite: boolean | null
+          genres: string[] | null
+          id: string
+          order: number | null
+          pages: number | null
+          progress: number
+          recommended_by: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date_read?: string | null
+          favorite?: boolean | null
+          genres?: string[] | null
+          id?: string
+          order?: number | null
+          pages?: number | null
+          progress?: number
+          recommended_by?: string | null
+          status: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date_read?: string | null
+          favorite?: boolean | null
+          genres?: string[] | null
+          id?: string
+          order?: number | null
+          pages?: number | null
+          progress?: number
+          recommended_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          author: string
+          color: string | null
+          cover_url: string | null
+          created_at: string | null
+          date_read: string | null
+          favorite: boolean | null
+          genres: string[] | null
+          id: string
+          pages: number | null
+          progress: number
+          recommended_by: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date_read?: string | null
+          favorite?: boolean | null
+          genres?: string[] | null
+          id?: string
+          pages?: number | null
+          progress?: number
+          recommended_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          date_read?: string | null
+          favorite?: boolean | null
+          genres?: string[] | null
+          id?: string
+          pages?: number | null
+          progress?: number
+          recommended_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

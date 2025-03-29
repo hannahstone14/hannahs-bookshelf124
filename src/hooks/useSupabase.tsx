@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import * as bookService from '@/services/bookService';
 
 export const useSupabase = () => {

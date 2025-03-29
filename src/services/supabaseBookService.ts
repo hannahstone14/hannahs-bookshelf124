@@ -1,5 +1,6 @@
 
-import { supabase, BOOKS_TABLE, RECOMMENDATIONS_TABLE } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { BOOKS_TABLE, RECOMMENDATIONS_TABLE } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { prepareBookForDB, convertDBToBook } from './bookMappers';
 
