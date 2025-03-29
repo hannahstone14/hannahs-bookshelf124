@@ -14,8 +14,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   // Get an appropriate color for the layered effect based on cover or book color
   const [layerColors, setLayerColors] = useState({
     primary: '#9b87f5',  // Default purple primary color
-    secondary: '#CCCCCC', // Subtle gray for secondary layer
-    tertiary: '#DDDDDD'   // Even lighter gray for tertiary layer
+    secondary: '#888888', // Darker gray for secondary layer
+    tertiary: '#AAAAAA'   // Medium gray for tertiary layer
   });
 
   // Create a modified title that adds "Series" for series books
@@ -28,8 +28,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       const baseColor = book.color;
       setLayerColors({
         primary: baseColor,
-        secondary: convertToGrayTone(baseColor, 0.6),  // Grayer variant with medium opacity
-        tertiary: convertToGrayTone(baseColor, 0.4)    // Grayer variant with lower opacity
+        secondary: convertToGrayTone(baseColor, 0.8),  // Darker gray variant with higher opacity
+        tertiary: convertToGrayTone(baseColor, 0.7)    // Medium gray variant with higher opacity
       });
     }
   }, [book.color]);
@@ -61,9 +61,9 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
     const grayValue = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
     
     // Create a gray color with slight tint from original
-    const grayR = Math.round(grayValue * 0.8 + r * 0.2);
-    const grayG = Math.round(grayValue * 0.8 + g * 0.2);
-    const grayB = Math.round(grayValue * 0.8 + b * 0.2);
+    const grayR = Math.round(grayValue * 0.7 + r * 0.3);
+    const grayG = Math.round(grayValue * 0.7 + g * 0.3);
+    const grayB = Math.round(grayValue * 0.7 + b * 0.3);
     
     // Convert back to hex with opacity
     return `rgba(${grayR}, ${grayG}, ${grayB}, ${opacity})`;
@@ -75,9 +75,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
     if (!book.isSeries || !book.seriesPosition) return null;
 
     // Get total books in series based on the highest series position
-    // (This is an approximation, ideally we'd have a total books in series property)
     const totalInSeries = book.seriesName ? 
-      (book.seriesPosition > 0 ? Math.max(book.seriesPosition, 7) : 7) : 7;
+      (book.seriesPosition > 0 ? Math.max(book.seriesPosition, book.seriesPosition) : book.seriesPosition) : book.seriesPosition;
     
     // If the book is read, count it as completed for that position
     const booksRead = book.status === 'read' ? book.seriesPosition : book.seriesPosition - 1;
@@ -97,23 +96,23 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - subtle gray layers with improved spacing and shadows */}
+      {/* Layer effect for series books - darker gray layers with improved spacing and shadows */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-2" 
+            className="absolute -right-2.5 -bottom-2.5 w-32 h-48 rounded-md z-0 rotate-2" 
             style={{ 
               backgroundColor: layerColors.tertiary, 
-              opacity: 0.7,
-              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)'
+              opacity: 0.85,
+              boxShadow: '0 3px 4px rgba(0, 0, 0, 0.25)'
             }}
           />
           <div 
-            className="absolute -right-0.75 -bottom-0.75 w-32 h-48 rounded-md z-0 rotate-1" 
+            className="absolute -right-1.25 -bottom-1.25 w-32 h-48 rounded-md z-0 rotate-1" 
             style={{ 
               backgroundColor: layerColors.secondary, 
-              opacity: 0.8,
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+              opacity: 0.9,
+              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.3)'
             }}
           />
         </>

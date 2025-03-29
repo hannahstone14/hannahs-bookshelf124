@@ -77,15 +77,15 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               <BookCover book={book} showStatus={showStatus} />
               
               <div className="mt-1 text-center">
-                <div className="text-sm font-medium truncate max-w-full">
+                <div className="text-sm font-medium break-words max-w-full">
                   {displayTitle}
                 </div>
-                <div className="text-xs text-gray-500 truncate max-w-full">
+                <div className="text-xs text-gray-500 break-words max-w-full">
                   {book.author}
                 </div>
                 
                 {book.recommendedBy && (
-                  <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
+                  <div className="text-xs text-center mt-1 text-blue-500 break-words max-w-full">
                     From: {book.recommendedBy}
                   </div>
                 )}

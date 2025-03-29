@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
 import { BookOpen, BookOpenCheck, BookmarkCheck, Archive, Coffee, Bookmark, BookMarked, Stars, Rocket, Brain, BookCopy } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-// Map of genre to icon component
 const genreIconMap: Record<string, React.ReactNode> = {
   'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
   'Non-Fiction': <Brain className="h-4 w-4 text-purple-500" />,
@@ -16,7 +15,6 @@ const genreIconMap: Record<string, React.ReactNode> = {
   'Self-Help': <Coffee className="h-4 w-4 text-teal-500" />
 };
 
-// Helper function to ensure a date is a Date object
 const ensureDate = (date: Date | string | number): Date => {
   if (date instanceof Date) {
     return date;
@@ -27,13 +25,10 @@ const ensureDate = (date: Date | string | number): Date => {
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
   
-  // Get the current year
   const currentYear = new Date().getFullYear();
   
-  // Calculate total books read
   const totalBooksRead = books.filter(book => book.status === 'read').length;
   
-  // Calculate books read this year
   const booksReadThisYear = books.filter(
     book => {
       try {
@@ -46,9 +41,7 @@ const BookshelfStats: React.FC = () => {
     }
   ).length;
   
-  // Calculate total series read completely
   const countCompleteSeriesRead = () => {
-    // Group books by series name
     const seriesGroups: Record<string, Book[]> = {};
     
     books.forEach(book => {
@@ -60,10 +53,8 @@ const BookshelfStats: React.FC = () => {
       }
     });
     
-    // Count series where all books are read
     let completeSeriesCount = 0;
     
-    // For each series group, check if there are multiple books and all are read
     Object.values(seriesGroups).forEach(seriesBooks => {
       if (seriesBooks.length > 1 && seriesBooks.every(book => book.status === 'read')) {
         completeSeriesCount++;
@@ -75,20 +66,16 @@ const BookshelfStats: React.FC = () => {
   
   const totalSeriesRead = countCompleteSeriesRead();
   
-  // Calculate total pages read
   const pagesRead = books.reduce((total, book) => {
-    // For read books, count all pages
     if (book.status === 'read') {
       return total + (book.pages || 0);
     }
-    // For in-progress books, count proportional to completion
     else if (book.status === 'reading') {
       return total + (book.pages || 0) * (book.progress / 100);
     }
     return total;
   }, 0);
   
-  // Format pages read in a readable way
   const formatPagesRead = (pages: number) => {
     if (pages >= 1000000) {
       return `${(pages / 1000000).toFixed(1)}M`;
@@ -98,7 +85,6 @@ const BookshelfStats: React.FC = () => {
     return pages.toFixed(0);
   };
   
-  // Calculate genre counts for top 3 genres
   const genreCounts: Record<string, number> = {};
   books.forEach(book => {
     if (book.genres && book.genres.length > 0) {
@@ -108,13 +94,11 @@ const BookshelfStats: React.FC = () => {
     }
   });
   
-  // Get top 3 genres
   const topGenres = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([genre, count]) => ({ genre, count }));
   
-  // Find the latest read book
   const readBooks = books.filter(book => book.status === 'read');
   const latestRead = readBooks.length > 0 
     ? readBooks.reduce((latest: Book | null, book) => {
@@ -130,7 +114,6 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
-  // Get icon for a genre
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
   };
@@ -138,20 +121,20 @@ const BookshelfStats: React.FC = () => {
   return (
     <div className="mb-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Main statistics card - Pages Read */}
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
           </div>
-          <div className="text-4xl font-bold mb-4">
-            {formatPagesRead(pagesRead)}
+          <div className="flex items-center justify-between">
+            <div className="text-4xl font-bold">
+              {formatPagesRead(pagesRead)}
+            </div>
           </div>
-          <div className="flex items-center text-sm text-gray-500">
+          <div className="flex items-center text-sm text-gray-500 mt-2">
             <BookOpen className="h-4 w-4 mr-1" />
             <span>From {books.length} books in your collection</span>
           </div>
           
-          {/* Books read stats in smaller size */}
           <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-xs text-gray-500 mb-1">Total Books Read</div>
@@ -170,7 +153,6 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
 
-        {/* Top 3 Genres Card */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-sm text-gray-500 font-medium mb-4">TOP 3 GENRES</h3>
           {topGenres.length > 0 ? (
@@ -199,7 +181,6 @@ const BookshelfStats: React.FC = () => {
         </div>
       </div>
 
-      {/* Latest Read Book Card */}
       {latestRead && (
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h3 className="text-sm text-gray-500 font-medium mb-4">LAST BOOK YOU FINISHED</h3>
