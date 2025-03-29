@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
@@ -6,11 +5,12 @@ import * as bookService from '@/services/bookService';
 import { isUsingDemoCredentials, shouldUseFallback } from '@/lib/supabase';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSupabase } from '@/hooks/useSupabase';
+import { createSeriesBooks } from '@/services/bookMappers';
 
 interface BookshelfContextType {
   books: Book[];
   recommendations: Book[];
-  addBook: (book: Omit<Book, 'id'>) => void;
+  addBook: (book: Omit<Book, 'id'>, totalSeriesBooks?: number, totalSeriesPages?: number) => void;
   removeBook: (id: string) => void;
   editBook: (id: string, bookData: Partial<Book>) => void;
   reorderBooks: (currentOrder: string[], newOrder: string[]) => void;
@@ -36,11 +36,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(shouldUseFallback());
   const isMounted = useRef(true);
   
-  // Use either localStorage or Supabase based on configuration
   const localStorage = useLocalStorage();
   const supabaseStorage = useSupabase();
   
-  // Determine which data source to use
   const { 
     books = [], 
     recommendations = [],
@@ -53,7 +51,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log(`Current books count: ${books.length}, recommendations count: ${recommendations.length}`);
   }, [useLocalStorageState, books.length, recommendations.length]);
   
-  // Set loading state based on Supabase loading (if applicable)
   useEffect(() => {
     if (!useLocalStorageState && 'isLoading' in supabaseStorage) {
       setIsLoading(supabaseStorage.isLoading);
@@ -62,31 +59,52 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [useLocalStorageState, supabaseStorage]);
 
-  // Allow component to clean up on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  const addBook = async (book: Omit<Book, 'id'>) => {
+  const addBook = async (
+    book: Omit<Book, 'id'>, 
+    totalSeriesBooks?: number, 
+    totalSeriesPages?: number
+  ) => {
     try {
       console.log('Adding book:', book.title);
-      const newBook = await bookService.addBook(book);
       
-      if (useLocalStorageState) {
-        if (book.status === 'recommendation') {
-          setRecommendations(prev => [...prev, newBook]);
-        } else {
-          setBooks(prev => [...prev, newBook]);
+      if (book.isSeries && totalSeriesBooks && totalSeriesPages && totalSeriesBooks > 1) {
+        const seriesBooks = createSeriesBooks(book, totalSeriesBooks, totalSeriesPages);
+        
+        const addPromises = seriesBooks.map(seriesBook => bookService.addBook(seriesBook));
+        const newBooks = await Promise.all(addPromises);
+        
+        if (useLocalStorageState) {
+          if (book.status === 'recommendation') {
+            setRecommendations(prev => [...prev, ...newBooks]);
+          } else {
+            setBooks(prev => [...prev, ...newBooks]);
+          }
         }
-        console.log(`Book added successfully. New count: ${book.status === 'recommendation' ? recommendations.length + 1 : books.length + 1}`);
-      }
-      
-      if (book.status === 'recommendation') {
-        toast.success('Thank you for your recommendation!');
+        
+        toast.success(`Added ${seriesBooks.length} books in the ${book.seriesName} series!`);
       } else {
-        toast.success('Book added to your shelf!');
+        const newBook = await bookService.addBook(book);
+        
+        if (useLocalStorageState) {
+          if (book.status === 'recommendation') {
+            setRecommendations(prev => [...prev, newBook]);
+          } else {
+            setBooks(prev => [...prev, newBook]);
+          }
+          console.log(`Book added successfully. New count: ${book.status === 'recommendation' ? recommendations.length + 1 : books.length + 1}`);
+        }
+        
+        if (book.status === 'recommendation') {
+          toast.success('Thank you for your recommendation!');
+        } else {
+          toast.success('Book added to your shelf!');
+        }
       }
     } catch (error) {
       console.error('Error adding book:', error);
@@ -351,13 +369,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     hasBackup
   };
 
-  // Attempt to load data on first render if storage appears empty
   useEffect(() => {
     if (books.length === 0 && recommendations.length === 0 && !isLoading) {
       console.log('No books found in state, attempting to recover data...');
       recoverData();
     }
-  }, [isLoading]); // Only run once after initial loading is complete
+  }, [isLoading]);
 
   if (isLoading) {
     return (

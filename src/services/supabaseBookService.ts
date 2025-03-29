@@ -169,3 +169,24 @@ export const updateBookOrder = async (orderedIds: string[]): Promise<void> => {
     throw error;
   }
 };
+
+// Get books from the same series
+export const getBooksInSeries = async (seriesName: string): Promise<Book[]> => {
+  try {
+    const { data: seriesBooks, error } = await supabase
+      .from(BOOKS_TABLE)
+      .select('*')
+      .eq('series_name', seriesName)
+      .order('series_position', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching series books:', error);
+      throw error;
+    }
+    
+    return (seriesBooks || []).map(convertDBToBook);
+  } catch (error) {
+    console.error('Error in getBooksInSeries:', error);
+    return [];
+  }
+};

@@ -48,3 +48,29 @@ export const convertDBToBook = (dbBook: any): Book => {
     seriesPosition: dbBook.series_position || undefined
   };
 };
+
+// Create multiple books for a series
+export const createSeriesBooks = (
+  baseBook: Omit<Book, 'id'>,
+  totalBooks: number,
+  totalPages: number
+): Omit<Book, 'id'>[] => {
+  const seriesBooks: Omit<Book, 'id'>[] = [];
+  const pagesPerBook = Math.floor(totalPages / totalBooks);
+  
+  for (let i = 1; i <= totalBooks; i++) {
+    // Create a copy of the base book with series position and pages
+    const bookInSeries: Omit<Book, 'id'> = {
+      ...baseBook,
+      title: i === 1 ? baseBook.title : `${baseBook.seriesName} #${i}`,
+      seriesPosition: i,
+      pages: i === totalBooks ? totalPages - (pagesPerBook * (totalBooks - 1)) : pagesPerBook, // Distribute remaining pages to last book
+      status: i === 1 ? baseBook.status : 'to-read',
+      progress: i === 1 ? baseBook.progress : 0
+    };
+    
+    seriesBooks.push(bookInSeries);
+  }
+  
+  return seriesBooks;
+};

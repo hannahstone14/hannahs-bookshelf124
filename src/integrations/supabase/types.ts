@@ -19,10 +19,13 @@ export type Database = {
           favorite: boolean | null
           genres: string[] | null
           id: string
+          is_series: boolean | null
           order: number | null
           pages: number | null
           progress: number
           recommended_by: string | null
+          series_name: string | null
+          series_position: number | null
           status: string
           title: string
           updated_at: string | null
@@ -36,10 +39,13 @@ export type Database = {
           favorite?: boolean | null
           genres?: string[] | null
           id?: string
+          is_series?: boolean | null
           order?: number | null
           pages?: number | null
           progress?: number
           recommended_by?: string | null
+          series_name?: string | null
+          series_position?: number | null
           status: string
           title: string
           updated_at?: string | null
@@ -53,10 +59,13 @@ export type Database = {
           favorite?: boolean | null
           genres?: string[] | null
           id?: string
+          is_series?: boolean | null
           order?: number | null
           pages?: number | null
           progress?: number
           recommended_by?: string | null
+          series_name?: string | null
+          series_position?: number | null
           status?: string
           title?: string
           updated_at?: string | null
@@ -73,9 +82,12 @@ export type Database = {
           favorite: boolean | null
           genres: string[] | null
           id: string
+          is_series: boolean | null
           pages: number | null
           progress: number
           recommended_by: string | null
+          series_name: string | null
+          series_position: number | null
           status: string
           title: string
           updated_at: string | null
@@ -89,9 +101,12 @@ export type Database = {
           favorite?: boolean | null
           genres?: string[] | null
           id?: string
+          is_series?: boolean | null
           pages?: number | null
           progress?: number
           recommended_by?: string | null
+          series_name?: string | null
+          series_position?: number | null
           status?: string
           title: string
           updated_at?: string | null
@@ -105,9 +120,12 @@ export type Database = {
           favorite?: boolean | null
           genres?: string[] | null
           id?: string
+          is_series?: boolean | null
           pages?: number | null
           progress?: number
           recommended_by?: string | null
+          series_name?: string | null
+          series_position?: number | null
           status?: string
           title?: string
           updated_at?: string | null

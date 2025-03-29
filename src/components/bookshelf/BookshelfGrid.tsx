@@ -71,18 +71,17 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
             </div>
             <BookCover book={book} showStatus={showStatus} />
             
-            {/* Series indicator */}
-            {book.isSeries && (
-              <div className="absolute top-1 left-1 bg-purple-600 text-white px-2 py-0.5 rounded-md text-xs font-semibold flex items-center">
-                <BookMarked className="h-3 w-3 mr-1" />
-                {book.seriesPosition ? `#${book.seriesPosition}` : 'Series'}
-              </div>
-            )}
-            
             <div className="mt-1 text-center">
+              <div className="text-sm font-medium truncate max-w-full">
+                {book.title}
+              </div>
+              <div className="text-xs text-gray-500 truncate max-w-full">
+                {book.author}
+              </div>
+              
               {book.isSeries && book.seriesName && (
                 <div className="text-xs text-purple-600 font-medium truncate max-w-full">
-                  {book.seriesName}
+                  {book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}
                 </div>
               )}
               

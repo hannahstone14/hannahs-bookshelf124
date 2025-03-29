@@ -13,11 +13,18 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   return (
     <div className="relative">
       {book.coverUrl ? (
-        <img
-          src={book.coverUrl}
-          alt={book.title}
-          className="w-32 h-48 object-cover rounded-md shadow-lg"
-        />
+        <div className="relative">
+          <img
+            src={book.coverUrl}
+            alt={book.title}
+            className="w-32 h-48 object-cover rounded-md shadow-lg"
+          />
+          {book.isSeries && (
+            <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full">
+              <BookMarked size={14} />
+            </div>
+          )}
+        </div>
       ) : (
         <div
           className="w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative"
@@ -31,16 +38,13 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
           )}
         </div>
       )}
+      
       {showStatus && book.status === 'reading' && (
         <div className="absolute bottom-0 left-0 w-full bg-blue-700 text-white text-xs text-center py-1 rounded-b-md">
           {book.progress}%
         </div>
       )}
-      {book.isSeries && book.coverUrl && (
-        <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full">
-          <BookMarked size={14} />
-        </div>
-      )}
+      
       {book.isSeries && book.seriesPosition && (
         <div className="absolute top-1 left-1 bg-purple-700 text-white px-1.5 py-0.5 text-xs font-bold rounded-full">
           #{book.seriesPosition}
