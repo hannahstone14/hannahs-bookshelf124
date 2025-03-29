@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
 import * as bookService from '@/services/bookService';
-import { isUsingDemoCredentials, shouldUseFallback } from '@/lib/supabase';
+import { isUsingDemoCredentials, shouldUseFallback, isTestBook } from '@/lib/supabase';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSupabase } from '@/hooks/useSupabase';
 import { createSeriesBooks } from '@/services/bookMappers';
@@ -35,16 +34,15 @@ export const useBookshelf = () => {
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(shouldUseFallback());
+  const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(true);
   const isMounted = useRef(true);
   const lastRefreshTime = useRef<number>(Date.now());
   
   const localStorage = useLocalStorage();
   const supabaseStorage = useSupabase();
   
-  // Initial data cleanup
   useEffect(() => {
-    storageService.cleanupStorage();
+    storageService.purgeTestBooks();
   }, []);
   
   const { 
@@ -54,31 +52,30 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setRecommendations
   } = useLocalStorageState ? localStorage : supabaseStorage;
   
-  // Ensure we're using localStorage for maximum stability
   useEffect(() => {
-    setUseLocalStorageState(true);
-  }, []);
+    if (!useLocalStorageState) {
+      setUseLocalStorageState(true);
+      console.log('Forced using localStorage to true for stability');
+    }
+  }, [useLocalStorageState]);
   
   useEffect(() => {
     console.log(`BookshelfProvider initialized. Using localStorage: ${useLocalStorageState}`);
     console.log(`Current books count: ${books.length}, recommendations count: ${recommendations.length}`);
-  }, [useLocalStorageState, books.length, recommendations.length]);
-  
-  useEffect(() => {
-    if (!useLocalStorageState && 'isLoading' in supabaseStorage) {
-      setIsLoading(supabaseStorage.isLoading);
-    } else {
-      setIsLoading(false);
+    
+    if (books.some(isTestBook) || recommendations.some(isTestBook)) {
+      console.log('Found test books in state, filtering them out');
+      setBooks(books.filter(book => !isTestBook(book)));
+      setRecommendations(recommendations.filter(book => !isTestBook(book)));
     }
-  }, [useLocalStorageState, supabaseStorage]);
-
+  }, [useLocalStorageState, books.length, recommendations.length, setBooks, setRecommendations]);
+  
   useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  // Private refresh data function with test book filtering
   const refreshData = async () => {
     try {
       setIsLoading(true);
@@ -87,30 +84,11 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       let booksData: Book[] = [];
       let recommendationsData: Book[] = [];
       
-      if (useLocalStorageState) {
-        // Use localStorage for data retrieval
-        booksData = storageService.getStoredBooks();
-        recommendationsData = storageService.getStoredRecommendations();
-      } else {
-        // Try to get from service, which may fall back to localStorage
-        [booksData, recommendationsData] = await Promise.all([
-          bookService.getAllBooks(),
-          bookService.getAllRecommendations()
-        ]);
-      }
+      booksData = storageService.getStoredBooks();
+      recommendationsData = storageService.getStoredRecommendations();
       
-      // Filter out test books
-      booksData = booksData.filter(book => {
-        return !book.title.includes('Sample Book') && 
-               book.title !== 'hk' && 
-               book.title !== 'ver';
-      });
-      
-      recommendationsData = recommendationsData.filter(book => {
-        return !book.title.includes('Sample Book') && 
-               book.title !== 'hk' && 
-               book.title !== 'ver';
-      });
+      booksData = booksData.filter(book => !isTestBook(book));
+      recommendationsData = recommendationsData.filter(book => !isTestBook(book));
       
       if (isMounted.current) {
         console.log(`Refreshed data: ${booksData.length} books and ${recommendationsData.length} recommendations`);
@@ -135,7 +113,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       console.log('Adding book:', book.title);
       
-      // Include totalSeriesBooks and totalSeriesPages in the book data if provided
       const bookWithSeriesData = {
         ...book,
         totalSeriesBooks,
@@ -172,7 +149,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         toast.success(`Added ${seriesBooks.length} books in the ${book.seriesName} series!`);
         
-        // Refresh data after adding series books
         await refreshData();
       } else {
         const newBook = await bookService.addBook(bookWithSeriesData);
@@ -199,7 +175,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
           console.log(`Book added successfully. New count: ${book.status === 'recommendation' ? recommendations.length + 1 : books.length + 1}`);
         } else {
-          // Always refresh after adding a book
           await refreshData();
         }
         
@@ -212,7 +187,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch (error) {
       console.error('Error adding book:', error);
       toast.error('Failed to add book');
-      await refreshData(); // Try to refresh data anyway
+      await refreshData();
     }
   };
 
@@ -220,27 +195,28 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const isRecommendation = recommendations.some(rec => rec.id === id);
       
-      // First update our state immediately for better UX
       if (isRecommendation) {
-        setRecommendations(prev => prev.filter(book => book.id !== id));
+        setRecommendations(prev => prev.filter(book => book.id !== id && !isTestBook(book)));
       } else {
-        setBooks(prev => prev.filter(book => book.id !== id));
+        setBooks(prev => prev.filter(book => book.id !== id && !isTestBook(book)));
       }
       
-      // Now perform the delete operation
       await bookService.deleteBook(id, isRecommendation);
       
-      // Make sure local storage is also updated
       storageService.deleteStoredBook(id, isRecommendation);
       
-      // Refresh data to ensure consistency
-      await refreshData();
+      storageService.purgeTestBooks();
+      
+      setTimeout(() => refreshData(), 500);
       
       toast.info(isRecommendation ? 'Recommendation removed' : 'Book removed from your shelf');
     } catch (error) {
       console.error('Error removing book:', error);
       toast.error('Failed to remove book');
-      await refreshData(); // Try to refresh data anyway
+      
+      storageService.purgeTestBooks();
+      
+      setTimeout(() => refreshData(), 500);
     }
   };
 
@@ -248,7 +224,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const isRecommendation = recommendations.some(rec => rec.id === id);
       
-      // Update state immediately for better UX
       if (isRecommendation) {
         setRecommendations(prev => 
           prev.map(book => book.id === id ? { ...book, ...bookData } : book)
@@ -259,13 +234,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         );
       }
       
-      // Now perform the update operation
       const updatedBook = await bookService.updateBook(id, bookData, isRecommendation);
       
-      // Make sure local storage is also updated
       storageService.updateStoredBook(id, bookData, isRecommendation);
       
-      // Refresh data to ensure consistency
       await refreshData();
       
       toast.success('Book updated successfully!');
@@ -273,7 +245,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.error('Error editing book:', error);
       toast.error('Failed to update book');
       
-      // Always try to refresh data if there was an error
       await refreshData();
     }
   };
@@ -282,25 +253,21 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const status = progress === 100 ? 'read' : 'reading';
     
     try {
-      // Update state immediately for better UX
       setBooks(prev => 
         prev.map(book => book.id === id ? { ...book, progress, status } : book)
       );
       
-      // Now perform the update operation
       await bookService.updateBook(id, { progress, status });
       
-      // Make sure local storage is also updated
       storageService.updateStoredBook(id, { progress, status });
       
-      // Refresh data to ensure consistency
       await refreshData();
       
       toast.success('Reading progress updated!');
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error('Failed to update progress');
-      await refreshData(); // Try to refresh data anyway
+      await refreshData();
     }
   };
 
@@ -311,7 +278,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     if (book) {
       try {
-        // Update state immediately for better UX
         if (isRecommendation) {
           setRecommendations(prev => 
             prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
@@ -322,52 +288,43 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           );
         }
         
-        // Now perform the update operation
         await bookService.updateBook(id, { favorite: !book.favorite }, isRecommendation);
         
-        // Make sure local storage is also updated
         storageService.updateStoredBook(id, { favorite: !book.favorite }, isRecommendation);
         
-        // Refresh data to ensure consistency
         await refreshData();
         
         toast.success('Favorite status updated!');
       } catch (error) {
         console.error('Error toggling favorite:', error);
         toast.error('Failed to update favorite status');
-        await refreshData(); // Try to refresh data anyway
+        await refreshData();
       }
     }
   };
 
   const reorderBooks = async (currentOrder: string[], newOrder: string[]) => {
     try {
-      // Create a new array based on the new order
       const reorderedBooks = newOrder
         .map(id => books.find(book => book.id === id))
         .filter(Boolean) as Book[];
       
-      // Update state immediately with the reordered books
       setBooks(prev => {
-        // Combine reordered books with any books not in the order array
         const booksNotInOrder = prev.filter(book => !newOrder.includes(book.id));
         return [...reorderedBooks, ...booksNotInOrder];
       });
       
-      // Update the book order in the service
       await bookService.updateBookOrder(newOrder);
       
-      // Make sure local storage is also updated
       storageService.updateStoredBookOrder(newOrder);
       
-      // Refresh data to ensure consistency
       await refreshData();
       
       toast.success('Books reordered successfully!');
     } catch (error) {
       console.error('Error reordering books:', error);
       toast.error('Failed to reorder books');
-      await refreshData(); // Try to refresh data anyway
+      await refreshData();
     }
   };
 
@@ -375,10 +332,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       console.log('Attempting to recover data from service...');
       
-      // Clean storage first to remove test books
-      storageService.cleanupStorage();
+      storageService.purgeTestBooks();
       
-      // Get data from localStorage for maximum reliability
       const booksData = storageService.getStoredBooks();
       const recommendationsData = storageService.getStoredRecommendations();
       
@@ -395,22 +350,19 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Set up a more aggressive auto-refresh every 5 seconds
   useEffect(() => {
     const intervalId = setInterval(() => {
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime.current;
       
-      // Refresh every 5 seconds if not loading
-      if (timeSinceLastRefresh > 5000 && !isLoading) {
+      if (timeSinceLastRefresh > 10000 && !isLoading) {
         refreshData();
       }
-    }, 5000);
+    }, 10000);
     
     return () => clearInterval(intervalId);
   }, [isLoading]);
 
-  // Refresh data after user interactions
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -422,16 +374,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime.current;
       
-      // Only refresh if it's been more than 3 seconds since the last refresh
       if (timeSinceLastRefresh > 3000) {
         refreshData();
       }
     };
     
-    // Listen for visibility changes (tab focus)
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Listen for user interactions
     window.addEventListener('mousedown', handleUserActivity);
     window.addEventListener('keydown', handleUserActivity);
     window.addEventListener('scroll', handleUserActivity);
@@ -462,6 +410,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     if (shouldRecover) {
       console.log('No books found in state, attempting to recover data...');
+      storageService.purgeTestBooks();
       recoverData();
     }
   }, [isLoading, books.length, recommendations.length]);

@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
-import { RECOMMENDATIONS_TABLE, SupabaseResponse, shouldUseFallback } from '@/lib/supabase';
+import { RECOMMENDATIONS_TABLE, SupabaseResponse, shouldUseFallback, isTestBook } from '@/lib/supabase';
 import { withTimeout } from '@/utils/timeoutUtils';
 import * as storageService from './storageService';
 
@@ -114,7 +113,9 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
       return [];
     }
 
-    return result.data.map(mapDbRecommendationToBook);
+    // Filter out test books before mapping
+    const filteredData = result.data.filter(item => !isTestBook(item));
+    return filteredData.map(mapDbRecommendationToBook);
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     // Use localStorage as fallback
@@ -132,6 +133,12 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
  */
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
+    // Don't add test books
+    if (isTestBook(book)) {
+      console.log(`Prevented adding test book "${book.title}" to database`);
+      throw new Error(`Test book "${book.title}" not allowed`);
+    }
+    
     // If using fallback, immediately use localStorage
     if (shouldUseFallback()) {
       const id = crypto.randomUUID();
@@ -175,8 +182,8 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
   } catch (error) {
     console.error('Error adding recommendation:', error);
     
-    // If using fallback, create a new book with UUID
-    if (shouldUseFallback()) {
+    // If using fallback and not a test book, create a new book with UUID
+    if (shouldUseFallback() && !isTestBook(book)) {
       const id = crypto.randomUUID();
       const newBook = { ...book, id } as Book;
       storageService.addStoredBook(newBook, true);
