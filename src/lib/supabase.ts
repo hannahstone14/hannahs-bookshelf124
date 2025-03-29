@@ -9,6 +9,7 @@ export const RECOMMENDATIONS_TABLE = 'recommendations';
 export const isUsingDemoCredentials = false;
 
 // Define Supabase response type to ensure type safety
+// This type matches the structure returned by Supabase client methods
 export type SupabaseResponse<T> = {
   data: T | null;
   error: Error | null;

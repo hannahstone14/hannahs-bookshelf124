@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
-import { RECOMMENDATIONS_TABLE, SupabaseResponse, shouldUseFallback } from '@/lib/supabase';
+import { RECOMMENDATIONS_TABLE, SupabaseResponse } from '@/lib/supabase';
 import { withTimeout } from '@/utils/timeoutUtils';
 import * as storageService from './storageService';
 
@@ -70,7 +70,7 @@ const mapBookToDbRecommendation = (book: Omit<Book, 'id'> | Partial<Book>): Reco
  */
 export const getAllRecommendations = async (): Promise<Book[]> => {
   try {
-    const result = await withTimeout<SupabaseResponse<any[]>>(
+    const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .select('*')
@@ -100,10 +100,10 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
     const dbRecommendation = mapBookToDbRecommendation(book);
-    const result = await withTimeout<SupabaseResponse<any>>(
+    const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
-        .insert([dbRecommendation])
+        .insert(dbRecommendation)
         .select('*')
         .single(),
       5000
@@ -130,7 +130,7 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
 export const updateRecommendation = async (id: string, bookData: Partial<Book>): Promise<Book> => {
   try {
     const dbRecommendation = mapBookToDbRecommendation(bookData);
-    const result = await withTimeout<SupabaseResponse<any>>(
+    const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .update(dbRecommendation)
@@ -160,7 +160,7 @@ export const updateRecommendation = async (id: string, bookData: Partial<Book>):
  */
 export const deleteRecommendation = async (id: string): Promise<void> => {
   try {
-    const result = await withTimeout<SupabaseResponse<any>>(
+    const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .delete()

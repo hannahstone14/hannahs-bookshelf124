@@ -1,14 +1,15 @@
+
 /**
  * Run a promise with a timeout that will resolve with a fallback value
  * if the promise doesn't complete within the specified milliseconds.
  * 
- * @param promise The promise to execute
+ * @param promise The promise or Thenable to execute
  * @param timeoutMs Timeout in milliseconds
  * @param fallback Optional function to provide a fallback value on timeout
  * @returns Promise result or fallback value
  */
 export async function withTimeout<T>(
-  promise: Promise<T>,
+  promise: Promise<T> | { then(onfulfilled: (value: T) => any): any },
   timeoutMs: number,
   fallback?: () => T
 ): Promise<T> {
@@ -22,8 +23,11 @@ export async function withTimeout<T>(
       }, timeoutMs);
     });
     
+    // Convert the input to a proper Promise if it's not already one
+    const properPromise = Promise.resolve(promise);
+    
     // Race the original promise against the timeout
-    const result = await Promise.race([promise, timeoutPromise]);
+    const result = await Promise.race([properPromise, timeoutPromise]);
     return result as T;
   } catch (error) {
     console.error(`Operation timed out or failed after ${timeoutMs}ms:`, error);
