@@ -22,7 +22,7 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
         {totalBooks !== undefined && (
           <span className="text-gray-500 mr-2">
             {totalBooks} books
-            {totalCompleteSeries !== undefined && (
+            {totalCompleteSeries !== undefined && totalCompleteSeries > 0 && (
               <span className="ml-1">• {totalCompleteSeries} complete series</span>
             )}
           </span>

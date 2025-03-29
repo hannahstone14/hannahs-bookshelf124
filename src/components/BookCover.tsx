@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { cn } from '@/lib/utils';
-import { BookMarked } from 'lucide-react';
+import { BookMarked, Star } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface BookCoverProps {
   book: Book;
@@ -68,6 +69,29 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
     return `rgba(${grayR}, ${grayG}, ${grayB}, ${opacity})`;
   };
 
+  // Calculate series progress
+  const getSeriesProgress = () => {
+    // If there's no series position or it's not a series, return null
+    if (!book.isSeries || !book.seriesPosition) return null;
+
+    // Get total books in series based on the highest series position
+    // (This is an approximation, ideally we'd have a total books in series property)
+    const totalInSeries = book.seriesName ? 
+      (book.seriesPosition > 0 ? Math.max(book.seriesPosition, 7) : 7) : 7;
+    
+    // If the book is read, count it as completed for that position
+    const booksRead = book.status === 'read' ? book.seriesPosition : book.seriesPosition - 1;
+    const isCompleted = booksRead >= totalInSeries;
+
+    return {
+      booksRead: Math.max(0, booksRead),
+      totalInSeries,
+      isCompleted
+    };
+  };
+
+  const seriesProgress = book.isSeries ? getSeriesProgress() : null;
+
   return (
     <div className={cn(
       "relative", 
@@ -77,26 +101,26 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md z-0 rotate-2" 
+            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-2" 
             style={{ 
               backgroundColor: layerColors.tertiary, 
-              opacity: 0.5,
-              boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)'
+              opacity: 0.7,
+              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)'
             }}
           />
           <div 
-            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-1" 
+            className="absolute -right-0.75 -bottom-0.75 w-32 h-48 rounded-md z-0 rotate-1" 
             style={{ 
               backgroundColor: layerColors.secondary, 
-              opacity: 0.6,
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+              opacity: 0.8,
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
             }}
           />
         </>
       )}
       
-      {book.coverUrl ? (
-        <div className="relative">
+      <div className="relative">
+        {book.coverUrl ? (
           <img
             src={book.coverUrl}
             alt={displayTitle}
@@ -106,37 +130,63 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             )}
             style={book.isSeries ? { borderColor: layerColors.primary } : {}}
           />
-          {book.isSeries && (
-            <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full z-20">
-              <BookMarked size={14} />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative z-10",
-            book.isSeries && "bg-gradient-to-b from-purple-50 to-transparent"
-          )}
-          style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
-        >
-          <span className={cn(
-            "text-lg font-bold",
-            book.isSeries ? "text-purple-700" : "text-white"
-          )}>
-            {displayTitle.substring(0, 1)}
-          </span>
-          {book.isSeries && (
-            <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full z-20">
-              <BookMarked size={16} />
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <div
+            className={cn(
+              "w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative z-10",
+              book.isSeries && "bg-gradient-to-b from-purple-50 to-transparent"
+            )}
+            style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
+          >
+            <span className={cn(
+              "text-lg font-bold",
+              book.isSeries ? "text-purple-700" : "text-white"
+            )}>
+              {displayTitle.substring(0, 1)}
+            </span>
+          </div>
+        )}
+        
+        {/* Series indicator */}
+        {book.isSeries && (
+          <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full z-20">
+            <BookMarked size={14} />
+          </div>
+        )}
+        
+        {/* Favorite star badge */}
+        {book.favorite && (
+          <div className="absolute top-1 left-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
+            <Star size={14} fill="white" />
+          </div>
+        )}
+      </div>
       
+      {/* Reading progress */}
       {showStatus && book.status === 'reading' && (
         <div className="absolute bottom-0 left-0 w-full bg-blue-700 text-white text-xs text-center py-1 rounded-b-md z-20">
           {book.progress}%
+        </div>
+      )}
+      
+      {/* Series progress tracker */}
+      {book.isSeries && seriesProgress && (
+        <div className="mt-1 w-full">
+          {seriesProgress.isCompleted ? (
+            <div className="bg-green-100 text-green-800 text-xs text-center py-1 px-2 rounded-full w-full">
+              Completed
+            </div>
+          ) : (
+            <div className="w-full">
+              <div className="text-xs text-center text-gray-700 mb-0.5">
+                {seriesProgress.booksRead} of {seriesProgress.totalInSeries} read
+              </div>
+              <Progress 
+                value={(seriesProgress.booksRead / seriesProgress.totalInSeries) * 100} 
+                className="h-1.5 bg-gray-200" 
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
