@@ -17,6 +17,9 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
     tertiary: '#6E59A5'   // Default purple tertiary color
   });
 
+  // Create a modified title that adds "Series" for series books
+  const displayTitle = book.isSeries ? `${book.title} Series` : book.title;
+
   useEffect(() => {
     // If book has specific color, use variants of that color for layers
     if (book.color) {
@@ -54,30 +57,31 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       {book.coverUrl ? (
         <div className={cn(
           "relative",
-          book.isSeries && "border-2 rounded-md",
-          book.isSeries && `border-${layerColors.primary}`
+          book.isSeries && "rounded-md"
         )}>
-          {/* Layer effect for series books */}
+          {/* Enhanced layer effect for series books */}
           {book.isSeries && (
             <>
               <div 
-                className="absolute -right-2 -bottom-2 w-28 h-44 rounded-md -z-10 rotate-2" 
-                style={{ backgroundColor: layerColors.secondary }}
+                className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md -z-10 rotate-3 shadow-md" 
+                style={{ backgroundColor: layerColors.tertiary }}
               />
               <div 
-                className="absolute -right-1 -bottom-1 w-30 h-46 rounded-md -z-20 rotate-1" 
-                style={{ backgroundColor: layerColors.tertiary }}
+                className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md -z-5 rotate-1.5 shadow-md" 
+                style={{ backgroundColor: layerColors.secondary }}
               />
             </>
           )}
           
           <img
             src={book.coverUrl}
-            alt={book.title}
+            alt={displayTitle}
             className={cn(
               "w-32 h-48 object-cover rounded-md shadow-lg",
-              book.isSeries && "rounded-[5px]"
+              book.isSeries && "border-2",
+              book.isSeries && `border-${layerColors.primary}`
             )}
+            style={book.isSeries ? { borderColor: layerColors.primary } : {}}
           />
           {book.isSeries && (
             <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full">
@@ -89,21 +93,20 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         <div
           className={cn(
             "w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative",
-            book.isSeries && "border-2 bg-gradient-to-b from-purple-50 to-transparent",
-            book.isSeries && `border-${layerColors.primary}`
+            book.isSeries && "bg-gradient-to-b from-purple-50 to-transparent"
           )}
           style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
         >
-          {/* Layer effect for series books without cover */}
+          {/* Enhanced layer effect for series books without cover */}
           {book.isSeries && (
             <>
               <div 
-                className="absolute -right-2 -bottom-2 w-28 h-44 rounded-md -z-10 rotate-2" 
-                style={{ backgroundColor: layerColors.secondary }}
+                className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md -z-10 rotate-3 shadow-md" 
+                style={{ backgroundColor: layerColors.tertiary }}
               />
               <div 
-                className="absolute -right-1 -bottom-1 w-30 h-46 rounded-md -z-20 rotate-1" 
-                style={{ backgroundColor: layerColors.tertiary }}
+                className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md -z-5 rotate-1.5 shadow-md" 
+                style={{ backgroundColor: layerColors.secondary }}
               />
             </>
           )}
@@ -112,10 +115,10 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             "text-lg font-bold",
             book.isSeries ? "text-purple-700" : "text-white"
           )}>
-            {book.title.substring(0, 1)}
+            {displayTitle.substring(0, 1)}
           </span>
           {book.isSeries && (
-            <div className="absolute bottom-2 right-2 bg-purple-700 text-white p-1 rounded-full">
+            <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full">
               <BookMarked size={16} />
             </div>
           )}
@@ -128,13 +131,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         </div>
       )}
 
-      {/* Removed the seriesPosition display */}
-
-      {book.isSeries && (
-        <div className="absolute -bottom-1 left-0 right-0 mx-auto w-28 bg-purple-100 border border-purple-300 text-purple-800 text-xs text-center py-0.5 rounded-full font-medium">
-          Series
-        </div>
-      )}
+      {/* Series label at the bottom is removed, as we've added it to the title */}
     </div>
   );
 };
