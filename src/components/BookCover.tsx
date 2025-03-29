@@ -54,32 +54,28 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
+      {/* Layer effect for series books - placed explicitly BEHIND the cover */}
+      {book.isSeries && (
+        <>
+          <div 
+            className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md z-0 rotate-3 shadow-md" 
+            style={{ backgroundColor: layerColors.tertiary }}
+          />
+          <div 
+            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-1.5 shadow-md" 
+            style={{ backgroundColor: layerColors.secondary }}
+          />
+        </>
+      )}
+      
       {book.coverUrl ? (
-        <div className={cn(
-          "relative",
-          book.isSeries && "rounded-md"
-        )}>
-          {/* Enhanced layer effect for series books - place BEHIND the cover */}
-          {book.isSeries && (
-            <>
-              <div 
-                className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md -z-10 rotate-3 shadow-md" 
-                style={{ backgroundColor: layerColors.tertiary }}
-              />
-              <div 
-                className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md -z-5 rotate-1.5 shadow-md" 
-                style={{ backgroundColor: layerColors.secondary }}
-              />
-            </>
-          )}
-          
+        <div className="relative">
           <img
             src={book.coverUrl}
             alt={displayTitle}
             className={cn(
-              "w-32 h-48 object-cover rounded-md shadow-lg z-10",
+              "w-32 h-48 object-cover rounded-md shadow-lg z-10 relative",
               book.isSeries && "border-2",
-              book.isSeries && `border-${layerColors.primary}`
             )}
             style={book.isSeries ? { borderColor: layerColors.primary } : {}}
           />
@@ -97,20 +93,6 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
           )}
           style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
         >
-          {/* Enhanced layer effect for series books without cover - place BEHIND the placeholder */}
-          {book.isSeries && (
-            <>
-              <div 
-                className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md -z-10 rotate-3 shadow-md" 
-                style={{ backgroundColor: layerColors.tertiary }}
-              />
-              <div 
-                className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md -z-5 rotate-1.5 shadow-md" 
-                style={{ backgroundColor: layerColors.secondary }}
-              />
-            </>
-          )}
-          
           <span className={cn(
             "text-lg font-bold",
             book.isSeries ? "text-purple-700" : "text-white"
