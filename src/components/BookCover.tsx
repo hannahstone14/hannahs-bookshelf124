@@ -27,8 +27,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       const baseColor = book.color;
       setLayerColors({
         primary: baseColor,
-        secondary: convertToGrayTone(baseColor, 0.5),  // Grayer variant with medium opacity
-        tertiary: convertToGrayTone(baseColor, 0.3)    // Grayer variant with lower opacity
+        secondary: convertToGrayTone(baseColor, 0.6),  // Grayer variant with medium opacity
+        tertiary: convertToGrayTone(baseColor, 0.4)    // Grayer variant with lower opacity
       });
     }
   }, [book.color]);
@@ -73,16 +73,24 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - subtle gray layers */}
+      {/* Layer effect for series books - subtle gray layers with improved spacing and shadows */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-2 -bottom-2 w-32 h-48 rounded-md z-0 rotate-2 shadow-sm" 
-            style={{ backgroundColor: layerColors.tertiary, opacity: 0.4 }}
+            className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md z-0 rotate-2" 
+            style={{ 
+              backgroundColor: layerColors.tertiary, 
+              opacity: 0.5,
+              boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)'
+            }}
           />
           <div 
-            className="absolute -right-1 -bottom-1 w-32 h-48 rounded-md z-0 rotate-1 shadow-sm" 
-            style={{ backgroundColor: layerColors.secondary, opacity: 0.5 }}
+            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-1" 
+            style={{ 
+              backgroundColor: layerColors.secondary, 
+              opacity: 0.6,
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+            }}
           />
         </>
       )}

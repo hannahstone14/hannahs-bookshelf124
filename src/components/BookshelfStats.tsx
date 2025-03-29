@@ -46,6 +46,35 @@ const BookshelfStats: React.FC = () => {
     }
   ).length;
   
+  // Calculate total series read completely
+  const countCompleteSeriesRead = () => {
+    // Group books by series name
+    const seriesGroups: Record<string, Book[]> = {};
+    
+    books.forEach(book => {
+      if (book.isSeries && book.seriesName && book.status === 'read') {
+        if (!seriesGroups[book.seriesName]) {
+          seriesGroups[book.seriesName] = [];
+        }
+        seriesGroups[book.seriesName].push(book);
+      }
+    });
+    
+    // Count series where all books are read
+    let completeSeriesCount = 0;
+    
+    // For each series group, check if there are multiple books and all are read
+    Object.values(seriesGroups).forEach(seriesBooks => {
+      if (seriesBooks.length > 1 && seriesBooks.every(book => book.status === 'read')) {
+        completeSeriesCount++;
+      }
+    });
+    
+    return completeSeriesCount;
+  };
+  
+  const totalSeriesRead = countCompleteSeriesRead();
+  
   // Calculate total pages read
   const pagesRead = books.reduce((total, book) => {
     // For read books, count all pages
@@ -123,7 +152,7 @@ const BookshelfStats: React.FC = () => {
           </div>
           
           {/* Books read stats in smaller size */}
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-xs text-gray-500 mb-1">Total Books Read</div>
               <div className="text-xl font-semibold">{totalBooksRead}</div>
@@ -132,6 +161,11 @@ const BookshelfStats: React.FC = () => {
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-xs text-gray-500 mb-1">Books Read in {currentYear}</div>
               <div className="text-xl font-semibold">{booksReadThisYear}</div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Total Series Read</div>
+              <div className="text-xl font-semibold">{totalSeriesRead}</div>
             </div>
           </div>
         </div>
