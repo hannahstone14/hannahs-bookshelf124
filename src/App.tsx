@@ -7,13 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { BookshelfProvider } from "./context/BookshelfContext";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-
-// Check if Supabase is configured
-const isSupabaseConfigured = 
-  import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { isUsingDemoCredentials } from "./lib/supabase";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,18 +24,6 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        
-        {!isSupabaseConfigured && (
-          <Alert variant="warning" className="max-w-6xl mx-auto my-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Supabase Not Configured</AlertTitle>
-            <AlertDescription>
-              The app is running in local storage mode because Supabase environment variables are missing. 
-              Books will be saved to your browser's localStorage and won't be shared with others.
-              To enable multi-user functionality, please set up VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.
-            </AlertDescription>
-          </Alert>
-        )}
         
         <BrowserRouter>
           <Routes>

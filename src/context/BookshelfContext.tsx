@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { Book } from '@/types/book';
 import { toast } from "sonner";
 import * as bookService from '@/services/bookService';
-import { supabase } from '@/lib/supabase';
+import { supabase, isUsingDemoCredentials } from '@/lib/supabase';
 
 interface BookshelfContextType {
   books: Book[];
@@ -32,13 +32,13 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(true);
+  const [useLocalStorage, setUseLocalStorage] = useState<boolean>(isUsingDemoCredentials);
   const isMounted = useRef(true);
 
+  // Initialize local storage if using demo credentials
   useEffect(() => {
-    if (typeof supabase.from !== 'function' || !supabase.from('books')) {
-      setIsSupabaseConfigured(false);
-      console.warn('Supabase appears to be misconfigured. Using local storage fallback.');
+    if (isUsingDemoCredentials) {
+      console.log("Using demo Supabase credentials. Data will be stored in localStorage.");
       try {
         const storedBooks = localStorage.getItem('books');
         const storedRecommendations = localStorage.getItem('recommendations');
@@ -74,7 +74,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.error('Error loading initial data:', error);
         toast.error('Failed to load your books');
         
-        if (!isSupabaseConfigured) {
+        if (useLocalStorage) {
           try {
             const storedBooks = localStorage.getItem('books');
             const storedRecommendations = localStorage.getItem('recommendations');
@@ -99,7 +99,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     loadData();
     
-    if (!isSupabaseConfigured) {
+    if (useLocalStorage) {
       const syncInterval = setInterval(() => {
         console.log('Performing periodic save');
         try {
@@ -130,7 +130,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     }
     
-    if (isSupabaseConfigured) {
+    if (!useLocalStorage) {
       try {
         let booksSubscription: any = null;
         let recommendationsSubscription: any = null;
@@ -188,13 +188,13 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       isMounted.current = false;
     };
-  }, [isSupabaseConfigured, books, recommendations]);
+  }, [useLocalStorage, books, recommendations]);
 
   const addBook = async (book: Omit<Book, 'id'>) => {
     try {
       const newBook = await bookService.addBook(book);
       
-      if (!isSupabaseConfigured) {
+      if (useLocalStorage) {
         if (book.status === 'recommendation') {
           setRecommendations(prev => [...prev, newBook]);
         } else {
@@ -219,7 +219,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       await bookService.deleteBook(id, isRecommendation);
       
-      if (!isSupabaseConfigured) {
+      if (useLocalStorage) {
         if (isRecommendation) {
           setRecommendations(prev => prev.filter(book => book.id !== id));
         } else {
@@ -240,7 +240,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       const updatedBook = await bookService.updateBook(id, bookData, isRecommendation);
       
-      if (!isSupabaseConfigured) {
+      if (useLocalStorage) {
         if (isRecommendation) {
           setRecommendations(prev => 
             prev.map(book => book.id === id ? { ...book, ...updatedBook } : book)
@@ -265,7 +265,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       await bookService.updateBook(id, { progress, status });
       
-      if (!isSupabaseConfigured) {
+      if (useLocalStorage) {
         setBooks(prev => 
           prev.map(book => book.id === id ? { ...book, progress, status } : book)
         );
@@ -287,7 +287,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (book) {
         await bookService.updateBook(id, { favorite: !book.favorite }, isRecommendation);
         
-        if (!isSupabaseConfigured) {
+        if (useLocalStorage) {
           if (isRecommendation) {
             setRecommendations(prev => 
               prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
@@ -311,7 +311,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       await bookService.updateBookOrder(newOrder);
       
-      if (!isSupabaseConfigured) {
+      if (useLocalStorage) {
         const orderedBooks = newOrder.map(
           id => books.find(book => book.id === id)
         ).filter(Boolean) as Book[];
