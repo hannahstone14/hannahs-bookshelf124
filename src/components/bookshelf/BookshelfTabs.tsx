@@ -10,7 +10,8 @@ import {
   ArrowDownZA, 
   Percent,
   Star,
-  PlusCircle
+  PlusCircle,
+  SortAsc
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -46,35 +47,35 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
 }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
-      <Tabs 
-        defaultValue="shelf" 
-        value={viewTab} 
-        onValueChange={onTabChange}
-        className="w-full md:w-[540px]"
-      >
-        <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Shelf View
-          </TabsTrigger>
-          <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-            <List className="h-4 w-4 mr-2" />
-            List View
-          </TabsTrigger>
-          <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-            <Bookmark className="h-4 w-4 mr-2" />
-            To Read
-          </TabsTrigger>
-          <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-            <LightbulbIcon className="h-4 w-4 mr-2" />
-            Recommendations
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-      
-      <div className="flex gap-3 items-center">
+      <div className="flex items-center gap-3 w-full">
+        <Tabs 
+          defaultValue="shelf" 
+          value={viewTab} 
+          onValueChange={onTabChange}
+          className="w-full md:w-[540px]"
+        >
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Shelf View
+            </TabsTrigger>
+            <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+              <List className="h-4 w-4 mr-2" />
+              List View
+            </TabsTrigger>
+            <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+              <Bookmark className="h-4 w-4 mr-2" />
+              To Read
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+              <LightbulbIcon className="h-4 w-4 mr-2" />
+              Recommendations
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
         <Button 
-          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2"
+          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
           id="add-book-button"
           onClick={(e) => {
             e.preventDefault();
@@ -90,10 +91,10 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
-              size="sm" 
-              className="border-blue-700 text-blue-700"
+              size="icon"
+              className="border-blue-700 text-blue-700 h-12 w-12"
             >
-              Sort Books
+              <SortAsc className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-white z-50">

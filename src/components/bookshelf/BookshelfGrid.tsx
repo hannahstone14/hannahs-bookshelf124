@@ -46,7 +46,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {books.map(book => {
           // Create a modified title that adds "Series" for series books
-          const displayTitle = book.isSeries ? `${book.title} Series` : book.title;
+          const displayTitle = book.title;
           
           return (
             <div 
@@ -74,7 +74,14 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <BookCover book={book} showStatus={showStatus} />
+              
+              <div className="relative">
+                <BookCover book={book} showStatus={showStatus} />
+                
+                {book.isSeries && (
+                  <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">Series</Badge>
+                )}
+              </div>
               
               <div className="mt-1 text-center">
                 <div className="text-sm font-medium break-words max-w-full whitespace-normal">

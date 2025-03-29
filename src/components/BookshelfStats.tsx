@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
@@ -51,7 +50,6 @@ const BookshelfStats: React.FC = () => {
     if (book.seriesName) {
       uniqueSeriesNames.add(book.seriesName);
     } else {
-      // If no series name, use book id as a unique identifier for the series
       uniqueSeriesNames.add(book.id);
     }
   });
@@ -132,29 +130,30 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
         
-        {/* Stats in a horizontal layout with evenly aligned numbers */}
-        <div className="bg-white rounded-xl shadow-sm p-5 grid grid-cols-4 gap-4 w-full md:w-auto">
-          <div className="text-center">
-            <div className="text-3xl font-bold mb-2">
-              {formatPagesRead(pagesRead)}
-            </div>
-            <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
+        {/* Pages Read Highlight */}
+        <div className="bg-white rounded-xl shadow-sm p-5 w-full md:w-auto flex flex-col justify-center items-center">
+          <div className="text-5xl font-bold mb-2">
+            {formatPagesRead(pagesRead)}
           </div>
-          
-          <div className="text-center">
-            <div className="text-3xl font-bold mb-2">{totalBooksRead}</div>
-            <h3 className="text-sm text-gray-500 font-medium">BOOKS READ</h3>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-3xl font-bold mb-2">{booksReadThisYear}</div>
-            <h3 className="text-sm text-gray-500 font-medium">READ IN {currentYear}</h3>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-3xl font-bold mb-2">{totalSeriesCount}</div>
-            <h3 className="text-sm text-gray-500 font-medium">SERIES</h3>
-          </div>
+          <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
+        </div>
+      </div>
+      
+      {/* Other Stats in a horizontal layout with evenly aligned numbers */}
+      <div className="bg-white rounded-xl shadow-sm p-5 mb-6 grid grid-cols-3 gap-4">
+        <div className="text-center">
+          <div className="text-3xl font-bold">{totalBooksRead}</div>
+          <h3 className="text-sm text-gray-500 font-medium">BOOKS READ</h3>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-3xl font-bold">{booksReadThisYear}</div>
+          <h3 className="text-sm text-gray-500 font-medium">READ IN {currentYear}</h3>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-3xl font-bold">{totalSeriesCount}</div>
+          <h3 className="text-sm text-gray-500 font-medium">SERIES</h3>
         </div>
       </div>
       
@@ -192,7 +191,7 @@ const BookshelfStats: React.FC = () => {
           <div className="bg-white rounded-xl shadow-md p-6">
             <h3 className="text-sm text-gray-500 font-medium mb-4">LAST FINISHED</h3>
             <div className="flex items-start gap-3">
-              <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
+              <div className="w-20 h-32 shadow-md rounded-sm overflow-hidden">
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -224,7 +223,7 @@ const BookshelfStats: React.FC = () => {
           <div className="bg-white rounded-xl shadow-md p-6">
             <h3 className="text-sm text-gray-500 font-medium mb-4">NEXT READ</h3>
             <div className="flex items-start gap-3">
-              <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
+              <div className="w-20 h-32 shadow-md rounded-sm overflow-hidden">
                 {nextToRead.coverUrl ? (
                   <img 
                     src={nextToRead.coverUrl} 
