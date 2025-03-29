@@ -17,7 +17,7 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex-1">
-        {/* Empty space where "Your Books" heading was */}
+        {/* Empty space (Your Books heading removed) */}
       </div>
       <div className="flex gap-2 items-center">
         <Button 
