@@ -16,4 +16,5 @@ export interface Book {
   isSeries: boolean; // New property to mark if book is part of a series
   seriesName?: string; // Optional name of the series
   seriesPosition?: number; // Optional position in the series
+  tags?: string[]; // New property for tags that will show as badges
 }

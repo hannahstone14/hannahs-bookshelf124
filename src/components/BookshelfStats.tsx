@@ -68,20 +68,32 @@ const BookshelfStats: React.FC = () => {
   
   const currentYear = new Date().getFullYear();
   
-  const totalBooksRead = books.filter(book => book.status === 'read').length;
+  // Helper to count books properly (counting each book in a series as an individual book)
+  const calculateTotalBookCount = (filterFn: (book: Book) => boolean): number => {
+    return books.filter(filterFn).reduce((total, book) => {
+      // If it's a stand-alone book, count as 1
+      if (!book.isSeries) return total + 1;
+      
+      // If it's a series, count according to series position
+      return total + (book.seriesPosition ? 1 : 1); // Count each position in series as one book
+    }, 0);
+  };
   
-  const booksReadThisYear = books.filter(
-    book => {
-      try {
-        const dateRead = ensureDate(book.dateRead);
-        return book.status === 'read' && dateRead.getFullYear() === currentYear;
-      } catch (error) {
-        console.error('Error processing date for book:', book.title, error);
-        return false;
-      }
+  // Count books read including each book in a series
+  const totalBooksRead = calculateTotalBookCount(book => book.status === 'read');
+  
+  // Count books read this year
+  const booksReadThisYear = calculateTotalBookCount(book => {
+    try {
+      const dateRead = ensureDate(book.dateRead);
+      return book.status === 'read' && dateRead.getFullYear() === currentYear;
+    } catch (error) {
+      console.error('Error processing date for book:', book.title, error);
+      return false;
     }
-  ).length;
+  });
   
+  // Calculate series information
   const seriesBooks = books.filter(book => book.isSeries);
   const uniqueSeriesNames = new Set();
   
@@ -95,15 +107,21 @@ const BookshelfStats: React.FC = () => {
   
   const totalSeriesCount = uniqueSeriesNames.size;
   
-  const pagesRead = books.reduce((total, book) => {
-    if (book.status === 'read') {
-      return total + (book.pages || 0);
-    }
-    else if (book.status === 'reading') {
-      return total + (book.pages || 0) * (book.progress / 100);
-    }
-    return total;
-  }, 0);
+  // Calculate total pages read
+  const calculatePagesRead = (): number => {
+    return books.reduce((total, book) => {
+      if (book.status === 'read') {
+        return total + (book.pages || 0);
+      }
+      else if (book.status === 'reading') {
+        // Calculate only the read portion of the book based on progress
+        return total + ((book.pages || 0) * (book.progress / 100));
+      }
+      return total;
+    }, 0);
+  };
+  
+  const pagesRead = calculatePagesRead();
   
   const formatPagesRead = (pages: number) => {
     if (pages >= 1000000) {

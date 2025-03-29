@@ -4,6 +4,7 @@ import { Book } from '@/types/book';
 import { cn } from '@/lib/utils';
 import { BookMarked, Star } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 interface BookCoverProps {
   book: Book;
@@ -122,6 +123,30 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         {book.favorite && (
           <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
             <Star size={14} fill="white" />
+          </div>
+        )}
+
+        {/* Reading status badge */}
+        {showStatus && book.status === 'reading' && (
+          <div className="absolute top-1 left-1 z-20">
+            <Badge variant="secondary" className="bg-blue-600 text-white text-xs px-2 py-0.5">
+              Reading
+            </Badge>
+          </div>
+        )}
+        
+        {/* Tags badges */}
+        {book.tags && book.tags.length > 0 && (
+          <div className="absolute bottom-2 left-0 right-0 flex flex-wrap justify-center gap-1 px-1 z-20">
+            {book.tags.map((tag, index) => (
+              <Badge 
+                key={index} 
+                variant="outline" 
+                className="bg-black/70 border-none text-white text-[10px] px-1.5 py-0 truncate max-w-[80px]"
+              >
+                {tag}
+              </Badge>
+            ))}
           </div>
         )}
       </div>

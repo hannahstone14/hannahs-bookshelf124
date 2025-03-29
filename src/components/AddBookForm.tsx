@@ -10,9 +10,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBookshelf } from '@/context/BookshelfContext';
-import { BookIcon, BookMarked, Upload, Link } from 'lucide-react';
+import { BookIcon, BookMarked, Upload, Link, Tag, X } from 'lucide-react';
 import DateReadPicker from './DateReadPicker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+
+// Predefined list of genres
+const GENRES = [
+  'Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 
+  'History', 'Romance', 'Self-Help', 'Biography', 'Thriller', 'Horror',
+  'Historical Fiction', 'Young Adult', 'Children', 'Poetry', 'Classics',
+  'Music', 'Gaming', 'Food', 'Travel', 'Art', 'Philosophy'
+];
 
 // Create a schema for form validation
 const bookFormSchema = z.object({
@@ -28,6 +37,7 @@ const bookFormSchema = z.object({
   isSeries: z.boolean().default(false),
   seriesName: z.string().optional(),
   seriesPosition: z.number().int().min(1, "Series position must be at least 1").optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 interface AddBookFormProps {
@@ -45,6 +55,9 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
   const [coverImageMode, setCoverImageMode] = useState<'url' | 'upload'>('url');
   const [uploadedCoverFile, setUploadedCoverFile] = useState<File | null>(null);
   const [uploadedCoverPreview, setUploadedCoverPreview] = useState<string>('');
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(bookToEdit?.genres || []);
+  const [newTag, setNewTag] = useState<string>('');
+  const [tags, setTags] = useState<string[]>(bookToEdit?.tags || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof bookFormSchema>>({
@@ -62,6 +75,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
       seriesName: bookToEdit?.seriesName || '',
       seriesPosition: bookToEdit?.seriesPosition || 1,
       dateRead: bookToEdit?.dateRead || undefined,
+      tags: bookToEdit?.tags || [],
     },
   });
 
@@ -95,6 +109,36 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
     }
   };
 
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenres(prev => {
+      const isSelected = prev.includes(genre);
+      if (isSelected) {
+        return prev.filter(g => g !== genre);
+      } else {
+        return [...prev, genre];
+      }
+    });
+    form.setValue('genres', selectedGenres.includes(genre) 
+      ? selectedGenres.filter(g => g !== genre) 
+      : [...selectedGenres, genre]
+    );
+  };
+
+  const addTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      const updatedTags = [...tags, newTag.trim()];
+      setTags(updatedTags);
+      form.setValue('tags', updatedTags);
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    const updatedTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(updatedTags);
+    form.setValue('tags', updatedTags);
+  };
+
   const onSubmit = async (data: z.infer<typeof bookFormSchema>) => {
     try {
       let finalCoverUrl = data.coverUrl || '';
@@ -118,7 +162,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         progress: data.progress,
         pages: data.pages || 0,
         dateRead: data.dateRead || new Date(),
-        genres: data.genres || [],
+        genres: selectedGenres,
+        tags: tags,
         recommendedBy: data.recommendedBy || '',
         favorite: bookToEdit?.favorite || false,
         isSeries: data.isSeries,
@@ -139,6 +184,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         setUploadedCoverPreview('');
       }
       setUploadedCoverFile(null);
+      setSelectedGenres([]);
+      setTags([]);
       
       if (onClose) onClose();
       if (onSuccess) onSuccess();
@@ -155,6 +202,8 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
       setUploadedCoverPreview('');
     }
     setUploadedCoverFile(null);
+    setSelectedGenres([]);
+    setTags([]);
     
     if (onClose) onClose();
   };
@@ -212,6 +261,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 )}
               />
               
+              {/* Status selection */}
               <FormField
                 control={form.control}
                 name="status"
@@ -391,6 +441,74 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                     </div>
                   </TabsContent>
                 </Tabs>
+              </div>
+              
+              {/* Genre Selection */}
+              <div className="md:col-span-2">
+                <FormLabel className="block mb-2">Genres</FormLabel>
+                <div className="border rounded-md p-4 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {GENRES.map(genre => (
+                      <div key={genre} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`genre-${genre}`}
+                          checked={selectedGenres.includes(genre)}
+                          onCheckedChange={() => handleGenreChange(genre)}
+                        />
+                        <label
+                          htmlFor={`genre-${genre}`}
+                          className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {genre}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Tags Input */}
+              <div className="md:col-span-2">
+                <FormLabel className="block mb-2">Tags</FormLabel>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                      {tag}
+                      <button 
+                        type="button" 
+                        onClick={() => removeTag(tag)}
+                        className="rounded-full p-1 hover:bg-gray-200"
+                      >
+                        <X size={12} />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add a tag"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={addTag}
+                    disabled={!newTag.trim()}
+                  >
+                    <Tag className="h-4 w-4 mr-1" /> Add
+                  </Button>
+                </div>
+                <FormDescription>
+                  Tags will appear as badges on your book covers
+                </FormDescription>
               </div>
               
               <FormField
