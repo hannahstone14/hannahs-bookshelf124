@@ -6,7 +6,7 @@ import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import BookshelfHeader from './bookshelf/BookshelfHeader';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
-import EmptyBookshelf from './bookshelf/BookshelfEmptyState';
+import EmptyBookshelf from './bookshelf/EmptyBookshelf';
 import BookshelfSection from './bookshelf/BookshelfSection';
 
 type DisplayStyle = 'shelf' | 'list';
