@@ -42,14 +42,20 @@ const Bookshelf: React.FC = () => {
   const completedBooks = books.filter(book => book.status === 'read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
-  // Still calculate series count for informational purposes
-  const seriesBooks = books.filter(book => book.isSeries === true);
+  // Count unique series
+  const seriesBooks = books.filter(book => book.isSeries);
+  const uniqueSeriesNames = new Set();
   
-  const seriesCount = new Set(
-    seriesBooks
-      .filter(book => book.seriesName)
-      .map(book => book.seriesName)
-  ).size;
+  seriesBooks.forEach(book => {
+    if (book.seriesName) {
+      uniqueSeriesNames.add(book.seriesName);
+    } else {
+      // If no series name, use book id as a unique identifier for the series
+      uniqueSeriesNames.add(book.id);
+    }
+  });
+  
+  const seriesCount = uniqueSeriesNames.size;
   
   React.useEffect(() => {
     if (!isMounted.current) return;
@@ -213,9 +219,7 @@ const Bookshelf: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <BookshelfHeader 
-        onAddBook={handleAddBookClick}
-      />
+      <BookshelfHeader />
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
@@ -252,6 +256,7 @@ const Bookshelf: React.FC = () => {
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSort={handleSort}
+            onAddBook={handleAddBookClick}
           />
 
           {viewTab === 'recommendations' ? (

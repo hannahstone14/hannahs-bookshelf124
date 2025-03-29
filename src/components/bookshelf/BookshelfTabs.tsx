@@ -9,7 +9,8 @@ import {
   ArrowDownAZ, 
   ArrowDownZA, 
   Percent,
-  Star
+  Star,
+  PlusCircle
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ interface BookshelfTabsProps {
   sortBy: SortOption;
   sortOrder: 'asc' | 'desc';
   onSort: (option: SortOption) => void;
+  onAddBook: () => void;
 }
 
 const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
@@ -39,15 +41,16 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
   onTabChange,
   sortBy,
   sortOrder,
-  onSort
+  onSort,
+  onAddBook
 }) => {
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
       <Tabs 
         defaultValue="shelf" 
         value={viewTab} 
         onValueChange={onTabChange}
-        className="w-[540px]"
+        className="w-full md:w-[540px]"
       >
         <TabsList className="grid grid-cols-4">
           <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
@@ -70,6 +73,19 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
       </Tabs>
       
       <div className="flex gap-3 items-center">
+        <Button 
+          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2"
+          id="add-book-button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAddBook();
+          }}
+        >
+          <PlusCircle className="h-5 w-5 mr-2" />
+          Add Book
+        </Button>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 

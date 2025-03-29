@@ -45,38 +45,33 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
               <div className="w-12 h-16 mr-4 relative">
                 {book.coverUrl ? (
                   <div 
-                    className={cn(
-                      "w-full h-full bg-cover bg-center rounded shadow-md",
-                      book.isSeries && "border border-purple-400"
-                    )}
+                    className="w-full h-full bg-cover bg-center rounded shadow-md"
                     style={{ backgroundImage: `url(${book.coverUrl})` }}
-                  />
+                  >
+                    {book.isSeries && (
+                      <div className="absolute top-0 left-0 bg-purple-700 text-white text-xs px-1 rounded-tl rounded-br">
+                        Series
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div 
-                    className={cn(
-                      "w-full h-full flex items-center justify-center rounded shadow-md",
-                      book.isSeries && "bg-purple-100 border border-purple-400"
-                    )}
-                    style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
+                    className="w-full h-full flex items-center justify-center rounded shadow-md relative"
+                    style={{ backgroundColor: book.color || '#3B82F6' }}
                   >
-                    <span className={cn(
-                      "text-xs font-bold",
-                      book.isSeries ? "text-purple-700" : "text-white"
-                    )}>
+                    <span className="text-xs font-bold text-white">
                       {displayTitle.substring(0, 2)}
                     </span>
+                    {book.isSeries && (
+                      <div className="absolute top-0 left-0 bg-purple-700 text-white text-xs px-1 rounded-tl rounded-br">
+                        Series
+                      </div>
+                    )}
                   </div>
                 )}
                 {book.favorite && (
                   <div className="absolute -top-1 -right-1">
                     <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  </div>
-                )}
-                {book.isSeries && (
-                  <div className="absolute -top-1 -left-1">
-                    <div className="bg-purple-600 text-white p-0.5 rounded-full">
-                      <BookMarked className="h-3 w-3" />
-                    </div>
                   </div>
                 )}
               </div>

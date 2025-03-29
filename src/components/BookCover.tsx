@@ -11,7 +11,7 @@ interface BookCoverProps {
 }
 
 const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
-  // Get an appropriate color for the layered effect based on cover or book color
+  // Get an appropriate color for the book cover
   const [layerColors, setLayerColors] = useState({
     primary: '#9b87f5',  // Default purple primary color
     secondary: '#e2e2e2', // Light gray for secondary layer
@@ -96,30 +96,6 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - positioned with same size, slightly offset */}
-      {book.isSeries && (
-        <>
-          <div 
-            className="absolute w-full h-full rounded-md z-0" 
-            style={{ 
-              backgroundColor: '#eaeaea', 
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              top: '6px',
-              left: '5px'
-            }}
-          />
-          <div 
-            className="absolute w-full h-full rounded-md z-0" 
-            style={{ 
-              backgroundColor: '#dedede',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              top: '3px',
-              left: '2px'
-            }}
-          />
-        </>
-      )}
-      
       <div className="relative z-10">
         {book.coverUrl ? (
           <img
@@ -127,22 +103,16 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             alt={displayTitle}
             className={cn(
               "w-32 h-48 object-cover rounded-md shadow-lg",
-              book.isSeries && "border-2",
             )}
-            style={book.isSeries ? { borderColor: layerColors.primary } : {}}
           />
         ) : (
           <div
             className={cn(
               "w-32 h-48 flex items-center justify-center rounded-md shadow-lg",
-              book.isSeries && "bg-gradient-to-b from-purple-50 to-transparent"
             )}
-            style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
+            style={{ backgroundColor: book.color || '#3B82F6' }}
           >
-            <span className={cn(
-              "text-lg font-bold",
-              book.isSeries ? "text-purple-700" : "text-white"
-            )}>
+            <span className="text-lg font-bold text-white">
               {displayTitle.substring(0, 1)}
             </span>
           </div>
@@ -150,14 +120,14 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         
         {/* Series indicator */}
         {book.isSeries && (
-          <div className="absolute top-1 right-1 bg-purple-700 text-white p-1 rounded-full z-20">
-            <BookMarked size={14} />
+          <div className="absolute top-0 left-0 bg-purple-700 text-white text-xs py-1 px-2 rounded-tl-md rounded-br-md z-20">
+            Series
           </div>
         )}
         
         {/* Favorite star badge */}
         {book.favorite && (
-          <div className="absolute top-1 left-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
+          <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
             <Star size={14} fill="white" />
           </div>
         )}

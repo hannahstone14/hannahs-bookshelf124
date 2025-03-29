@@ -43,8 +43,20 @@ const BookshelfStats: React.FC = () => {
     }
   ).length;
   
-  // Count books that are marked as series
-  const totalSeriesBooks = books.filter(book => book.isSeries).length;
+  // Count unique series by series name
+  const seriesBooks = books.filter(book => book.isSeries);
+  const uniqueSeriesNames = new Set();
+  
+  seriesBooks.forEach(book => {
+    if (book.seriesName) {
+      uniqueSeriesNames.add(book.seriesName);
+    } else {
+      // If no series name, use book id as a unique identifier for the series
+      uniqueSeriesNames.add(book.id);
+    }
+  });
+  
+  const totalSeriesCount = uniqueSeriesNames.size;
   
   const pagesRead = books.reduce((total, book) => {
     if (book.status === 'read') {
@@ -107,7 +119,7 @@ const BookshelfStats: React.FC = () => {
       {/* Profile and statistics header */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-28 w-28 border-2 border-white shadow-md">
+          <Avatar className="h-32 w-32 border-2 border-white shadow-md">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
@@ -120,35 +132,28 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm p-5 flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="text-4xl font-bold">
+        {/* Stats in a horizontal layout with evenly aligned numbers */}
+        <div className="bg-white rounded-xl shadow-sm p-5 grid grid-cols-4 gap-4 w-full md:w-auto">
+          <div className="text-center">
+            <div className="text-3xl font-bold mb-2">
               {formatPagesRead(pagesRead)}
             </div>
-            <div>
-              <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
-              <div className="flex items-center text-sm text-gray-500 mt-1">
-                <BookOpen className="h-4 w-4 mr-1" />
-                <span>From {books.length} books</span>
-              </div>
-            </div>
+            <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
           </div>
           
-          <div className="grid grid-cols-3 gap-3 flex-1">
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <div className="text-xs text-gray-500 mb-1">Books Read</div>
-              <div className="text-xl font-semibold">{totalBooksRead}</div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <div className="text-xs text-gray-500 mb-1">Read in {currentYear}</div>
-              <div className="text-xl font-semibold">{booksReadThisYear}</div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <div className="text-xs text-gray-500 mb-1">Series</div>
-              <div className="text-xl font-semibold">{totalSeriesBooks}</div>
-            </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold mb-2">{totalBooksRead}</div>
+            <h3 className="text-sm text-gray-500 font-medium">BOOKS READ</h3>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-3xl font-bold mb-2">{booksReadThisYear}</div>
+            <h3 className="text-sm text-gray-500 font-medium">READ IN {currentYear}</h3>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-3xl font-bold mb-2">{totalSeriesCount}</div>
+            <h3 className="text-sm text-gray-500 font-medium">SERIES</h3>
           </div>
         </div>
       </div>
