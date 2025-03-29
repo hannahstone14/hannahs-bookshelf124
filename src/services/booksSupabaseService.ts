@@ -1,8 +1,9 @@
+
 /**
  * Service for book-related Supabase operations
  */
 import { supabase } from '@/integrations/supabase/client';
-import { BOOKS_TABLE, shouldUseFallback, SupabaseResponse } from '@/lib/supabase';
+import { BOOKS_TABLE, SupabaseResponse } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { prepareBookForDB, convertDBToBook } from './bookMappers';
 import * as storageService from './storageService';
@@ -11,71 +12,11 @@ import { withTimeout } from '@/utils/timeoutUtils';
 const TIMEOUT_MS = 5000;
 
 /**
- * Map database book to application book
- */
-const mapDbBookToBook = (dbBook: any): Book => {
-  return {
-    id: dbBook.id,
-    title: dbBook.title,
-    author: dbBook.author,
-    coverUrl: dbBook.cover_url,
-    status: dbBook.status,
-    progress: dbBook.progress || 0,
-    pages: dbBook.pages || 0,
-    color: dbBook.color,
-    genres: dbBook.genres || [],
-    dateRead: dbBook.date_read ? new Date(dbBook.date_read) : new Date(),
-    recommendedBy: dbBook.recommended_by,
-    favorite: dbBook.favorite || false,
-    order: dbBook.order || 0,
-    isSeries: dbBook.is_series || false,
-    seriesName: dbBook.series_name,
-    seriesPosition: dbBook.series_position,
-    tags: dbBook.tags || [],
-    totalSeriesBooks: dbBook.total_series_books,
-    totalSeriesPages: dbBook.total_series_pages,
-  };
-};
-
-/**
- * Map application book to database book
- */
-const mapBookToDbBook = (book: Omit<Book, 'id'> | Partial<Book>): Record<string, any> => {
-  const dbBook: Record<string, any> = {
-    title: book.title,
-    author: book.author,
-    cover_url: book.coverUrl,
-    status: book.status,
-    progress: book.progress,
-    pages: book.pages,
-    color: book.color,
-    genres: book.genres,
-    date_read: book.dateRead ? book.dateRead.toISOString() : new Date().toISOString(),
-    recommended_by: book.recommendedBy,
-    favorite: book.favorite,
-    is_series: book.isSeries,
-    series_name: book.seriesName,
-    series_position: book.seriesPosition,
-    tags: book.tags,
-    total_series_books: book.totalSeriesBooks,
-    total_series_pages: book.totalSeriesPages,
-  };
-  
-  Object.keys(dbBook).forEach(key => {
-    if (dbBook[key] === undefined) {
-      delete dbBook[key];
-    }
-  });
-  
-  return dbBook;
-};
-
-/**
  * Get all books from Supabase
  */
 export const getAllBooks = async (): Promise<Book[]> => {
   try {
-    const result = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any[]>>(
       supabase.from(BOOKS_TABLE).select('*'),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error('Fallback: Timed out fetching books') })
@@ -113,7 +54,7 @@ export const addBook = async (book: Omit<Book, 'id'>): Promise<Book> => {
   
   try {
     console.log('Adding book to Supabase:', newBook);
-    const result = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any[]>>(
       supabase.from(BOOKS_TABLE).insert(newBook).select(),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error('Fallback: Timed out adding book') })
@@ -166,7 +107,7 @@ export const updateBook = async (
   bookData: Partial<Book>
 ): Promise<Book> => {
   try {
-    const existingBookResult = await withTimeout(
+    const existingBookResult = await withTimeout<SupabaseResponse<any>>(
       supabase.from(BOOKS_TABLE).select('*').eq('id', id).single(),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error(`Fallback: Timed out fetching book ${id}`) })
@@ -210,10 +151,8 @@ export const updateBook = async (
     if (bookData.seriesName !== undefined) updateData.series_name = bookData.seriesName;
     if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
     if (bookData.tags !== undefined) updateData.tags = bookData.tags;
-    if (bookData.totalSeriesBooks !== undefined) updateData.total_series_books = bookData.totalSeriesBooks;
-    if (bookData.totalSeriesPages !== undefined) updateData.total_series_pages = bookData.totalSeriesPages;
     
-    const updateResult = await withTimeout(
+    const updateResult = await withTimeout<SupabaseResponse<any>>(
       supabase.from(BOOKS_TABLE).update(updateData).eq('id', id),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error(`Fallback: Timed out updating book ${id}`) })
@@ -253,7 +192,7 @@ export const updateBook = async (
  */
 export const deleteBook = async (id: string): Promise<void> => {
   try {
-    const result = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any>>(
       supabase.from(BOOKS_TABLE).delete().eq('id', id),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error(`Fallback: Timed out deleting book ${id}`) })
@@ -277,7 +216,7 @@ export const deleteBook = async (id: string): Promise<void> => {
 export const updateBookOrder = async (orderedIds: string[]): Promise<void> => {
   try {
     const updatePromises = orderedIds.map((id, index) => {
-      return withTimeout(
+      return withTimeout<SupabaseResponse<any>>(
         supabase.from(BOOKS_TABLE).update({ order: index }).eq('id', id),
         TIMEOUT_MS,
         () => ({ data: null, error: new Error(`Fallback: Timed out updating order for book ${id}`) })
@@ -299,7 +238,7 @@ export const updateBookOrder = async (orderedIds: string[]): Promise<void> => {
  */
 export const getBooksInSeries = async (seriesName: string): Promise<Book[]> => {
   try {
-    const result = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any[]>>(
       supabase.from(BOOKS_TABLE).select('*').eq('series_name', seriesName).order('series_position', { ascending: true }),
       TIMEOUT_MS,
       () => ({ data: null, error: new Error(`Fallback: Timed out fetching series books for ${seriesName}`) })

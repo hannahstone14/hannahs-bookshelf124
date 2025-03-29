@@ -1,49 +1,47 @@
 
 /**
- * Run a promise with a timeout that will resolve with a fallback value
- * if the promise doesn't complete within the specified milliseconds.
- * 
- * @param promise The promise or Thenable to execute
- * @param timeoutMs Timeout in milliseconds
- * @param fallback Optional function to provide a fallback value on timeout
- * @returns Promise result or fallback value
+ * Utility for handling timeouts in async operations
  */
-export async function withTimeout<T>(
-  promise: Promise<T> | { then(onfulfilled: (value: T) => any): any },
+
+export type PromiseWithTimeout<T> = Promise<T> | { then(onfulfilled: any): any };
+
+/**
+ * Executes a promise with a timeout
+ * @param promise The promise to execute
+ * @param timeoutMs The timeout in milliseconds
+ * @param fallbackFn Optional fallback function to execute if the promise times out
+ * @returns The result of the promise or fallback function
+ */
+export const withTimeout = async <T>(
+  promise: PromiseWithTimeout<T>,
   timeoutMs: number,
-  fallback?: () => T
-): Promise<T> {
-  let timeoutId: NodeJS.Timeout | null = null;
+  fallbackFn?: () => T
+): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  
+  // Convert the input to a proper Promise if it's not already one
+  const actualPromise = Promise.resolve(promise);
+  
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
   
   try {
-    // Create a promise that rejects after the specified timeout
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error(`Operation timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-    });
+    const result = await Promise.race([
+      actualPromise,
+      timeoutPromise
+    ]);
     
-    // Convert the input to a proper Promise if it's not already one
-    const properPromise = Promise.resolve(promise);
-    
-    // Race the original promise against the timeout
-    const result = await Promise.race([properPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
     return result as T;
   } catch (error) {
-    console.error(`Operation timed out or failed after ${timeoutMs}ms:`, error);
-    
-    // If a fallback is provided, use it
-    if (fallback) {
-      console.log('Using fallback value due to timeout');
-      return fallback();
+    clearTimeout(timeoutId);
+    if (fallbackFn) {
+      console.warn('Using fallback function due to error:', error);
+      return fallbackFn();
     }
-    
-    // Otherwise, rethrow the error
     throw error;
-  } finally {
-    // Clear the timeout if it's still active
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
   }
-}
+};

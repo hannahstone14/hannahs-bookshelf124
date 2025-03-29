@@ -169,9 +169,6 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         isSeries: data.isSeries,
         seriesName: data.isSeries ? (data.seriesName || data.title) : undefined,
         seriesPosition: data.isSeries ? data.seriesPosition : undefined,
-        // Store series metadata even for single books in a series
-        totalSeriesBooks: data.isSeries ? totalSeriesBooks || 1 : undefined,
-        totalSeriesPages: data.isSeries ? totalSeriesPages || (data.pages || 0) : undefined,
       };
       
       if (data.isSeries && totalSeriesBooks > 1 && totalSeriesPages > 0) {
