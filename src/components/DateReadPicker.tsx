@@ -19,15 +19,18 @@ import {
 } from '@/components/ui/tabs';
 
 interface DateReadPickerProps {
-  date: Date;
+  date: Date | undefined;
   onDateChange: (date: Date) => void;
 }
 
 const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) => {
   const [selectedTab, setSelectedTab] = useState<'full-date' | 'year-only'>('full-date');
   
+  // Create a default date if none is provided
+  const safeDate = date || new Date();
+  
   const handleYearChange = (year: number) => {
-    const newDate = new Date(date);
+    const newDate = new Date(safeDate);
     newDate.setFullYear(year);
     onDateChange(newDate);
   };
@@ -70,7 +73,7 @@ const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) =
             <TabsContent value="full-date" className="p-0 pointer-events-auto">
               <Calendar
                 mode="single"
-                selected={date}
+                selected={safeDate}
                 onSelect={(newDate) => newDate && onDateChange(newDate)}
                 initialFocus
                 className="pointer-events-auto"
@@ -80,7 +83,7 @@ const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) =
             <TabsContent value="year-only" className="p-3 pointer-events-auto">
               <div className="py-4">
                 <YearPicker
-                  value={date.getFullYear()}
+                  value={safeDate.getFullYear()}
                   onChange={handleYearChange}
                   startYear={1900}
                   className="w-full pointer-events-auto"
