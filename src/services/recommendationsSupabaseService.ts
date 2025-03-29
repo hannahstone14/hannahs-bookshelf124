@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
 import { RECOMMENDATIONS_TABLE, SupabaseResponse } from '@/lib/supabase';
@@ -106,17 +107,32 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
       throw new Error('Recommendation must have a title and author');
     }
     
-    // Insert the recommendation into the database
+    // Explicitly type the recommendation for TypeScript
+    type RecommendationInsert = {
+      title: string;
+      author: string;
+      status: string;
+      progress: number;
+      cover_url?: string;
+      pages?: number;
+      color?: string;
+      genres?: string[];
+      date_read?: string;
+      recommended_by?: string;
+      favorite?: boolean;
+      is_series?: boolean;
+      series_name?: string;
+      series_position?: number;
+      tags?: string[];
+      total_series_books?: number;
+      total_series_pages?: number;
+    };
+    
+    // Insert the recommendation into the database with proper typing
     const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
-        .insert(dbRecommendation as { 
-          title: string; 
-          author: string;
-          status: string;
-          progress: number;
-          // Other fields are optional
-        })
+        .insert(dbRecommendation as RecommendationInsert)
         .select('*')
         .single(),
       5000

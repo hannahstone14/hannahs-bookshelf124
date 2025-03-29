@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ interface BookshelfContextType {
   toggleFavorite: (id: string) => void;
   recoverData: () => void;
   hasBackup: boolean;
+  refreshData: () => Promise<void>; // Add a function to manually refresh data
 }
 
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
@@ -35,6 +37,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(shouldUseFallback());
   const isMounted = useRef(true);
+  const lastRefreshTime = useRef<number>(Date.now());
   
   const localStorage = useLocalStorage();
   const supabaseStorage = useSupabase();
@@ -64,6 +67,33 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isMounted.current = false;
     };
   }, []);
+
+  // Add a function to manually refresh data
+  const refreshData = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Manually refreshing data...');
+      const [booksData, recommendationsData] = await Promise.all([
+        bookService.getAllBooks(),
+        bookService.getAllRecommendations()
+      ]);
+      
+      if (isMounted.current) {
+        console.log(`Refreshed data: ${booksData.length} books and ${recommendationsData.length} recommendations`);
+        setBooks(booksData);
+        setRecommendations(recommendationsData);
+        lastRefreshTime.current = Date.now();
+        toast.success('Data refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('Failed to refresh data');
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const addBook = async (
     book: Omit<Book, 'id'>, 
@@ -95,6 +125,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         
         toast.success(`Added ${seriesBooks.length} books in the ${book.seriesName} series!`);
+        
+        // Refresh data after adding series books
+        await refreshData();
       } else {
         const newBook = await bookService.addBook(bookWithSeriesData);
         
@@ -111,6 +144,11 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           toast.success('Thank you for your recommendation!');
         } else {
           toast.success('Book added to your shelf!');
+        }
+        
+        // Refresh data after adding a book
+        if (!useLocalStorageState) {
+          await refreshData();
         }
       }
     } catch (error) {
@@ -131,6 +169,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else {
           setBooks(prev => prev.filter(book => book.id !== id));
         }
+      } else {
+        // Always refresh data after removing a book when using Supabase
+        await refreshData();
       }
       
       toast.info(isRecommendation ? 'Recommendation removed' : 'Book removed from your shelf');
@@ -156,12 +197,20 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             prev.map(book => book.id === id ? { ...book, ...updatedBook } : book)
           );
         }
+      } else {
+        // Always refresh data after editing a book when using Supabase
+        await refreshData();
       }
       
       toast.success('Book updated successfully!');
     } catch (error) {
       console.error('Error editing book:', error);
       toast.error('Failed to update book');
+      
+      // Try to refresh data if there was an error
+      if (!useLocalStorageState) {
+        await refreshData();
+      }
     }
   };
 
@@ -175,6 +224,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setBooks(prev => 
           prev.map(book => book.id === id ? { ...book, progress, status } : book)
         );
+      } else {
+        // Always refresh data after updating progress when using Supabase
+        await refreshData();
       }
       
       toast.success('Reading progress updated!');
@@ -203,6 +255,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
             );
           }
+        } else {
+          // Always refresh data after toggling favorite when using Supabase
+          await refreshData();
         }
         
         toast.success('Favorite status updated!');
@@ -227,6 +282,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         );
         
         setBooks([...orderedBooks, ...unorderedBooks]);
+      } else {
+        // Always refresh data after reordering books when using Supabase
+        await refreshData();
       }
       
       toast.success('Books reordered successfully!');
@@ -248,6 +306,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.log(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
         setBooks(booksData);
         setRecommendations(recommendationsData);
+        lastRefreshTime.current = Date.now();
         toast.success(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
       }
     } catch (error) {
@@ -255,6 +314,24 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       toast.error('Failed to recover books');
     }
   };
+
+  // Add auto-refresh every 30 seconds when using Supabase
+  useEffect(() => {
+    if (useLocalStorageState) return;
+    
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime.current;
+      
+      // Only refresh if it's been more than 30 seconds since the last refresh
+      if (timeSinceLastRefresh > 30000 && !isLoading) {
+        console.log('Auto-refreshing data...');
+        refreshData();
+      }
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [useLocalStorageState, isLoading]);
 
   const value = {
     books,
@@ -266,7 +343,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     toggleFavorite,
     reorderBooks,
     recoverData,
-    hasBackup
+    hasBackup,
+    refreshData
   };
 
   useEffect(() => {
