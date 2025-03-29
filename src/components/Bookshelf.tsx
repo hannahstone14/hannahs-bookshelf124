@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked } from 'lucide-react';
@@ -32,7 +32,7 @@ const Bookshelf: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       isMounted.current = false;
     };
@@ -54,7 +54,8 @@ const Bookshelf: React.FC = () => {
   
   const seriesCount = uniqueSeriesNames.size;
   
-  React.useEffect(() => {
+  // Fix infinite loop by adding proper dependencies
+  useEffect(() => {
     if (!isMounted.current) return;
     
     let displayedBooks: Book[] = [];
@@ -74,7 +75,7 @@ const Bookshelf: React.FC = () => {
     }
     
     setBooksToDisplay(displayedBooks);
-  }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks]);
+  }, [viewTab, sortBy, sortOrder, books, recommendations]);
 
   const handleTabChange = useCallback((value: string) => {
     const newTab = value as ViewTab;

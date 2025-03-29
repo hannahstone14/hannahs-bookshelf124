@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { supabase } from '@/integrations/supabase/client';
 import * as bookService from '@/services/bookService';
+import * as storageService from '@/services/storageService';
 
 export const useSupabase = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -10,16 +11,26 @@ export const useSupabase = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isMounted = useRef(true);
   const channelsRef = useRef<{ books: any; recommendations: any } | null>(null);
+  const loadingAttemptsRef = useRef(0);
 
   // Load initial data and set up real-time subscriptions
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      
+      // Maximum attempts to load data from Supabase
+      const MAX_ATTEMPTS = 3;
+      let booksData: Book[] = [];
+      let recommendationsData: Book[] = [];
+      
       try {
-        const [booksData, recommendationsData] = await Promise.all([
+        // Try to load from Supabase first
+        [booksData, recommendationsData] = await Promise.all([
           bookService.getAllBooks(),
           bookService.getAllRecommendations()
         ]);
+        
+        loadingAttemptsRef.current = 0; // Reset attempts on success
         
         if (isMounted.current) {
           setBooks(booksData);
@@ -27,7 +38,24 @@ export const useSupabase = () => {
           console.log(`Loaded ${booksData.length} books and ${recommendationsData.length} recommendations from Supabase`);
         }
       } catch (error) {
-        console.error('Error loading initial data:', error);
+        console.error('Error loading from Supabase, attempt #', loadingAttemptsRef.current + 1, error);
+        
+        loadingAttemptsRef.current++;
+        
+        // After several attempts, try to fall back to localStorage
+        if (loadingAttemptsRef.current >= MAX_ATTEMPTS) {
+          console.log('Falling back to localStorage after multiple Supabase failures');
+          
+          // Try to load from localStorage as fallback
+          booksData = storageService.getStoredBooks();
+          recommendationsData = storageService.getStoredRecommendations();
+          
+          if (isMounted.current) {
+            setBooks(booksData);
+            setRecommendations(recommendationsData);
+            console.log(`Loaded ${booksData.length} books and ${recommendationsData.length} recommendations from localStorage fallback`);
+          }
+        }
       } finally {
         if (isMounted.current) {
           setIsLoading(false);
@@ -55,9 +83,13 @@ export const useSupabase = () => {
           { event: '*', schema: 'public', table: 'books' },
           async () => {
             console.log('Real-time books update received');
-            const updatedBooks = await bookService.getAllBooks();
-            if (isMounted.current) {
-              setBooks(updatedBooks);
+            try {
+              const updatedBooks = await bookService.getAllBooks();
+              if (isMounted.current) {
+                setBooks(updatedBooks);
+              }
+            } catch (error) {
+              console.error('Error updating books via real-time:', error);
             }
           }
         )
@@ -68,9 +100,13 @@ export const useSupabase = () => {
           { event: '*', schema: 'public', table: 'recommendations' },
           async () => {
             console.log('Real-time recommendations update received');
-            const updatedRecommendations = await bookService.getAllRecommendations();
-            if (isMounted.current) {
-              setRecommendations(updatedRecommendations);
+            try {
+              const updatedRecommendations = await bookService.getAllRecommendations();
+              if (isMounted.current) {
+                setRecommendations(updatedRecommendations);
+              }
+            } catch (error) {
+              console.error('Error updating recommendations via real-time:', error);
             }
           }
         )

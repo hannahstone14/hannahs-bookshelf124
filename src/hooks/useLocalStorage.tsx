@@ -1,30 +1,36 @@
-
 import { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 
 export const useLocalStorage = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
+  const [initialized, setInitialized] = useState<boolean>(false);
 
   // Load data from localStorage on initialization
   useEffect(() => {
+    if (initialized) return;
+    
     try {
       const storedBooks = localStorage.getItem('books');
       const storedRecommendations = localStorage.getItem('recommendations');
       
       if (storedBooks) {
-        setBooks(JSON.parse(storedBooks));
-        console.log('Loaded books from localStorage:', JSON.parse(storedBooks).length);
+        const parsedBooks = JSON.parse(storedBooks);
+        setBooks(parsedBooks);
+        console.log('Loaded books from localStorage:', parsedBooks.length);
       }
       
       if (storedRecommendations) {
-        setRecommendations(JSON.parse(storedRecommendations));
-        console.log('Loaded recommendations from localStorage:', JSON.parse(storedRecommendations).length);
+        const parsedRecommendations = JSON.parse(storedRecommendations);
+        setRecommendations(parsedRecommendations);
+        console.log('Loaded recommendations from localStorage:', parsedRecommendations.length);
       }
+      
+      setInitialized(true);
     } catch (error) {
       console.error('Error loading from localStorage:', error);
     }
-  }, []);
+  }, [initialized]);
 
   // Create custom setters that immediately sync with localStorage
   const setAndSaveBooks = (newBooks: Book[] | ((prev: Book[]) => Book[])) => {
@@ -57,6 +63,8 @@ export const useLocalStorage = () => {
 
   // Still keep the periodic sync for extra safety
   useEffect(() => {
+    if (!initialized) return;
+    
     const syncInterval = setInterval(() => {
       try {
         localStorage.setItem('books', JSON.stringify(books));
@@ -83,7 +91,7 @@ export const useLocalStorage = () => {
       clearInterval(syncInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [books, recommendations]);
+  }, [books, recommendations, initialized]);
 
   return {
     books,
