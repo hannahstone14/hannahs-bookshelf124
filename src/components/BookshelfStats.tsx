@@ -44,10 +44,11 @@ const BookshelfStats: React.FC = () => {
   ).length;
   
   const countCompleteSeriesRead = () => {
+    // Group books by series name
     const seriesGroups: Record<string, Book[]> = {};
     
     books.forEach(book => {
-      if (book.isSeries && book.seriesName && book.status === 'read') {
+      if (book.isSeries && book.seriesName) {
         if (!seriesGroups[book.seriesName]) {
           seriesGroups[book.seriesName] = [];
         }
@@ -55,10 +56,11 @@ const BookshelfStats: React.FC = () => {
       }
     });
     
+    // Count series where all books are read
     let completeSeriesCount = 0;
     
     Object.values(seriesGroups).forEach(seriesBooks => {
-      if (seriesBooks.length > 1 && seriesBooks.every(book => book.status === 'read')) {
+      if (seriesBooks.length > 0 && seriesBooks.every(book => book.status === 'read')) {
         completeSeriesCount++;
       }
     });
@@ -98,7 +100,7 @@ const BookshelfStats: React.FC = () => {
   
   const topGenres = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
+    .slice(0, 2) // Show only top 2 genres
     .map(([genre, count]) => ({ genre, count }));
   
   const readBooks = books.filter(book => book.status === 'read');
@@ -129,7 +131,7 @@ const BookshelfStats: React.FC = () => {
       {/* Profile and statistics header */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 border-2 border-white shadow-md">
+          <Avatar className="h-24 w-24 border-2 border-white shadow-md">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
@@ -138,7 +140,7 @@ const BookshelfStats: React.FC = () => {
           </Avatar>
           <div>
             <h1 className="text-3xl font-medium">Hannah's Library</h1>
-            <p className="text-gray-500 text-sm italic">I do not endorse everything I read.</p>
+            <p className="text-gray-500 text-sm">I do not endorse everything I read.</p>
           </div>
         </div>
         
@@ -175,36 +177,11 @@ const BookshelfStats: React.FC = () => {
         </div>
       </div>
       
+      {/* Book Highlights Section - Reorganized to horizontal layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-sm text-gray-500 font-medium mb-4">TOP 3 GENRES</h3>
-          {topGenres.length > 0 ? (
-            <div className="space-y-4">
-              {topGenres.map((item, index) => (
-                <div key={item.genre} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-600' : 
-                      index === 1 ? 'bg-gray-100 text-gray-600' : 
-                      'bg-amber-100 text-amber-600'
-                    }`}>
-                      {getGenreIcon(item.genre)}
-                    </div>
-                    <span className="font-medium">{item.genre}</span>
-                  </div>
-                  <span className="text-gray-500">{item.count} books</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-gray-500 text-center py-4">
-              Add books with genres to see statistics
-            </div>
-          )}
-        </div>
-
+        {/* Top genres */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-sm text-gray-500 font-medium mb-4">TOP 3 GENRES</h3>
+          <h3 className="text-sm text-gray-500 font-medium mb-4">TOP GENRES</h3>
           {topGenres.length > 0 ? (
             <div className="space-y-4">
               {topGenres.map((item, index) => (
@@ -212,8 +189,7 @@ const BookshelfStats: React.FC = () => {
                   <div className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
                       index === 0 ? 'bg-yellow-100 text-yellow-600' : 
-                      index === 1 ? 'bg-gray-100 text-gray-600' : 
-                      'bg-amber-100 text-amber-600'
+                      'bg-gray-100 text-gray-600'
                     }`}>
                       {getGenreIcon(item.genre)}
                     </div>
@@ -229,10 +205,7 @@ const BookshelfStats: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Book Highlights Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Last finished book */}
         {latestRead && (
           <div className="bg-white rounded-xl shadow-md p-6">

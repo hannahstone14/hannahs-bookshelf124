@@ -94,23 +94,27 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   return (
     <div className={cn(
       "relative", 
-      book.isSeries && "transform transition-transform hover:scale-105"
+      "transform transition-transform hover:scale-105"
     )}>
       {/* Layer effect for series books - positioned straight and to the right/bottom */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute top-1 left-1 w-full h-full rounded-md z-0" 
+            className="absolute w-full h-full rounded-md z-0" 
             style={{ 
               backgroundColor: '#eaeaea', 
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+              top: '5px',
+              left: '5px'
             }}
           />
           <div 
-            className="absolute top-2 left-2 w-full h-full rounded-md z-0" 
+            className="absolute w-full h-full rounded-md z-0" 
             style={{ 
               backgroundColor: '#dedede',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+              top: '10px',
+              left: '10px'
             }}
           />
         </>
