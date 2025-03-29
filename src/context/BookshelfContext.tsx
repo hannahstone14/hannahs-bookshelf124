@@ -101,10 +101,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.log('Adding book:', bookData.title);
       
       if (bookData.isSeries && totalSeriesBooks && totalSeriesPages && totalSeriesBooks > 1) {
-        const tempSeriesBooks = createSeriesBooks({
+        const completeBook: Book = {
           ...bookData,
           id: uuidv4()
-        }, totalSeriesBooks, totalSeriesPages);
+        };
+        
+        const tempSeriesBooks = createSeriesBooks(completeBook, totalSeriesBooks, totalSeriesPages);
         
         tempSeriesBooks.forEach(seriesBook => {
           updateLocalState(seriesBook, bookData.status === 'recommendation');
@@ -112,7 +114,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         try {
           const addPromises = tempSeriesBooks.map(seriesBook => 
-            bookService.addBook(seriesBook as Omit<Book, 'id'>)
+            bookService.addBook({
+              ...seriesBook,
+              id: undefined as any
+            } as Omit<Book, 'id'>)
           );
           const newBooks = await Promise.all(addPromises);
           

@@ -17,8 +17,11 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 30000, // 30 seconds
       gcTime: 300000, // 5 minutes (formerly cacheTime)
-      onError: (error) => {
-        console.error('Query error:', error);
+      meta: {
+        // Use meta for error handling in newer versions of tanstack/react-query
+        onError: (error: any) => {
+          console.error('Query error:', error);
+        }
       }
     },
   },
