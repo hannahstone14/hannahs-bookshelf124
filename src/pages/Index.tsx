@@ -4,9 +4,10 @@ import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { books, recommendations } = useBookshelf();
+  const { books, recommendations, recoverData, isLoading } = useBookshelf();
 
   // Debug log on mount
   useEffect(() => {
@@ -17,10 +18,16 @@ const Index = () => {
     try {
       const storedBooks = localStorage.getItem('books');
       console.log(`Books in localStorage: ${storedBooks ? JSON.parse(storedBooks).length : 0}`);
+      
+      // If there's a mismatch between state and localStorage, recover data
+      if (books.length === 0 && storedBooks && JSON.parse(storedBooks).length > 0) {
+        console.log('Mismatch between state and localStorage, recovering data...');
+        recoverData();
+      }
     } catch (error) {
       console.error('Error checking localStorage:', error);
     }
-  }, [books.length, recommendations.length]);
+  }, [books.length, recommendations.length, recoverData]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -33,7 +40,15 @@ const Index = () => {
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <BookshelfStats />
-          <Bookshelf />
+          
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-lg text-blue-600">Loading your books...</span>
+            </div>
+          ) : (
+            <Bookshelf />
+          )}
         </div>
       </main>
       

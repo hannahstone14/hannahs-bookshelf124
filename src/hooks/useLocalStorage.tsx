@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Book } from '@/types/book';
 
 export const useLocalStorage = () => {
@@ -32,57 +32,50 @@ export const useLocalStorage = () => {
     }
   }, [initialized]);
 
+  // Memoized function to save data to localStorage
+  const saveToLocalStorage = useCallback((key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+      console.log(`Saved ${data.length} items to localStorage: ${key}`);
+      return true;
+    } catch (error) {
+      console.error(`Error saving ${key} to localStorage:`, error);
+      return false;
+    }
+  }, []);
+
   // Create custom setters that immediately sync with localStorage
-  const setAndSaveBooks = (newBooks: Book[] | ((prev: Book[]) => Book[])) => {
+  const setAndSaveBooks = useCallback((newBooks: Book[] | ((prev: Book[]) => Book[])) => {
     setBooks(prev => {
       const updatedBooks = typeof newBooks === 'function' ? newBooks(prev) : newBooks;
       // Immediately save to localStorage
-      try {
-        localStorage.setItem('books', JSON.stringify(updatedBooks));
-        console.log(`Saved ${updatedBooks.length} books to localStorage`);
-      } catch (error) {
-        console.error('Error saving books to localStorage:', error);
-      }
+      saveToLocalStorage('books', updatedBooks);
       return updatedBooks;
     });
-  };
+  }, [saveToLocalStorage]);
 
-  const setAndSaveRecommendations = (newRecs: Book[] | ((prev: Book[]) => Book[])) => {
+  const setAndSaveRecommendations = useCallback((newRecs: Book[] | ((prev: Book[]) => Book[])) => {
     setRecommendations(prev => {
       const updatedRecs = typeof newRecs === 'function' ? newRecs(prev) : newRecs;
       // Immediately save to localStorage
-      try {
-        localStorage.setItem('recommendations', JSON.stringify(updatedRecs));
-        console.log(`Saved ${updatedRecs.length} recommendations to localStorage`);
-      } catch (error) {
-        console.error('Error saving recommendations to localStorage:', error);
-      }
+      saveToLocalStorage('recommendations', updatedRecs);
       return updatedRecs;
     });
-  };
+  }, [saveToLocalStorage]);
 
   // Still keep the periodic sync for extra safety
   useEffect(() => {
     if (!initialized) return;
     
     const syncInterval = setInterval(() => {
-      try {
-        localStorage.setItem('books', JSON.stringify(books));
-        localStorage.setItem('recommendations', JSON.stringify(recommendations));
-        console.log(`Storage periodic save complete at ${new Date().toISOString()}: books=${books.length}, recommendations=${recommendations.length}`);
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
-      }
-    }, 5000); // Changed from 15000 to 5000 ms for more frequent syncing
+      saveToLocalStorage('books', books);
+      saveToLocalStorage('recommendations', recommendations);
+    }, 3000); // Sync every 3 seconds
     
     const handleBeforeUnload = () => {
-      try {
-        localStorage.setItem('books', JSON.stringify(books));
-        localStorage.setItem('recommendations', JSON.stringify(recommendations));
-        console.log('Saved data before page unload');
-      } catch (error) {
-        console.error('Error saving to localStorage on unload:', error);
-      }
+      saveToLocalStorage('books', books);
+      saveToLocalStorage('recommendations', recommendations);
+      console.log('Saved data before page unload');
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -90,8 +83,12 @@ export const useLocalStorage = () => {
     return () => {
       clearInterval(syncInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Save one last time on component unmount
+      saveToLocalStorage('books', books);
+      saveToLocalStorage('recommendations', recommendations);
     };
-  }, [books, recommendations, initialized]);
+  }, [books, recommendations, initialized, saveToLocalStorage]);
 
   return {
     books,

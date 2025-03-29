@@ -7,15 +7,43 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { BookshelfProvider } from "./context/BookshelfContext";
+import { useEffect } from "react";
 
+// Configure React Query for better caching and retries
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false
+      retry: 2,
+      refetchOnWindowFocus: false,
+      staleTime: 30000, // 30 seconds
+      cacheTime: 300000, // 5 minutes
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
     },
   },
 });
+
+// Log when the app initializes
+const DataPersistenceLogger = () => {
+  useEffect(() => {
+    console.log('App initialized, checking localStorage data');
+    try {
+      const books = localStorage.getItem('books');
+      const recommendations = localStorage.getItem('recommendations');
+      console.log(`Found ${books ? JSON.parse(books).length : 0} books and ${recommendations ? JSON.parse(recommendations).length : 0} recommendations in localStorage`);
+    } catch (error) {
+      console.error('Error checking localStorage:', error);
+    }
+    
+    return () => {
+      console.log('App unmounting, ensuring data is saved');
+      // No need to do anything, our hooks handle saving on unmount
+    };
+  }, []);
+  
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,6 +51,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <DataPersistenceLogger />
         
         <BrowserRouter>
           <Routes>
