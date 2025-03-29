@@ -129,31 +129,36 @@ const BookshelfStats: React.FC = () => {
             <p className="text-gray-500 text-sm">I do not endorse everything I read.</p>
           </div>
         </div>
-        
-        {/* Pages Read Highlight */}
-        <div className="bg-white rounded-xl shadow-sm p-5 w-full md:w-auto flex flex-col justify-center items-center">
-          <div className="text-5xl font-bold mb-2">
-            {formatPagesRead(pagesRead)}
-          </div>
-          <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
-        </div>
       </div>
       
-      {/* Other Stats in a horizontal layout with evenly aligned numbers */}
-      <div className="bg-white rounded-xl shadow-sm p-5 mb-6 grid grid-cols-3 gap-4">
-        <div className="text-center">
-          <div className="text-3xl font-bold">{totalBooksRead}</div>
-          <h3 className="text-sm text-gray-500 font-medium">BOOKS READ</h3>
+      {/* Stats in a horizontal layout with evenly aligned numbers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Pages Read */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex flex-col items-center justify-center">
+            <div className="text-5xl font-bold">{formatPagesRead(pagesRead)}</div>
+            <h3 className="text-sm text-gray-500 font-medium">PAGES READ • {books.filter(book => book.status === 'read').length} BOOKS</h3>
+          </div>
         </div>
         
-        <div className="text-center">
-          <div className="text-3xl font-bold">{booksReadThisYear}</div>
-          <h3 className="text-sm text-gray-500 font-medium">READ IN {currentYear}</h3>
-        </div>
-        
-        <div className="text-center">
-          <div className="text-3xl font-bold">{totalSeriesCount}</div>
-          <h3 className="text-sm text-gray-500 font-medium">SERIES</h3>
+        {/* Other stats */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex justify-between items-center">
+            <div className="text-center flex-1">
+              <div className="text-3xl font-bold">{totalBooksRead}</div>
+              <h3 className="text-sm text-gray-500 font-medium">BOOKS READ</h3>
+            </div>
+            
+            <div className="text-center flex-1">
+              <div className="text-3xl font-bold">{booksReadThisYear}</div>
+              <h3 className="text-sm text-gray-500 font-medium">READ IN {currentYear}</h3>
+            </div>
+            
+            <div className="text-center flex-1">
+              <div className="text-3xl font-bold">{totalSeriesCount}</div>
+              <h3 className="text-sm text-gray-500 font-medium">SERIES</h3>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -188,10 +193,10 @@ const BookshelfStats: React.FC = () => {
 
         {/* Last finished book */}
         {latestRead && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-sm text-gray-500 font-medium mb-4">LAST FINISHED</h3>
+          <div className="bg-white rounded-xl shadow-md p-6 h-full">
+            <h3 className="text-xs text-gray-500 font-medium mb-4">LAST FINISHED</h3>
             <div className="flex items-start gap-3">
-              <div className="w-20 h-32 shadow-md rounded-sm overflow-hidden">
+              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -208,9 +213,9 @@ const BookshelfStats: React.FC = () => {
                 )}
               </div>
               <div>
-                <h4 className="text-xl font-medium">{latestRead.title}</h4>
-                <p className="text-gray-600">{latestRead.author}</p>
-                <p className="text-gray-400 text-sm mt-1">
+                <h4 className="text-lg font-medium">{latestRead.title}</h4>
+                <p className="text-gray-600 text-sm">{latestRead.author}</p>
+                <p className="text-gray-400 text-xs mt-1">
                   {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
                 </p>
               </div>
@@ -220,10 +225,10 @@ const BookshelfStats: React.FC = () => {
 
         {/* Next book to read */}
         {nextToRead && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-sm text-gray-500 font-medium mb-4">NEXT READ</h3>
+          <div className="bg-white rounded-xl shadow-md p-6 h-full">
+            <h3 className="text-xs text-gray-500 font-medium mb-4">NEXT READ</h3>
             <div className="flex items-start gap-3">
-              <div className="w-20 h-32 shadow-md rounded-sm overflow-hidden">
+              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
                 {nextToRead.coverUrl ? (
                   <img 
                     src={nextToRead.coverUrl} 
@@ -240,9 +245,9 @@ const BookshelfStats: React.FC = () => {
                 )}
               </div>
               <div>
-                <h4 className="text-xl font-medium">{nextToRead.title}</h4>
-                <p className="text-gray-600">{nextToRead.author}</p>
-                <p className="text-gray-400 text-sm mt-1">
+                <h4 className="text-lg font-medium">{nextToRead.title}</h4>
+                <p className="text-gray-600 text-sm">{nextToRead.author}</p>
+                <p className="text-gray-400 text-xs mt-1">
                   {nextToRead.pages} pages · {nextToRead.genres && nextToRead.genres.length > 0 ? nextToRead.genres[0] : 'No genre'}
                 </p>
               </div>

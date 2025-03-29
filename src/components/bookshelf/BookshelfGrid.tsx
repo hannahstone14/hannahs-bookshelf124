@@ -79,7 +79,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                 <BookCover book={book} showStatus={showStatus} />
                 
                 {book.isSeries && (
-                  <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">Series</Badge>
+                  <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">Series</Badge>
                 )}
               </div>
               

@@ -118,13 +118,6 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
           </div>
         )}
         
-        {/* Series indicator */}
-        {book.isSeries && (
-          <div className="absolute top-0 left-0 bg-purple-700 text-white text-xs py-1 px-2 rounded-tl-md rounded-br-md z-20">
-            Series
-          </div>
-        )}
-        
         {/* Favorite star badge */}
         {book.favorite && (
           <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
@@ -143,11 +136,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       {/* Series progress tracker */}
       {book.isSeries && seriesProgress && (
         <div className="mt-1 w-full">
-          {seriesProgress.isCompleted ? (
-            <div className="bg-green-100 text-green-800 text-xs text-center py-1 px-2 rounded-full w-full">
-              Completed
-            </div>
-          ) : (
+          {!seriesProgress.isCompleted && (
             <div className="w-full">
               <div className="text-xs text-center text-gray-700 mb-0.5">
                 {seriesProgress.booksRead} of {seriesProgress.totalInSeries} read
