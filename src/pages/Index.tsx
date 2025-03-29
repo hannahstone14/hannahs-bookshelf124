@@ -4,23 +4,34 @@ import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
+import * as storageService from '@/services/storageService';
 
 const Index = () => {
-  const { books, recommendations } = useBookshelf();
+  const { books, recommendations, recoverData } = useBookshelf();
 
-  // Debug log on mount
+  // Initialize and verify data on mount
   useEffect(() => {
     console.log(`Index page loaded. Books: ${books.length}, Recommendations: ${recommendations.length}`);
     console.log(`Using localStorage: ${shouldUseFallback()}`);
     
+    // Make sure test books are removed
+    storageService.purgeTestBooks();
+    
     // Check if books are in localStorage
     try {
       const storedBooks = localStorage.getItem('books');
-      console.log(`Books in localStorage: ${storedBooks ? JSON.parse(storedBooks).length : 0}`);
+      const bookCount = storedBooks ? JSON.parse(storedBooks).length : 0;
+      console.log(`Books in localStorage: ${bookCount}`);
+      
+      // If there's a mismatch, recover data from localStorage
+      if (books.length === 0 && bookCount > 0) {
+        console.log('Data mismatch detected, recovering data...');
+        recoverData();
+      }
     } catch (error) {
       console.error('Error checking localStorage:', error);
     }
-  }, [books.length, recommendations.length]);
+  }, [books.length, recommendations.length, recoverData]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

@@ -42,6 +42,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const supabaseStorage = useSupabase();
   
   useEffect(() => {
+    console.log('Running initial cleanup');
     storageService.purgeTestBooks();
   }, []);
   
@@ -50,17 +51,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     recommendations = [],
     setBooks,
     setRecommendations
-  } = useLocalStorageState ? localStorage : supabaseStorage;
+  } = localStorage;
   
   useEffect(() => {
-    if (!useLocalStorageState) {
-      setUseLocalStorageState(true);
-      console.log('Forced using localStorage to true for stability');
-    }
-  }, [useLocalStorageState]);
-  
-  useEffect(() => {
-    console.log(`BookshelfProvider initialized. Using localStorage: ${useLocalStorageState}`);
+    console.log('BookshelfProvider initialized.');
     console.log(`Current books count: ${books.length}, recommendations count: ${recommendations.length}`);
     
     if (books.some(isTestBook) || recommendations.some(isTestBook)) {
@@ -68,7 +62,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setBooks(books.filter(book => !isTestBook(book)));
       setRecommendations(recommendations.filter(book => !isTestBook(book)));
     }
-  }, [useLocalStorageState, books.length, recommendations.length, setBooks, setRecommendations]);
+  }, [books.length, recommendations.length, setBooks, setRecommendations]);
   
   useEffect(() => {
     return () => {
@@ -79,7 +73,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const refreshData = async () => {
     try {
       setIsLoading(true);
-      console.log('Auto-refreshing data...');
+      console.log('Refreshing data...');
       
       let booksData: Book[] = [];
       let recommendationsData: Book[] = [];
@@ -355,10 +349,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime.current;
       
-      if (timeSinceLastRefresh > 10000 && !isLoading) {
+      if (timeSinceLastRefresh > 30000 && !isLoading) {
         refreshData();
       }
-    }, 10000);
+    }, 30000);
     
     return () => clearInterval(intervalId);
   }, [isLoading]);
@@ -374,7 +368,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime.current;
       
-      if (timeSinceLastRefresh > 3000) {
+      if (timeSinceLastRefresh > 5000) {
         refreshData();
       }
     };
