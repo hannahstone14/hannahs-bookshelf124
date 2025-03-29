@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 
@@ -64,7 +65,7 @@ export const useLocalStorage = () => {
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
-    }, 15000);
+    }, 5000); // Changed from 15000 to 5000 ms for more frequent syncing
     
     const handleBeforeUnload = () => {
       try {
