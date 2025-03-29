@@ -25,6 +25,18 @@ const queryClient = new QueryClient({
 const cleanupStorage = () => {
   console.log("Initial app cleanup");
   storageService.purgeTestBooks();
+  
+  // Attempt to recover any data from localStorage if needed
+  try {
+    const storedBooks = localStorage.getItem('books');
+    if (storedBooks) {
+      console.log(`Found ${JSON.parse(storedBooks).length} books in localStorage during app initialization`);
+    } else {
+      console.log('No books found in localStorage during app initialization');
+    }
+  } catch (error) {
+    console.error('Error checking localStorage during app initialization:', error);
+  }
 };
 
 const App = () => {

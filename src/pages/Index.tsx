@@ -1,13 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
 import * as storageService from '@/services/storageService';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { books, recommendations, recoverData } = useBookshelf();
+  const [dataRecovered, setDataRecovered] = useState(false);
 
   // Initialize and verify data on mount
   useEffect(() => {
@@ -17,21 +19,46 @@ const Index = () => {
     // Make sure test books are removed
     storageService.purgeTestBooks();
     
-    // Check if books are in localStorage
-    try {
+    // Attempt data recovery on initial load
+    const attemptRecovery = async () => {
+      try {
+        // Check if books are in localStorage
+        const storedBooks = localStorage.getItem('books');
+        const bookCount = storedBooks ? JSON.parse(storedBooks).length : 0;
+        console.log(`Books in localStorage: ${bookCount}`);
+        
+        // Always attempt recovery on first load to ensure we have the latest data
+        if (!dataRecovered) {
+          console.log('Attempting data recovery...');
+          await recoverData();
+          setDataRecovered(true);
+          
+          // If we have books in localStorage but none in state, show a message
+          if (bookCount > 0 && books.length === 0) {
+            toast.info(`Restored ${bookCount} books from storage`);
+          }
+        }
+      } catch (error) {
+        console.error('Error during data recovery:', error);
+      }
+    };
+    
+    attemptRecovery();
+    
+    // Set up an interval to periodically check if books disappeared and recover them
+    const recoveryInterval = setInterval(() => {
       const storedBooks = localStorage.getItem('books');
       const bookCount = storedBooks ? JSON.parse(storedBooks).length : 0;
-      console.log(`Books in localStorage: ${bookCount}`);
       
-      // If there's a mismatch, recover data from localStorage
       if (books.length === 0 && bookCount > 0) {
-        console.log('Data mismatch detected, recovering data...');
+        console.log('Books disappeared from state, recovering data...');
         recoverData();
+        toast.info('Restoring your books...');
       }
-    } catch (error) {
-      console.error('Error checking localStorage:', error);
-    }
-  }, [books.length, recommendations.length, recoverData]);
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(recoveryInterval);
+  }, [books.length, recommendations.length, recoverData, dataRecovered]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
