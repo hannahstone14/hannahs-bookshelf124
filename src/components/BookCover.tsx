@@ -54,15 +54,15 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - subtle but visible */}
+      {/* Layer effect for series books - visible behind the cover */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-1.5 -bottom-1.5 w-30 h-46 rounded-md z-0 rotate-1.5 shadow-md opacity-70" 
+            className="absolute -right-3 -bottom-3 w-32 h-48 rounded-md z-0 rotate-3 shadow-md opacity-75" 
             style={{ backgroundColor: layerColors.tertiary }}
           />
           <div 
-            className="absolute -right-0.75 -bottom-0.75 w-30 h-46 rounded-md z-0 rotate-0.75 shadow-md opacity-80" 
+            className="absolute -right-1.5 -bottom-1.5 w-32 h-48 rounded-md z-0 rotate-1.5 shadow-md opacity-85" 
             style={{ backgroundColor: layerColors.secondary }}
           />
         </>
