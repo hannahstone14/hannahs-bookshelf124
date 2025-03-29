@@ -1,9 +1,10 @@
+
 import { Book } from '@/types/book';
 import { Tables } from '@/integrations/supabase/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Prepare a book object for insertion into the Supabase database
-export const prepareBookForDB = (book: Omit<Book, 'id'>): Tables<'books'>['Insert'] => {
+export const prepareBookForDB = (book: Omit<Book, 'id'>): any => {
   const newBookId = uuidv4();
   
   return {
@@ -27,7 +28,7 @@ export const prepareBookForDB = (book: Omit<Book, 'id'>): Tables<'books'>['Inser
 };
 
 // Convert a book object from the Supabase database to the Book type
-export const convertDBToBook = (dbBook: Tables<'books'>['Row']): Book => {
+export const convertDBToBook = (dbBook: any): Book => {
   return {
     id: dbBook.id,
     title: dbBook.title,

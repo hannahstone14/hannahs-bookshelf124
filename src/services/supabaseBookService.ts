@@ -52,13 +52,15 @@ export const addBook = async (book: Omit<Book, 'id'>): Promise<Book> => {
   const tableName = book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE;
   
   try {
-    const { error } = await supabase.from(tableName).insert(newBook);
-      
+    console.log('Adding book to Supabase:', newBook);
+    const { data, error } = await supabase.from(tableName).insert(newBook).select();
+    
     if (error) {
       console.error('Error adding book:', error);
       throw error;
     }
     
+    console.log('Book added successfully:', data);
     // Return the book with the generated ID
     return {
       ...book,
