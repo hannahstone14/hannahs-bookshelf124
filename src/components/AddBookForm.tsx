@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Book } from '@/types/book';
@@ -9,14 +10,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBookshelf } from '@/context/BookshelfContext';
-import { BookIcon, BookMarked } from 'lucide-react';
+import { BookIcon, BookMarked, Upload, Link } from 'lucide-react';
 import DateReadPicker from './DateReadPicker';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Create a schema for form validation
 const bookFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author is required"),
-  status: z.enum(['read', 'reading', 'to-read', 'wishlist', 'recommendation']),
+  status: z.enum(['read', 'reading', 'to-read', 'wishlist', 'recommendation']).default('read'),
   dateRead: z.date().optional(),
   pages: z.number().int().min(1, "Pages is required").max(10000, "Too many pages").optional(),
   progress: z.number().int().min(0, "Progress must be at least 0").max(100, "Progress can't exceed 100%").default(0),
@@ -40,6 +42,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
   const [showSeriesOptions, setShowSeriesOptions] = useState(bookToEdit?.isSeries || false);
   const [totalSeriesBooks, setTotalSeriesBooks] = useState<number>(0);
   const [totalSeriesPages, setTotalSeriesPages] = useState<number>(0);
+  const [coverImageMode, setCoverImageMode] = useState<'url' | 'upload'>('url');
+  const [uploadedCoverFile, setUploadedCoverFile] = useState<File | null>(null);
+  const [uploadedCoverPreview, setUploadedCoverPreview] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof bookFormSchema>>({
     resolver: zodResolver(bookFormSchema),
@@ -62,12 +68,52 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
   const status = form.watch('status');
   const isSeries = form.watch('isSeries');
   
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedCoverFile(file);
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedCoverPreview(imageUrl);
+      // We'll handle the actual file in onSubmit
+    }
+  };
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setUploadedCoverFile(file);
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedCoverPreview(imageUrl);
+    }
+  };
+
   const onSubmit = async (data: z.infer<typeof bookFormSchema>) => {
     try {
+      let finalCoverUrl = data.coverUrl || '';
+      
+      // If we have an uploaded file, create a data URL from it
+      if (coverImageMode === 'upload' && uploadedCoverFile) {
+        // For simplicity, we'll use a data URL approach
+        // In a production app, you would typically upload this to a storage service
+        const reader = new FileReader();
+        finalCoverUrl = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(uploadedCoverFile);
+        });
+      }
+      
       const bookData: Omit<Book, 'id'> = {
         title: data.title,
         author: data.author,
-        coverUrl: data.coverUrl || '',
+        coverUrl: finalCoverUrl,
         status: data.status,
         progress: data.progress,
         pages: data.pages || 0,
@@ -87,6 +133,13 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
       }
       
       form.reset();
+      // Clean up object URLs
+      if (uploadedCoverPreview) {
+        URL.revokeObjectURL(uploadedCoverPreview);
+        setUploadedCoverPreview('');
+      }
+      setUploadedCoverFile(null);
+      
       if (onClose) onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -96,6 +149,13 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
 
   const handleCancel = () => {
     form.reset();
+    // Clean up object URLs
+    if (uploadedCoverPreview) {
+      URL.revokeObjectURL(uploadedCoverPreview);
+      setUploadedCoverPreview('');
+    }
+    setUploadedCoverFile(null);
+    
     if (onClose) onClose();
   };
 
@@ -246,22 +306,92 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                 />
               )}
               
-              <FormField
-                control={form.control}
-                name="coverUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cover URL (optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/cover.jpg" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Link to a cover image for the book
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Updated cover selection to allow upload or URL */}
+              <div className="md:col-span-2">
+                <FormLabel className="block mb-2">Book Cover</FormLabel>
+                
+                <Tabs defaultValue={coverImageMode} onValueChange={(value) => setCoverImageMode(value as 'url' | 'upload')}>
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="url" className="flex items-center gap-2">
+                      <Link size={16} /> URL Link
+                    </TabsTrigger>
+                    <TabsTrigger value="upload" className="flex items-center gap-2">
+                      <Upload size={16} /> Upload Image
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="url">
+                    <FormField
+                      control={form.control}
+                      name="coverUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input 
+                              placeholder="https://example.com/cover.jpg" 
+                              {...field} 
+                              disabled={coverImageMode !== 'url'}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Link to a cover image for the book
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="upload">
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileInputChange}
+                        className="hidden"
+                      />
+                      
+                      {uploadedCoverPreview ? (
+                        <div className="flex flex-col items-center">
+                          <img 
+                            src={uploadedCoverPreview} 
+                            alt="Cover preview" 
+                            className="w-36 h-48 object-cover rounded-md mb-2"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUploadedCoverFile(null);
+                              setUploadedCoverPreview('');
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="h-12 w-12 text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-500 text-center">
+                            Click to upload or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            JPG, PNG, GIF up to 10MB
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
               
               <FormField
                 control={form.control}
