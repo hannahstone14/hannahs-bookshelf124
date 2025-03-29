@@ -1,8 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
 import * as bookService from '@/services/bookService';
-import { supabase, isUsingDemoCredentials } from '@/lib/supabase';
+import { isUsingDemoCredentials } from '@/lib/supabase';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useSupabase } from '@/hooks/useSupabase';
 
 interface BookshelfContextType {
   books: Book[];
@@ -28,167 +31,38 @@ export const useBookshelf = () => {
 };
 
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [useLocalStorage, setUseLocalStorage] = useState<boolean>(isUsingDemoCredentials);
   const isMounted = useRef(true);
-
-  // Initialize local storage if using demo credentials
+  
+  // Use either localStorage or Supabase based on configuration
+  const localStorage = useLocalStorage();
+  const supabaseStorage = useSupabase();
+  
+  // Determine which data source to use
+  const { 
+    books = [], 
+    recommendations = [],
+    setBooks,
+    setRecommendations
+  } = useLocalStorage ? localStorage : supabaseStorage;
+  
+  // Set loading state based on Supabase loading (if applicable)
   useEffect(() => {
-    if (isUsingDemoCredentials) {
-      console.log("Using demo Supabase credentials. Data will be stored in localStorage.");
-      try {
-        const storedBooks = localStorage.getItem('books');
-        const storedRecommendations = localStorage.getItem('recommendations');
-        
-        if (storedBooks) {
-          setBooks(JSON.parse(storedBooks));
-        }
-        
-        if (storedRecommendations) {
-          setRecommendations(JSON.parse(storedRecommendations));
-        }
-      } catch (error) {
-        console.error('Error loading from localStorage:', error);
-      }
+    if (!useLocalStorage && 'isLoading' in supabaseStorage) {
+      setIsLoading(supabaseStorage.isLoading);
+    } else {
+      setIsLoading(false);
     }
-  }, []);
+  }, [useLocalStorage, supabaseStorage]);
 
+  // Allow component to clean up on unmount
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [booksData, recommendationsData] = await Promise.all([
-          bookService.getAllBooks(),
-          bookService.getAllRecommendations()
-        ]);
-        
-        if (isMounted.current) {
-          setBooks(booksData);
-          setRecommendations(recommendationsData);
-          console.log(`Loaded ${booksData.length} books and ${recommendationsData.length} recommendations from Supabase`);
-        }
-      } catch (error) {
-        console.error('Error loading initial data:', error);
-        toast.error('Failed to load your books');
-        
-        if (useLocalStorage) {
-          try {
-            const storedBooks = localStorage.getItem('books');
-            const storedRecommendations = localStorage.getItem('recommendations');
-            
-            if (storedBooks) {
-              setBooks(JSON.parse(storedBooks));
-            }
-            
-            if (storedRecommendations) {
-              setRecommendations(JSON.parse(storedRecommendations));
-            }
-          } catch (storageError) {
-            console.error('Error loading from localStorage:', storageError);
-          }
-        }
-      } finally {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    loadData();
-    
-    if (useLocalStorage) {
-      const syncInterval = setInterval(() => {
-        console.log('Performing periodic save');
-        try {
-          console.log(`Saving ${books.length} books and ${recommendations.length} recommendations to storage`);
-          localStorage.setItem('books', JSON.stringify(books));
-          localStorage.setItem('recommendations', JSON.stringify(recommendations));
-          console.log(`Storage save complete with timestamp: ${new Date().toISOString()} success: true`);
-        } catch (error) {
-          console.error('Error saving to localStorage:', error);
-        }
-      }, 15000);
-      
-      const handleBeforeUnload = () => {
-        console.log('Page unloading, saving data');
-        try {
-          localStorage.setItem('books', JSON.stringify(books));
-          localStorage.setItem('recommendations', JSON.stringify(recommendations));
-        } catch (error) {
-          console.error('Error saving to localStorage on unload:', error);
-        }
-      };
-      
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      
-      return () => {
-        clearInterval(syncInterval);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-    
-    if (!useLocalStorage) {
-      try {
-        let booksSubscription: any = null;
-        let recommendationsSubscription: any = null;
-        
-        if (typeof supabase.channel === 'function') {
-          try {
-            booksSubscription = supabase.channel('books-changes');
-            if (booksSubscription && typeof booksSubscription.on === 'function') {
-              booksSubscription = booksSubscription.on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'books' },
-                async () => {
-                  console.log('Real-time books update received');
-                  const updatedBooks = await bookService.getAllBooks();
-                  if (isMounted.current) {
-                    setBooks(updatedBooks);
-                  }
-                }
-              ).subscribe();
-            }
-            
-            recommendationsSubscription = supabase.channel('recommendations-changes');
-            if (recommendationsSubscription && typeof recommendationsSubscription.on === 'function') {
-              recommendationsSubscription = recommendationsSubscription.on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'recommendations' },
-                async () => {
-                  console.log('Real-time recommendations update received');
-                  const updatedRecommendations = await bookService.getAllRecommendations();
-                  if (isMounted.current) {
-                    setRecommendations(updatedRecommendations);
-                  }
-                }
-              ).subscribe();
-            }
-          } catch (subError) {
-            console.error('Error setting up real-time subscriptions:', subError);
-          }
-        }
-        
-        return () => {
-          isMounted.current = false;
-          if (booksSubscription && typeof booksSubscription.unsubscribe === 'function') {
-            booksSubscription.unsubscribe();
-          }
-          if (recommendationsSubscription && typeof recommendationsSubscription.unsubscribe === 'function') {
-            recommendationsSubscription.unsubscribe();
-          }
-        };
-      } catch (error) {
-        console.error('Error setting up real-time subscriptions:', error);
-      }
-    }
-    
     return () => {
       isMounted.current = false;
     };
-  }, [useLocalStorage, books, recommendations]);
+  }, []);
 
   const addBook = async (book: Omit<Book, 'id'>) => {
     try {

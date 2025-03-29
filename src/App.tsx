@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { BookshelfProvider } from "./context/BookshelfContext";
-import { isUsingDemoCredentials } from "./lib/supabase";
 
 const queryClient = new QueryClient({
   defaultOptions: {
