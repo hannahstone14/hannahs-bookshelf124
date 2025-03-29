@@ -8,6 +8,12 @@ export const RECOMMENDATIONS_TABLE = 'recommendations';
 // Check if we're using demo credentials
 export const isUsingDemoCredentials = false;
 
+// Define Supabase response type to ensure type safety
+export type SupabaseResponse<T> = {
+  data: T | null;
+  error: Error | null;
+};
+
 // Helper to determine if we should use localStorage fallback
 export const shouldUseFallback = () => {
   try {
