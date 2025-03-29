@@ -33,7 +33,7 @@ export const useBookshelf = () => {
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [useLocalStorage, setUseLocalStorage] = useState<boolean>(isUsingDemoCredentials);
+  const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(isUsingDemoCredentials);
   const isMounted = useRef(true);
   
   // Use either localStorage or Supabase based on configuration
@@ -46,16 +46,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     recommendations = [],
     setBooks,
     setRecommendations
-  } = useLocalStorage ? localStorage : supabaseStorage;
+  } = useLocalStorageState ? localStorage : supabaseStorage;
   
   // Set loading state based on Supabase loading (if applicable)
   useEffect(() => {
-    if (!useLocalStorage && 'isLoading' in supabaseStorage) {
+    if (!useLocalStorageState && 'isLoading' in supabaseStorage) {
       setIsLoading(supabaseStorage.isLoading);
     } else {
       setIsLoading(false);
     }
-  }, [useLocalStorage, supabaseStorage]);
+  }, [useLocalStorageState, supabaseStorage]);
 
   // Allow component to clean up on unmount
   useEffect(() => {
