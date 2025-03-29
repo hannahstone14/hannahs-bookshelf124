@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
@@ -113,12 +114,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
         
         try {
-          const addPromises = tempSeriesBooks.map(seriesBook => 
-            bookService.addBook({
-              ...seriesBook,
-              id: undefined as any
-            } as Omit<Book, 'id'>)
-          );
+          const addPromises = tempSeriesBooks.map(seriesBook => {
+            // Create a proper Omit<Book, "id"> by removing the id property
+            const { id, ...bookWithoutId } = seriesBook;
+            return bookService.addBook(bookWithoutId);
+          });
+          
           const newBooks = await Promise.all(addPromises);
           
           newBooks.forEach(newBook => {
