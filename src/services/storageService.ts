@@ -5,7 +5,13 @@ import { Book } from '@/types/book';
 export const getStoredBooks = (): Book[] => {
   try {
     const storedBooks = localStorage.getItem('books');
-    return storedBooks ? JSON.parse(storedBooks) : [];
+    if (!storedBooks) {
+      console.log('No books found in localStorage, returning empty array');
+      return [];
+    }
+    const parsedBooks = JSON.parse(storedBooks);
+    console.log(`Retrieved ${parsedBooks.length} books from localStorage`);
+    return parsedBooks;
   } catch (error) {
     console.error('Error getting books from localStorage:', error);
     return [];
@@ -15,7 +21,13 @@ export const getStoredBooks = (): Book[] => {
 export const getStoredRecommendations = (): Book[] => {
   try {
     const storedRecommendations = localStorage.getItem('recommendations');
-    return storedRecommendations ? JSON.parse(storedRecommendations) : [];
+    if (!storedRecommendations) {
+      console.log('No recommendations found in localStorage, returning empty array');
+      return [];
+    }
+    const parsedRecommendations = JSON.parse(storedRecommendations);
+    console.log(`Retrieved ${parsedRecommendations.length} recommendations from localStorage`);
+    return parsedRecommendations;
   } catch (error) {
     console.error('Error getting recommendations from localStorage:', error);
     return [];
@@ -25,6 +37,7 @@ export const getStoredRecommendations = (): Book[] => {
 export const storeBooks = (books: Book[]): void => {
   try {
     localStorage.setItem('books', JSON.stringify(books));
+    console.log(`Stored ${books.length} books in localStorage`);
   } catch (error) {
     console.error('Error saving books to localStorage:', error);
   }
@@ -33,6 +46,7 @@ export const storeBooks = (books: Book[]): void => {
 export const storeRecommendations = (recommendations: Book[]): void => {
   try {
     localStorage.setItem('recommendations', JSON.stringify(recommendations));
+    console.log(`Stored ${recommendations.length} recommendations in localStorage`);
   } catch (error) {
     console.error('Error saving recommendations to localStorage:', error);
   }
@@ -43,7 +57,9 @@ export const addStoredBook = (book: Book, isRecommendation: boolean = false): vo
     const storageKey = isRecommendation ? 'recommendations' : 'books';
     const existing = localStorage.getItem(storageKey);
     const items = existing ? JSON.parse(existing) : [];
-    localStorage.setItem(storageKey, JSON.stringify([...items, book]));
+    const updatedItems = [...items, book];
+    localStorage.setItem(storageKey, JSON.stringify(updatedItems));
+    console.log(`Added book "${book.title}" to ${storageKey}. New count: ${updatedItems.length}`);
   } catch (error) {
     console.error(`Error adding book to ${isRecommendation ? 'recommendations' : 'books'} in localStorage:`, error);
   }

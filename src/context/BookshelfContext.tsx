@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { Book } from '@/types/book';
 import { toast } from "sonner";
 import * as bookService from '@/services/bookService';
-import { isUsingDemoCredentials } from '@/lib/supabase';
+import { isUsingDemoCredentials, shouldUseFallback } from '@/lib/supabase';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSupabase } from '@/hooks/useSupabase';
 
@@ -33,7 +33,7 @@ export const useBookshelf = () => {
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(isUsingDemoCredentials);
+  const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(shouldUseFallback());
   const isMounted = useRef(true);
   
   // Use either localStorage or Supabase based on configuration
@@ -47,6 +47,11 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setBooks,
     setRecommendations
   } = useLocalStorageState ? localStorage : supabaseStorage;
+  
+  useEffect(() => {
+    console.log(`BookshelfProvider initialized. Using localStorage: ${useLocalStorageState}`);
+    console.log(`Current books count: ${books.length}, recommendations count: ${recommendations.length}`);
+  }, [useLocalStorageState, books.length, recommendations.length]);
   
   // Set loading state based on Supabase loading (if applicable)
   useEffect(() => {
@@ -66,14 +71,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addBook = async (book: Omit<Book, 'id'>) => {
     try {
+      console.log('Adding book:', book.title);
       const newBook = await bookService.addBook(book);
       
-      if (useLocalStorage) {
+      if (useLocalStorageState) {
         if (book.status === 'recommendation') {
           setRecommendations(prev => [...prev, newBook]);
         } else {
           setBooks(prev => [...prev, newBook]);
         }
+        console.log(`Book added successfully. New count: ${book.status === 'recommendation' ? recommendations.length + 1 : books.length + 1}`);
       }
       
       if (book.status === 'recommendation') {
@@ -206,12 +213,14 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const recoverData = async () => {
     try {
+      console.log('Attempting to recover data from service...');
       const [booksData, recommendationsData] = await Promise.all([
         bookService.getAllBooks(),
         bookService.getAllRecommendations()
       ]);
       
       if (isMounted.current) {
+        console.log(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
         setBooks(booksData);
         setRecommendations(recommendationsData);
         toast.success(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
@@ -226,14 +235,129 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     books,
     recommendations,
     addBook,
-    removeBook,
-    editBook,
-    reorderBooks,
-    updateProgress,
-    toggleFavorite,
+    removeBook: (id: string) => {
+      const isRecommendation = recommendations.some(rec => rec.id === id);
+      
+      bookService.deleteBook(id, isRecommendation)
+        .then(() => {
+          if (useLocalStorageState) {
+            if (isRecommendation) {
+              setRecommendations(prev => prev.filter(book => book.id !== id));
+            } else {
+              setBooks(prev => prev.filter(book => book.id !== id));
+            }
+          }
+          
+          toast.info(isRecommendation ? 'Recommendation removed' : 'Book removed from your shelf');
+        })
+        .catch(error => {
+          console.error('Error removing book:', error);
+          toast.error('Failed to remove book');
+        });
+    },
+    editBook: (id: string, bookData: Partial<Book>) => {
+      const isRecommendation = recommendations.some(rec => rec.id === id);
+      
+      bookService.updateBook(id, bookData, isRecommendation)
+        .then(updatedBook => {
+          if (useLocalStorageState) {
+            if (isRecommendation) {
+              setRecommendations(prev => 
+                prev.map(book => book.id === id ? { ...book, ...updatedBook } : book)
+              );
+            } else {
+              setBooks(prev => 
+                prev.map(book => book.id === id ? { ...book, ...updatedBook } : book)
+              );
+            }
+          }
+          
+          toast.success('Book updated successfully!');
+        })
+        .catch(error => {
+          console.error('Error editing book:', error);
+          toast.error('Failed to update book');
+        });
+    },
+    updateProgress: (id: string, progress: number) => {
+      const status = progress === 100 ? 'read' : 'reading';
+      
+      bookService.updateBook(id, { progress, status })
+        .then(() => {
+          if (useLocalStorageState) {
+            setBooks(prev => 
+              prev.map(book => book.id === id ? { ...book, progress, status } : book)
+            );
+          }
+          
+          toast.success('Reading progress updated!');
+        })
+        .catch(error => {
+          console.error('Error updating progress:', error);
+          toast.error('Failed to update progress');
+        });
+    },
+    toggleFavorite: (id: string) => {
+      const isRecommendation = recommendations.some(rec => rec.id === id);
+      const collection = isRecommendation ? recommendations : books;
+      const book = collection.find(b => b.id === id);
+      
+      if (book) {
+        bookService.updateBook(id, { favorite: !book.favorite }, isRecommendation)
+          .then(() => {
+            if (useLocalStorageState) {
+              if (isRecommendation) {
+                setRecommendations(prev => 
+                  prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
+                );
+              } else {
+                setBooks(prev => 
+                  prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
+                );
+              }
+            }
+            
+            toast.success('Favorite status updated!');
+          })
+          .catch(error => {
+            console.error('Error toggling favorite:', error);
+            toast.error('Failed to update favorite status');
+          });
+      }
+    },
+    reorderBooks: (currentOrder: string[], newOrder: string[]) => {
+      bookService.updateBookOrder(newOrder)
+        .then(() => {
+          if (useLocalStorageState) {
+            const orderedBooks = newOrder.map(
+              id => books.find(book => book.id === id)
+            ).filter(Boolean) as Book[];
+            
+            const unorderedBooks = books.filter(
+              book => !newOrder.includes(book.id)
+            );
+            
+            setBooks([...orderedBooks, ...unorderedBooks]);
+          }
+          
+          toast.success('Books reordered successfully!');
+        })
+        .catch(error => {
+          console.error('Error reordering books:', error);
+          toast.error('Failed to reorder books');
+        });
+    },
     recoverData,
     hasBackup
   };
+
+  // Attempt to load data on first render if storage appears empty
+  useEffect(() => {
+    if (books.length === 0 && recommendations.length === 0 && !isLoading) {
+      console.log('No books found in state, attempting to recover data...');
+      recoverData();
+    }
+  }, [isLoading]); // Only run once after initial loading is complete
 
   if (isLoading) {
     return (

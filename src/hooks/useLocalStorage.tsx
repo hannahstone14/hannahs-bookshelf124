@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 
@@ -14,34 +13,64 @@ export const useLocalStorage = () => {
       
       if (storedBooks) {
         setBooks(JSON.parse(storedBooks));
+        console.log('Loaded books from localStorage:', JSON.parse(storedBooks).length);
       }
       
       if (storedRecommendations) {
         setRecommendations(JSON.parse(storedRecommendations));
+        console.log('Loaded recommendations from localStorage:', JSON.parse(storedRecommendations).length);
       }
     } catch (error) {
       console.error('Error loading from localStorage:', error);
     }
   }, []);
 
-  // Save data to localStorage when it changes
+  // Create custom setters that immediately sync with localStorage
+  const setAndSaveBooks = (newBooks: Book[] | ((prev: Book[]) => Book[])) => {
+    setBooks(prev => {
+      const updatedBooks = typeof newBooks === 'function' ? newBooks(prev) : newBooks;
+      // Immediately save to localStorage
+      try {
+        localStorage.setItem('books', JSON.stringify(updatedBooks));
+        console.log(`Saved ${updatedBooks.length} books to localStorage`);
+      } catch (error) {
+        console.error('Error saving books to localStorage:', error);
+      }
+      return updatedBooks;
+    });
+  };
+
+  const setAndSaveRecommendations = (newRecs: Book[] | ((prev: Book[]) => Book[])) => {
+    setRecommendations(prev => {
+      const updatedRecs = typeof newRecs === 'function' ? newRecs(prev) : newRecs;
+      // Immediately save to localStorage
+      try {
+        localStorage.setItem('recommendations', JSON.stringify(updatedRecs));
+        console.log(`Saved ${updatedRecs.length} recommendations to localStorage`);
+      } catch (error) {
+        console.error('Error saving recommendations to localStorage:', error);
+      }
+      return updatedRecs;
+    });
+  };
+
+  // Still keep the periodic sync for extra safety
   useEffect(() => {
     const syncInterval = setInterval(() => {
-      console.log('Performing periodic save');
       try {
         localStorage.setItem('books', JSON.stringify(books));
         localStorage.setItem('recommendations', JSON.stringify(recommendations));
-        console.log(`Storage save complete with timestamp: ${new Date().toISOString()} success: true`);
+        console.log(`Storage periodic save complete at ${new Date().toISOString()}: books=${books.length}, recommendations=${recommendations.length}`);
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
     }, 15000);
     
     const handleBeforeUnload = () => {
-      console.log('Page unloading, saving data');
       try {
         localStorage.setItem('books', JSON.stringify(books));
         localStorage.setItem('recommendations', JSON.stringify(recommendations));
+        console.log('Saved data before page unload');
       } catch (error) {
         console.error('Error saving to localStorage on unload:', error);
       }
@@ -57,8 +86,8 @@ export const useLocalStorage = () => {
 
   return {
     books,
-    setBooks,
+    setBooks: setAndSaveBooks,
     recommendations,
-    setRecommendations
+    setRecommendations: setAndSaveRecommendations
   };
 };
