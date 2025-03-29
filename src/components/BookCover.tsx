@@ -96,7 +96,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - positioned straight and to the right/bottom */}
+      {/* Layer effect for series books - positioned with same size, slightly offset */}
       {book.isSeries && (
         <>
           <div 
@@ -104,7 +104,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             style={{ 
               backgroundColor: '#eaeaea', 
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              top: '5px',
+              top: '6px',
               left: '5px'
             }}
           />
@@ -113,8 +113,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             style={{ 
               backgroundColor: '#dedede',
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-              top: '10px',
-              left: '10px'
+              top: '3px',
+              left: '2px'
             }}
           />
         </>

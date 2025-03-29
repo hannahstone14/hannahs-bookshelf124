@@ -43,32 +43,8 @@ const BookshelfStats: React.FC = () => {
     }
   ).length;
   
-  const countCompleteSeriesRead = () => {
-    // Group books by series name
-    const seriesGroups: Record<string, Book[]> = {};
-    
-    books.forEach(book => {
-      if (book.isSeries && book.seriesName) {
-        if (!seriesGroups[book.seriesName]) {
-          seriesGroups[book.seriesName] = [];
-        }
-        seriesGroups[book.seriesName].push(book);
-      }
-    });
-    
-    // Count series where all books are read
-    let completeSeriesCount = 0;
-    
-    Object.values(seriesGroups).forEach(seriesBooks => {
-      if (seriesBooks.length > 0 && seriesBooks.every(book => book.status === 'read')) {
-        completeSeriesCount++;
-      }
-    });
-    
-    return completeSeriesCount;
-  };
-  
-  const totalSeriesRead = countCompleteSeriesRead();
+  // Count books that are marked as series
+  const totalSeriesBooks = books.filter(book => book.isSeries).length;
   
   const pagesRead = books.reduce((total, book) => {
     if (book.status === 'read') {
@@ -131,7 +107,7 @@ const BookshelfStats: React.FC = () => {
       {/* Profile and statistics header */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-24 w-24 border-2 border-white shadow-md">
+          <Avatar className="h-28 w-28 border-2 border-white shadow-md">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
@@ -170,14 +146,14 @@ const BookshelfStats: React.FC = () => {
             </div>
             
             <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <div className="text-xs text-gray-500 mb-1">Series Read</div>
-              <div className="text-xl font-semibold">{totalSeriesRead}</div>
+              <div className="text-xs text-gray-500 mb-1">Series</div>
+              <div className="text-xl font-semibold">{totalSeriesBooks}</div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Book Highlights Section - Reorganized to horizontal layout */}
+      {/* Book Highlights Section - Horizontal layout */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Top genres */}
         <div className="bg-white rounded-xl shadow-md p-6">
@@ -209,7 +185,7 @@ const BookshelfStats: React.FC = () => {
         {/* Last finished book */}
         {latestRead && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-sm text-gray-500 font-medium mb-4">LAST BOOK HANNAH FINISHED</h3>
+            <h3 className="text-sm text-gray-500 font-medium mb-4">LAST FINISHED</h3>
             <div className="flex items-start gap-3">
               <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
                 {latestRead.coverUrl ? (
@@ -241,7 +217,7 @@ const BookshelfStats: React.FC = () => {
         {/* Next book to read */}
         {nextToRead && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-sm text-gray-500 font-medium mb-4">NEXT BOOK HANNAH WILL READ</h3>
+            <h3 className="text-sm text-gray-500 font-medium mb-4">NEXT READ</h3>
             <div className="flex items-start gap-3">
               <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
                 {nextToRead.coverUrl ? (

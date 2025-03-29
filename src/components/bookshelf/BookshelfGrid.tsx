@@ -64,7 +64,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white">
+                  <DropdownMenuContent align="end" className="w-48 bg-white z-50">
                     <DropdownMenuItem onClick={() => onEdit(book)}>
                       <Pencil className="h-4 w-4 mr-2" /> Edit
                     </DropdownMenuItem>

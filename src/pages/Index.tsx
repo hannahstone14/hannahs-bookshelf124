@@ -39,7 +39,7 @@ const Index = () => {
       
       <footer className="py-6 border-t border-gray-200 text-center text-sm text-gray-600 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p>Track your reading journey, one book at a time.</p>
+          <p>Book Tracker</p>
         </div>
       </footer>
     </div>
