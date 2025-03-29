@@ -1,8 +1,9 @@
+
 /**
  * Service for book-related Supabase operations
  */
 import { supabase } from '@/integrations/supabase/client';
-import { BOOKS_TABLE, shouldUseFallback } from '@/lib/supabase';
+import { BOOKS_TABLE, shouldUseFallback, SupabaseResponse } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { prepareBookForDB, convertDBToBook } from './bookMappers';
 import * as storageService from './storageService';
@@ -211,6 +212,8 @@ export const updateBook = async (
     if (bookData.seriesName !== undefined) updateData.series_name = bookData.seriesName;
     if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
     if (bookData.tags !== undefined) updateData.tags = bookData.tags;
+    if (bookData.totalSeriesBooks !== undefined) updateData.total_series_books = bookData.totalSeriesBooks;
+    if (bookData.totalSeriesPages !== undefined) updateData.total_series_pages = bookData.totalSeriesPages;
     
     const updateResult = await withTimeout<SupabaseResponse<any>>(
       supabase.from(BOOKS_TABLE).update(updateData).eq('id', id),

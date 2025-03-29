@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
-import { RECOMMENDATIONS_TABLE, shouldUseFallback } from '@/lib/supabase';
+import { RECOMMENDATIONS_TABLE, SupabaseResponse, shouldUseFallback } from '@/lib/supabase';
 import { withTimeout } from '@/utils/timeoutUtils';
 import * as storageService from './storageService';
 
@@ -69,7 +70,7 @@ const mapBookToDbRecommendation = (book: Omit<Book, 'id'> | Partial<Book>): Reco
  */
 export const getAllRecommendations = async (): Promise<Book[]> => {
   try {
-    const { data, error } = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any[]>>(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .select('*')
@@ -77,16 +78,16 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
       5000
     );
 
-    if (error) {
-      throw error;
+    if (result.error) {
+      throw result.error;
     }
 
-    if (!data) {
+    if (!result.data) {
       console.warn('No recommendations found in the database');
       return [];
     }
 
-    return data.map(mapDbRecommendationToBook);
+    return result.data.map(mapDbRecommendationToBook);
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     return [];
@@ -99,7 +100,7 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
     const dbRecommendation = mapBookToDbRecommendation(book);
-    const { data, error } = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any>>(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .insert([dbRecommendation])
@@ -108,15 +109,15 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
       5000
     );
 
-    if (error) {
-      throw error;
+    if (result.error) {
+      throw result.error;
     }
 
-    if (!data) {
+    if (!result.data) {
       throw new Error('Failed to add recommendation');
     }
 
-    return mapDbRecommendationToBook(data);
+    return mapDbRecommendationToBook(result.data);
   } catch (error) {
     console.error('Error adding recommendation:', error);
     throw error;
@@ -129,7 +130,7 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
 export const updateRecommendation = async (id: string, bookData: Partial<Book>): Promise<Book> => {
   try {
     const dbRecommendation = mapBookToDbRecommendation(bookData);
-    const { data, error } = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any>>(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .update(dbRecommendation)
@@ -139,15 +140,15 @@ export const updateRecommendation = async (id: string, bookData: Partial<Book>):
       5000
     );
 
-    if (error) {
-      throw error;
+    if (result.error) {
+      throw result.error;
     }
 
-    if (!data) {
+    if (!result.data) {
       throw new Error(`Recommendation with id ${id} not found`);
     }
 
-    return mapDbRecommendationToBook(data);
+    return mapDbRecommendationToBook(result.data);
   } catch (error) {
     console.error('Error updating recommendation:', error);
     throw error;
@@ -159,7 +160,7 @@ export const updateRecommendation = async (id: string, bookData: Partial<Book>):
  */
 export const deleteRecommendation = async (id: string): Promise<void> => {
   try {
-    const { error } = await withTimeout(
+    const result = await withTimeout<SupabaseResponse<any>>(
       supabase
         .from(RECOMMENDATIONS_TABLE)
         .delete()
@@ -167,8 +168,8 @@ export const deleteRecommendation = async (id: string): Promise<void> => {
       5000
     );
 
-    if (error) {
-      throw error;
+    if (result.error) {
+      throw result.error;
     }
   } catch (error) {
     console.error('Error deleting recommendation:', error);
