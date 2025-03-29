@@ -17,4 +17,6 @@ export interface Book {
   seriesName?: string; // Optional name of the series
   seriesPosition?: number; // Optional position in the series
   tags?: string[]; // New property for tags that will show as badges
+  totalSeriesBooks?: number; // New property to store the total number of books in a series
+  totalSeriesPages?: number; // New property to store the total number of pages in a series
 }

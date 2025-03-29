@@ -85,6 +85,15 @@ export const updateStoredBook = (
       return null;
     }
     
+    // Handle series data
+    if (bookData.isSeries && !bookData.totalSeriesBooks && items[itemIndex].totalSeriesBooks) {
+      bookData.totalSeriesBooks = items[itemIndex].totalSeriesBooks;
+    }
+    
+    if (bookData.isSeries && !bookData.totalSeriesPages && items[itemIndex].totalSeriesPages) {
+      bookData.totalSeriesPages = items[itemIndex].totalSeriesPages;
+    }
+    
     const updatedBook = { ...items[itemIndex], ...bookData };
     items[itemIndex] = updatedBook;
     

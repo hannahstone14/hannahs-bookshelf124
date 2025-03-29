@@ -1,212 +1,177 @@
-
-/**
- * Service for recommendation-related Supabase operations
- */
 import { supabase } from '@/integrations/supabase/client';
-import { RECOMMENDATIONS_TABLE, SupabaseResponse } from '@/lib/supabase';
 import { Book } from '@/types/book';
-import { prepareBookForDB, convertDBToBook } from './bookMappers';
-import * as storageService from './storageService';
+import { RECOMMENDATIONS_TABLE, shouldUseFallback } from '@/lib/supabase';
 import { withTimeout } from '@/utils/timeoutUtils';
-
-const TIMEOUT_MS = 5000;
+import * as storageService from './storageService';
 
 /**
- * Get all recommendations from Supabase
+ * Map database recommendation to application book
+ */
+const mapDbRecommendationToBook = (dbRecommendation: any): Book => {
+  return {
+    id: dbRecommendation.id,
+    title: dbRecommendation.title,
+    author: dbRecommendation.author,
+    coverUrl: dbRecommendation.cover_url,
+    status: 'recommendation',
+    progress: dbRecommendation.progress || 0,
+    pages: dbRecommendation.pages || 0,
+    color: dbRecommendation.color,
+    genres: dbRecommendation.genres || [],
+    dateRead: dbRecommendation.date_read ? new Date(dbRecommendation.date_read) : new Date(),
+    recommendedBy: dbRecommendation.recommended_by,
+    favorite: dbRecommendation.favorite || false,
+    isSeries: dbRecommendation.is_series || false,
+    seriesName: dbRecommendation.series_name,
+    seriesPosition: dbRecommendation.series_position,
+    tags: dbRecommendation.tags || [],
+    totalSeriesBooks: dbRecommendation.total_series_books,
+    totalSeriesPages: dbRecommendation.total_series_pages,
+  };
+};
+
+/**
+ * Map application book to database recommendation
+ */
+const mapBookToDbRecommendation = (book: Omit<Book, 'id'> | Partial<Book>): Record<string, any> => {
+  const dbRecommendation: Record<string, any> = {
+    title: book.title,
+    author: book.author,
+    cover_url: book.coverUrl,
+    status: 'recommendation',
+    progress: book.progress,
+    pages: book.pages,
+    color: book.color,
+    genres: book.genres,
+    date_read: book.dateRead ? book.dateRead.toISOString() : new Date().toISOString(),
+    recommended_by: book.recommendedBy,
+    favorite: book.favorite,
+    is_series: book.isSeries,
+    series_name: book.seriesName,
+    series_position: book.seriesPosition,
+    tags: book.tags,
+    total_series_books: book.totalSeriesBooks,
+    total_series_pages: book.totalSeriesPages,
+  };
+  
+  // Remove undefined values to prevent SQL issues
+  Object.keys(dbRecommendation).forEach(key => {
+    if (dbRecommendation[key] === undefined) {
+      delete dbRecommendation[key];
+    }
+  });
+  
+  return dbRecommendation;
+};
+
+/**
+ * Get all recommendations from the database
  */
 export const getAllRecommendations = async (): Promise<Book[]> => {
   try {
-    const result = await withTimeout<SupabaseResponse<any[]>>(
-      supabase.from(RECOMMENDATIONS_TABLE).select('*'),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error('Fallback: Timed out fetching recommendations') })
+    const { data, error } = await withTimeout(
+      supabase
+        .from(RECOMMENDATIONS_TABLE)
+        .select('*')
+        .order('title', { ascending: true }),
+      5000
     );
-    
-    if (result.error) {
-      console.error('Error fetching recommendations:', result.error);
-      const storedRecommendations = storageService.getStoredRecommendations();
-      if (storedRecommendations.length > 0) {
-        console.log('Using localStorage fallback for recommendations');
-        return storedRecommendations;
-      }
-      throw result.error;
+
+    if (error) {
+      throw error;
     }
-    
-    const sortedData = (result.data || []).sort((a, b) => 
-      new Date(b.date_read).getTime() - new Date(a.date_read).getTime()
-    );
-    
-    return sortedData.map(convertDBToBook);
+
+    if (!data) {
+      console.warn('No recommendations found in the database');
+      return [];
+    }
+
+    return data.map(mapDbRecommendationToBook);
   } catch (error) {
-    console.error('Error in getAllRecommendations:', error);
-    const storedRecommendations = storageService.getStoredRecommendations();
-    if (storedRecommendations.length > 0) {
-      console.log('Using localStorage fallback for recommendations after error');
-      return storedRecommendations;
-    }
+    console.error('Error fetching recommendations:', error);
     return [];
   }
 };
 
 /**
- * Add a recommendation to Supabase
+ * Add a recommendation to the database
  */
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
-  const newBook = prepareBookForDB(book);
-  
   try {
-    console.log('Adding recommendation to Supabase:', newBook);
-    const result = await withTimeout<SupabaseResponse<any[]>>(
-      supabase.from(RECOMMENDATIONS_TABLE).insert(newBook).select(),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error('Fallback: Timed out adding recommendation') })
+    const dbRecommendation = mapBookToDbRecommendation(book);
+    const { data, error } = await withTimeout(
+      supabase
+        .from(RECOMMENDATIONS_TABLE)
+        .insert([dbRecommendation])
+        .select('*')
+        .single(),
+      5000
     );
-    
-    if (result.error) {
-      console.error('Error adding recommendation to Supabase:', result.error);
-      
-      const bookWithId = {
-        ...book,
-        id: newBook.id,
-      } as Book;
-      
-      storageService.addStoredBook(bookWithId, true);
-      
-      console.log('Added recommendation to localStorage as fallback');
-      return bookWithId;
-    }
-    
-    console.log('Recommendation added successfully to Supabase:', result.data);
-    
-    const bookWithId = {
-      ...book,
-      id: newBook.id,
-    } as Book;
-    
-    storageService.addStoredBook(bookWithId, true);
-    
-    return bookWithId;
-  } catch (error) {
-    console.error('Error in addRecommendation:', error);
-    
-    const bookWithId = {
-      ...book,
-      id: newBook.id,
-    } as Book;
-    
-    storageService.addStoredBook(bookWithId, true);
-    
-    console.log('Added recommendation to localStorage as fallback after error');
-    return bookWithId;
-  }
-};
 
-/**
- * Update a recommendation in Supabase
- */
-export const updateRecommendation = async (
-  id: string, 
-  bookData: Partial<Book>
-): Promise<Book> => {
-  try {
-    const existingBookResult = await withTimeout<SupabaseResponse<any>>(
-      supabase.from(RECOMMENDATIONS_TABLE).select('*').eq('id', id).single(),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error(`Fallback: Timed out fetching recommendation ${id}`) })
-    );
-    
-    const existingBook = existingBookResult.data;
-    const checkError = existingBookResult.error;
-    
-    if (checkError || !existingBook) {
-      console.warn(`Recommendation with id ${id} not found in Supabase ${RECOMMENDATIONS_TABLE}, checking localStorage`);
-      
-      const collection = storageService.getStoredRecommendations();
-      
-      const localBook = collection.find(b => b.id === id);
-      
-      if (!localBook) {
-        throw new Error(`Recommendation with id ${id} not found in ${RECOMMENDATIONS_TABLE} or localStorage`);
-      }
-      
-      const updatedBook = { ...localBook, ...bookData };
-      storageService.updateStoredBook(id, bookData, true);
-      
-      return updatedBook;
-    }
-    
-    const updateData: any = {};
-    
-    if (bookData.title !== undefined) updateData.title = bookData.title;
-    if (bookData.author !== undefined) updateData.author = bookData.author;
-    if (bookData.coverUrl !== undefined) updateData.cover_url = bookData.coverUrl;
-    if (bookData.status !== undefined) updateData.status = bookData.status;
-    if (bookData.progress !== undefined) updateData.progress = bookData.progress;
-    if (bookData.pages !== undefined) updateData.pages = bookData.pages;
-    if (bookData.genres !== undefined) updateData.genres = bookData.genres;
-    if (bookData.favorite !== undefined) updateData.favorite = bookData.favorite;
-    if (bookData.color !== undefined) updateData.color = bookData.color;
-    if (bookData.dateRead !== undefined) updateData.date_read = new Date(bookData.dateRead).toISOString();
-    if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
-    if (bookData.isSeries !== undefined) updateData.is_series = bookData.isSeries;
-    if (bookData.seriesName !== undefined) updateData.series_name = bookData.seriesName;
-    if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
-    if (bookData.tags !== undefined) updateData.tags = bookData.tags;
-    
-    const updateResult = await withTimeout<SupabaseResponse<any>>(
-      supabase.from(RECOMMENDATIONS_TABLE).update(updateData).eq('id', id),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error(`Fallback: Timed out updating recommendation ${id}`) })
-    );
-    
-    if (updateResult.error) {
-      console.error('Error updating recommendation in Supabase:', updateResult.error);
-      
-      storageService.updateStoredBook(id, bookData, true);
-      
-      console.log('Updated recommendation in localStorage as fallback');
-    } else {
-      storageService.updateStoredBook(id, bookData, true);
-    }
-    
-    return {
-      ...convertDBToBook(existingBook),
-      ...bookData,
-      id
-    } as Book;
-  } catch (error) {
-    console.error('Error in updateRecommendation:', error);
-    
-    const updatedBook = storageService.updateStoredBook(id, bookData, true);
-    
-    if (!updatedBook) {
+    if (error) {
       throw error;
     }
-    
-    console.log('Updated recommendation in localStorage as fallback after error');
-    return updatedBook;
+
+    if (!data) {
+      throw new Error('Failed to add recommendation');
+    }
+
+    return mapDbRecommendationToBook(data);
+  } catch (error) {
+    console.error('Error adding recommendation:', error);
+    throw error;
   }
 };
 
 /**
- * Delete a recommendation from Supabase
+ * Update a recommendation in the database
+ */
+export const updateRecommendation = async (id: string, bookData: Partial<Book>): Promise<Book> => {
+  try {
+    const dbRecommendation = mapBookToDbRecommendation(bookData);
+    const { data, error } = await withTimeout(
+      supabase
+        .from(RECOMMENDATIONS_TABLE)
+        .update(dbRecommendation)
+        .eq('id', id)
+        .select('*')
+        .single(),
+      5000
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error(`Recommendation with id ${id} not found`);
+    }
+
+    return mapDbRecommendationToBook(data);
+  } catch (error) {
+    console.error('Error updating recommendation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a recommendation from the database
  */
 export const deleteRecommendation = async (id: string): Promise<void> => {
   try {
-    const result = await withTimeout<SupabaseResponse<any>>(
-      supabase.from(RECOMMENDATIONS_TABLE).delete().eq('id', id),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error(`Fallback: Timed out deleting recommendation ${id}`) })
+    const { error } = await withTimeout(
+      supabase
+        .from(RECOMMENDATIONS_TABLE)
+        .delete()
+        .eq('id', id),
+      5000
     );
-    
-    if (result.error) {
-      console.error('Error deleting recommendation from Supabase:', result.error);
+
+    if (error) {
+      throw error;
     }
-    
-    storageService.deleteStoredBook(id, true);
   } catch (error) {
-    console.error('Error in deleteRecommendation:', error);
-    
-    storageService.deleteStoredBook(id, true);
+    console.error('Error deleting recommendation:', error);
+    throw error;
   }
 };

@@ -73,8 +73,15 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       console.log('Adding book:', book.title);
       
+      // Include totalSeriesBooks and totalSeriesPages in the book data if provided
+      const bookWithSeriesData = {
+        ...book,
+        totalSeriesBooks,
+        totalSeriesPages
+      };
+      
       if (book.isSeries && totalSeriesBooks && totalSeriesPages && totalSeriesBooks > 1) {
-        const seriesBooks = createSeriesBooks(book, totalSeriesBooks, totalSeriesPages);
+        const seriesBooks = createSeriesBooks(bookWithSeriesData, totalSeriesBooks, totalSeriesPages);
         
         const addPromises = seriesBooks.map(seriesBook => bookService.addBook(seriesBook));
         const newBooks = await Promise.all(addPromises);
@@ -89,7 +96,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         toast.success(`Added ${seriesBooks.length} books in the ${book.seriesName} series!`);
       } else {
-        const newBook = await bookService.addBook(book);
+        const newBook = await bookService.addBook(bookWithSeriesData);
         
         if (useLocalStorageState) {
           if (book.status === 'recommendation') {

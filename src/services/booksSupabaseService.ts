@@ -1,15 +1,75 @@
-
 /**
  * Service for book-related Supabase operations
  */
 import { supabase } from '@/integrations/supabase/client';
-import { BOOKS_TABLE, SupabaseResponse } from '@/lib/supabase';
+import { BOOKS_TABLE, shouldUseFallback } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { prepareBookForDB, convertDBToBook } from './bookMappers';
 import * as storageService from './storageService';
 import { withTimeout } from '@/utils/timeoutUtils';
 
 const TIMEOUT_MS = 5000;
+
+/**
+ * Map database book to application book
+ */
+const mapDbBookToBook = (dbBook: any): Book => {
+  return {
+    id: dbBook.id,
+    title: dbBook.title,
+    author: dbBook.author,
+    coverUrl: dbBook.cover_url,
+    status: dbBook.status,
+    progress: dbBook.progress || 0,
+    pages: dbBook.pages || 0,
+    color: dbBook.color,
+    genres: dbBook.genres || [],
+    dateRead: dbBook.date_read ? new Date(dbBook.date_read) : new Date(),
+    recommendedBy: dbBook.recommended_by,
+    favorite: dbBook.favorite || false,
+    order: dbBook.order || 0,
+    isSeries: dbBook.is_series || false,
+    seriesName: dbBook.series_name,
+    seriesPosition: dbBook.series_position,
+    tags: dbBook.tags || [],
+    totalSeriesBooks: dbBook.total_series_books,
+    totalSeriesPages: dbBook.total_series_pages,
+  };
+};
+
+/**
+ * Map application book to database book
+ */
+const mapBookToDbBook = (book: Omit<Book, 'id'> | Partial<Book>): Record<string, any> => {
+  const dbBook: Record<string, any> = {
+    title: book.title,
+    author: book.author,
+    cover_url: book.coverUrl,
+    status: book.status,
+    progress: book.progress,
+    pages: book.pages,
+    color: book.color,
+    genres: book.genres,
+    date_read: book.dateRead ? book.dateRead.toISOString() : new Date().toISOString(),
+    recommended_by: book.recommendedBy,
+    favorite: book.favorite,
+    is_series: book.isSeries,
+    series_name: book.seriesName,
+    series_position: book.seriesPosition,
+    tags: book.tags,
+    total_series_books: book.totalSeriesBooks,
+    total_series_pages: book.totalSeriesPages,
+  };
+  
+  // Remove undefined values to prevent SQL issues
+  Object.keys(dbBook).forEach(key => {
+    if (dbBook[key] === undefined) {
+      delete dbBook[key];
+    }
+  });
+  
+  return dbBook;
+};
 
 /**
  * Get all books from Supabase
