@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
 import { RECOMMENDATIONS_TABLE, SupabaseResponse } from '@/lib/supabase';
@@ -111,7 +110,13 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
     const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
-        .insert(dbRecommendation)
+        .insert(dbRecommendation as { 
+          title: string; 
+          author: string;
+          status: string;
+          progress: number;
+          // Other fields are optional
+        })
         .select('*')
         .single(),
       5000
