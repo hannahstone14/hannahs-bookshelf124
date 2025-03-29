@@ -3,7 +3,7 @@ import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
 import { 
-  BookOpen, 
+  BookCopy, 
   BookOpenCheck, 
   BookmarkCheck, 
   Archive, 
@@ -13,14 +13,23 @@ import {
   Stars, 
   Rocket, 
   Brain, 
-  BookCopy,
   Library,
   Glasses,
   CalendarDays,
-  Layers
+  Layers,
+  Music,
+  Heart,
+  Gamepad2,
+  Utensils,
+  Globe,
+  Users,
+  Palette,
+  Laugh,
+  Lightbulb
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 const genreIconMap: Record<string, React.ReactNode> = {
   'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
@@ -28,17 +37,23 @@ const genreIconMap: Record<string, React.ReactNode> = {
   'Science Fiction': <Rocket className="h-4 w-4 text-green-500" />,
   'Fantasy': <Stars className="h-4 w-4 text-amber-500" />,
   'Mystery': <BookMarked className="h-4 w-4 text-red-500" />,
-  'History': <Archive className="h-4 w-4 text-brown-500" />,
-  'Romance': <Bookmark className="h-4 w-4 text-pink-500" />,
+  'History': <Archive className="h-4 w-4 text-amber-700" />,
+  'Romance': <Heart className="h-4 w-4 text-pink-500" />,
   'Self-Help': <Coffee className="h-4 w-4 text-teal-500" />,
   'Biography': <Glasses className="h-4 w-4 text-indigo-500" />,
   'Thriller': <BookMarked className="h-4 w-4 text-orange-500" />,
-  'Horror': <BookMarked className="h-4 w-4 text-black" />,
+  'Horror': <Laugh className="h-4 w-4 text-black" />,
   'Historical Fiction': <CalendarDays className="h-4 w-4 text-amber-700" />,
-  'Young Adult': <BookCopy className="h-4 w-4 text-cyan-500" />,
+  'Young Adult': <Users className="h-4 w-4 text-cyan-500" />,
   'Children': <BookCopy className="h-4 w-4 text-amber-400" />,
-  'Poetry': <BookCopy className="h-4 w-4 text-pink-400" />,
-  'Classics': <Library className="h-4 w-4 text-yellow-700" />
+  'Poetry': <Bookmark className="h-4 w-4 text-pink-400" />,
+  'Classics': <Library className="h-4 w-4 text-yellow-700" />,
+  'Music': <Music className="h-4 w-4 text-purple-400" />,
+  'Gaming': <Gamepad2 className="h-4 w-4 text-green-400" />,
+  'Food': <Utensils className="h-4 w-4 text-orange-400" />,
+  'Travel': <Globe className="h-4 w-4 text-blue-400" />,
+  'Art': <Palette className="h-4 w-4 text-rose-500" />,
+  'Philosophy': <Lightbulb className="h-4 w-4 text-yellow-500" />
 };
 
 const ensureDate = (date: Date | string | number): Date => {
@@ -113,6 +128,9 @@ const BookshelfStats: React.FC = () => {
     .slice(0, 2) // Show only top 2 genres
     .map(([genre, count]) => ({ genre, count }));
   
+  const readingBooks = books.filter(book => book.status === 'reading');
+  const currentlyReading = readingBooks.length > 0 ? readingBooks[0] : null;
+
   const readBooks = books.filter(book => book.status === 'read');
   const latestRead = readBooks.length > 0 
     ? readBooks.reduce((latest: Book | null, book) => {
@@ -128,9 +146,6 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
-  const readingBooks = books.filter(book => book.status === 'reading');
-  const currentlyReading = readingBooks.length > 0 ? readingBooks[0] : null;
-
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
   };
@@ -141,7 +156,7 @@ const BookshelfStats: React.FC = () => {
         <div className="flex items-center gap-4">
           <Avatar className="h-32 w-32 border-2 border-white shadow-md">
             <AvatarImage 
-              src="/lovable-uploads/3107d1a2-2116-4a8f-a6d9-a5a7f971fb6d.png" 
+              src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
             />
             <AvatarFallback>HL</AvatarFallback>
@@ -152,30 +167,26 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center">
             <div className="text-4xl font-bold">{formatPagesRead(pagesRead)}</div>
-            <h3 className="text-xs text-gray-500 font-medium">PAGES READ • {books.filter(book => book.status === 'read').length} BOOKS</h3>
+            <h3 className="text-xs text-gray-500 font-medium">PAGES READ</h3>
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
-            <div>
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-6">
+            <div className="flex flex-col items-center px-3">
               <div className="text-2xl font-bold">{totalBooksRead}</div>
-              <h3 className="text-xs text-gray-500 font-medium">BOOKS READ</h3>
+              <h3 className="text-xs text-gray-500 font-medium text-center">BOOKS READ</h3>
             </div>
             
-            <div className="h-8 border-r border-gray-200"></div>
-            
-            <div>
+            <div className="flex flex-col items-center px-3">
               <div className="text-2xl font-bold">{booksReadThisYear}</div>
-              <h3 className="text-xs text-gray-500 font-medium">READ IN {currentYear}</h3>
+              <h3 className="text-xs text-gray-500 font-medium text-center">READ IN {currentYear}</h3>
             </div>
             
-            <div className="h-8 border-r border-gray-200"></div>
-            
-            <div>
+            <div className="flex flex-col items-center px-3">
               <div className="text-2xl font-bold">{totalSeriesCount}</div>
-              <h3 className="text-xs text-gray-500 font-medium">SERIES</h3>
+              <h3 className="text-xs text-gray-500 font-medium text-center">SERIES</h3>
             </div>
           </div>
         </div>
@@ -183,7 +194,7 @@ const BookshelfStats: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-sm text-gray-500 font-medium mb-4">TOP GENRES</h3>
+          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Top Genres</h3>
           {topGenres.length > 0 ? (
             <div className="space-y-4">
               {topGenres.map((item, index) => (
@@ -208,9 +219,57 @@ const BookshelfStats: React.FC = () => {
           )}
         </div>
 
+        <div className="bg-white rounded-xl shadow-md p-6 h-full">
+          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Currently Reading</h3>
+          {currentlyReading ? (
+            <div className="flex items-start gap-3">
+              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
+                {currentlyReading.coverUrl ? (
+                  <img 
+                    src={currentlyReading.coverUrl} 
+                    alt={currentlyReading.title} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: currentlyReading.color || '#3B82F6' }}
+                  >
+                    <span className="text-white text-xs font-bold">{currentlyReading.title.substring(0, 2)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="overflow-hidden">
+                <h4 className="text-md font-medium line-clamp-2">{currentlyReading.title}</h4>
+                <p className="text-gray-600 text-xs line-clamp-1">{currentlyReading.author}</p>
+                <p className="text-gray-400 text-xs mt-1 line-clamp-1">
+                  {currentlyReading.pages} pages
+                </p>
+                <div className="mt-2">
+                  <div className="text-xs text-gray-600 mb-1">{currentlyReading.progress}% completed</div>
+                  <Progress value={currentlyReading.progress} className="h-2 bg-gray-200" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                <BookOpenCheck className="h-8 w-8 text-gray-400" />
+              </div>
+              <div>
+                <h4 className="text-md font-medium">None</h4>
+                <p className="text-gray-600 text-xs">No books currently being read</p>
+                <p className="text-gray-400 text-xs mt-1">
+                  Mark a book as "Reading" to see it here
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {latestRead && (
           <div className="bg-white rounded-xl shadow-md p-6 h-full">
-            <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-base">Last Finished</h3>
+            <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Last Finished</h3>
             <div className="flex items-start gap-3">
               <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
                 {latestRead.coverUrl ? (
@@ -238,50 +297,6 @@ const BookshelfStats: React.FC = () => {
             </div>
           </div>
         )}
-
-        <div className="bg-white rounded-xl shadow-md p-6 h-full">
-          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-base">Currently Reading</h3>
-          {currentlyReading ? (
-            <div className="flex items-start gap-3">
-              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
-                {currentlyReading.coverUrl ? (
-                  <img 
-                    src={currentlyReading.coverUrl} 
-                    alt={currentlyReading.title} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center"
-                    style={{ backgroundColor: currentlyReading.color || '#3B82F6' }}
-                  >
-                    <span className="text-white text-xs font-bold">{currentlyReading.title.substring(0, 2)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="overflow-hidden">
-                <h4 className="text-md font-medium line-clamp-2">{currentlyReading.title}</h4>
-                <p className="text-gray-600 text-xs line-clamp-1">{currentlyReading.author}</p>
-                <p className="text-gray-400 text-xs mt-1 line-clamp-1">
-                  {currentlyReading.progress}% completed · {currentlyReading.pages} pages
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start gap-3">
-              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-                <BookOpenCheck className="h-8 w-8 text-gray-400" />
-              </div>
-              <div>
-                <h4 className="text-md font-medium">None</h4>
-                <p className="text-gray-600 text-xs">No books currently being read</p>
-                <p className="text-gray-400 text-xs mt-1">
-                  Mark a book as "Reading" to see it here
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

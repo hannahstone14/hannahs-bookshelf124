@@ -1,10 +1,10 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
-import BookshelfHeader from './bookshelf/BookshelfHeader';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
 import EmptyBookshelf from './bookshelf/EmptyBookshelf';
 import BookshelfSection from './bookshelf/BookshelfSection';
@@ -38,9 +38,7 @@ const Bookshelf: React.FC = () => {
     };
   }, []);
   
-  const readingBooks = books.filter(book => book.status === 'reading');
   const toReadBooks = books.filter(book => book.status === 'to-read');
-  const completedBooks = books.filter(book => book.status === 'read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
   const seriesBooks = books.filter(book => book.isSeries);
@@ -213,17 +211,8 @@ const Bookshelf: React.FC = () => {
     }
   }, []);
 
-  const sortedReadingBooks = getSortedBooks(readingBooks);
-
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <BookshelfHeader 
-        onAddBook={handleAddBookClick} 
-        onSort={handleSort}
-        totalBooks={books.length}
-        totalCompleteSeries={seriesCount}
-      />
-
       <div className="flex justify-end mb-4">
         <Button 
           className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
@@ -305,38 +294,20 @@ const Bookshelf: React.FC = () => {
               emptySubMessage="Add books you want to read next"
             />
           ) : (
-            <div className="space-y-6">
-              {readingBooks.length > 0 && (
-                <BookshelfSection
-                  title="Currently Reading"
-                  icon={BookOpenCheck}
-                  iconColor="text-blue-700"
-                  books={sortedReadingBooks}
-                  displayStyle={displayStyle}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  draggedOverBook={draggedOverBook}
-                />
-              )}
-              
-              <BookshelfSection
-                title="Bookshelf"
-                icon={BookOpen}
-                iconColor="text-green-600"
-                books={booksToDisplay}
-                displayStyle={displayStyle}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                draggedOverBook={draggedOverBook}
-                showStatus={true}
-              />
-            </div>
+            <BookshelfSection
+              title="Bookshelf"
+              icon={BookOpen}
+              iconColor="text-green-600"
+              books={booksToDisplay}
+              displayStyle={displayStyle}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              draggedOverBook={draggedOverBook}
+              showStatus={true}
+            />
           )}
         </>
       )}

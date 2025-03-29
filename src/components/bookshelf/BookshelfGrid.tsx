@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, BookMarked, BookOpenCheck } from 'lucide-react';
 import { Book } from '@/types/book';
 import BookCover from '@/components/BookCover';
 import { Button } from '@/components/ui/button';
@@ -80,6 +80,10 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                 
                 {book.isSeries && (
                   <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">Series</Badge>
+                )}
+                
+                {book.status === 'reading' && (
+                  <Badge className="absolute top-2 right-2 bg-blue-700 text-white text-xs">Reading</Badge>
                 )}
               </div>
               
