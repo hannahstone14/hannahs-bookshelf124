@@ -102,6 +102,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.log('Adding book:', bookData.title);
       
       if (bookData.isSeries && totalSeriesBooks && totalSeriesPages && totalSeriesBooks > 1) {
+        // For UI updates, we need a complete book with ID
         const completeBook: Book = {
           ...bookData,
           id: uuidv4()
@@ -109,19 +110,22 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         const tempSeriesBooks = createSeriesBooks(completeBook, totalSeriesBooks, totalSeriesPages);
         
+        // Update UI with temporary books (these have IDs)
         tempSeriesBooks.forEach(seriesBook => {
-          updateLocalState(seriesBook, bookData.status === 'recommendation');
+          updateLocalState(seriesBook as Book, bookData.status === 'recommendation');
         });
         
         try {
+          // When sending to API, we need to remove the ID and use Omit<Book, "id"> type
           const addPromises = tempSeriesBooks.map(seriesBook => {
             // Create a proper Omit<Book, "id"> by removing the id property
-            const { id, ...bookWithoutId } = seriesBook;
+            const { id, ...bookWithoutId } = seriesBook as Book;
             return bookService.addBook(bookWithoutId);
           });
           
           const newBooks = await Promise.all(addPromises);
           
+          // Update UI with books returned from API (these have server-generated IDs)
           newBooks.forEach(newBook => {
             updateLocalState(newBook, bookData.status === 'recommendation');
           });
@@ -132,6 +136,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           toast.error('Failed to add all series books');
         }
       } else {
+        // For UI updates, create a complete book with ID
         const tempBook: Book = {
           ...bookData,
           id: uuidv4(),
@@ -141,6 +146,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateLocalState(tempBook, bookData.status === 'recommendation');
         
         try {
+          // When sending to API, pass bookData which is already Omit<Book, "id">
           const newBook = await bookService.addBook(bookData);
           
           console.log('Received book from API:', newBook);
