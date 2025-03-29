@@ -17,7 +17,7 @@ import DateReadPicker from './DateReadPicker';
 const bookFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author is required"),
-  status: z.enum(['read', 'reading', 'to-read']),
+  status: z.enum(['read', 'reading', 'to-read', 'wishlist', 'recommendation']),
   dateRead: z.date().optional(),
   pages: z.number().int().min(1, "Pages is required").max(10000, "Too many pages").optional(),
   progress: z.number().int().min(0, "Progress must be at least 0").max(100, "Progress can't exceed 100%").default(0),
