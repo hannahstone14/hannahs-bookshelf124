@@ -3,6 +3,8 @@ import React from 'react';
 import { Star, MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
 import { Book } from '@/types/book';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -31,20 +33,34 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
         {books.map(book => (
           <div 
             key={book.id}
-            className="flex items-center p-3 border-b border-gray-200 hover:bg-gray-50"
+            className={cn(
+              "flex items-center p-3 border-b border-gray-200 hover:bg-gray-50",
+              book.isSeries && "bg-purple-50 hover:bg-purple-100"
+            )}
           >
             <div className="w-12 h-16 mr-4 relative">
               {book.coverUrl ? (
                 <div 
-                  className="w-full h-full bg-cover bg-center rounded shadow-md"
+                  className={cn(
+                    "w-full h-full bg-cover bg-center rounded shadow-md",
+                    book.isSeries && "border border-purple-400"
+                  )}
                   style={{ backgroundImage: `url(${book.coverUrl})` }}
                 />
               ) : (
                 <div 
-                  className="w-full h-full flex items-center justify-center rounded shadow-md"
-                  style={{ backgroundColor: book.color || '#3B82F6' }}
+                  className={cn(
+                    "w-full h-full flex items-center justify-center rounded shadow-md",
+                    book.isSeries && "bg-purple-100 border border-purple-400"
+                  )}
+                  style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}
                 >
-                  <span className="text-white text-xs font-bold">{book.title.substring(0, 2)}</span>
+                  <span className={cn(
+                    "text-xs font-bold",
+                    book.isSeries ? "text-purple-700" : "text-white"
+                  )}>
+                    {book.title.substring(0, 2)}
+                  </span>
                 </div>
               )}
               {book.favorite && (
@@ -64,9 +80,12 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
               <h3 className="font-medium">{book.title}</h3>
               <p className="text-sm text-gray-500">{book.author}</p>
               {book.isSeries && book.seriesName && (
-                <p className="text-xs text-purple-600 font-medium">
-                  {book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}
-                </p>
+                <div className="flex items-center mt-0.5">
+                  <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 flex items-center gap-1 px-2 py-0">
+                    <BookMarked className="h-3 w-3" />
+                    <span>{book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}</span>
+                  </Badge>
+                </div>
               )}
               {book.pages && (
                 <p className="text-xs text-gray-400">{book.pages} pages</p>

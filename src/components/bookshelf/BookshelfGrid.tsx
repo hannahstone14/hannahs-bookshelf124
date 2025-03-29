@@ -4,6 +4,7 @@ import { MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
 import { Book } from '@/types/book';
 import BookCover from '@/components/BookCover';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -50,7 +51,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
             onDragStart={() => onDragStart?.(book)}
             onDragOver={(e) => onDragOver?.(e, book)}
             onDrop={(e) => onDrop?.(e, book)}
-            className={`${onDragStart ? 'cursor-move' : ''} book-container relative group ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
+            className={`${onDragStart ? 'cursor-move' : ''} book-container relative group ${draggedOverBook?.id === book.id ? 'opacity-50' : ''} ${book.isSeries ? 'pb-2' : ''}`}
           >
             <div className="absolute right-1 top-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
@@ -80,8 +81,9 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               </div>
               
               {book.isSeries && book.seriesName && (
-                <div className="text-xs text-purple-600 font-medium truncate max-w-full">
-                  {book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}
+                <div className="text-xs text-purple-600 font-medium truncate max-w-full flex items-center justify-center mt-0.5">
+                  <BookMarked className="h-3 w-3 mr-1 inline" />
+                  <span>{book.seriesName} {book.seriesPosition ? `#${book.seriesPosition}` : ''}</span>
                 </div>
               )}
               
