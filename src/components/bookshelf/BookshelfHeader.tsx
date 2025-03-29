@@ -25,7 +25,10 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
           />
           <AvatarFallback>HL</AvatarFallback>
         </Avatar>
-        <h1 className="text-3xl font-medium">Hannah's Library</h1>
+        <div>
+          <h1 className="text-3xl font-medium">Hannah's Library</h1>
+          <p className="text-gray-500 text-sm italic">I do not endorse everything I read. Books read for school, development, and pleasure since 2022.</p>
+        </div>
       </div>
       
       <div className="flex items-center gap-3">

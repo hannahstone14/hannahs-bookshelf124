@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
 import { BookOpen, BookOpenCheck, BookmarkCheck, Archive, Coffee, Bookmark, BookMarked, Stars, Rocket, Brain, BookCopy } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const genreIconMap: Record<string, React.ReactNode> = {
   'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
@@ -122,17 +124,19 @@ const BookshelfStats: React.FC = () => {
     <div className="mb-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="text-4xl font-bold">
-              {formatPagesRead(pagesRead)}
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="text-4xl font-bold">
+                {formatPagesRead(pagesRead)}
+              </div>
+              <div>
+                <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
+                <div className="flex items-center text-sm text-gray-500 mt-1">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  <span>From {books.length} books in your collection</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center text-sm text-gray-500 mt-2">
-            <BookOpen className="h-4 w-4 mr-1" />
-            <span>From {books.length} books in your collection</span>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mt-4">

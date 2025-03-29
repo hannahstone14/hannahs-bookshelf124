@@ -251,6 +251,33 @@
   height: 225px;
   width: 140px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  z-index: 10;
+}
+
+/* Series book layers */
+.book-cover.is-series::before,
+.book-cover.is-series::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 102%;
+  background: rgba(180, 180, 180, 0.9);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: -1;
+  top: -4px;
+  transform: rotate(-2deg);
+}
+
+.book-cover.is-series::after {
+  background: rgba(140, 140, 140, 0.9);
+  top: -8px;
+  left: -6px;
+  right: -6px;
+  transform: rotate(-4deg);
+  z-index: -2;
 }
 
 .book-cover:hover {
@@ -268,4 +295,53 @@
     height: 192px;
     width: 120px;
   }
+}
+
+/* Book title styles */
+.book-title {
+  width: 100%;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* Book favorite badge */
+.book-favorite-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: gold;
+  color: #333;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 20;
+}
+
+/* Book series progress */
+.book-series-progress {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  white-space: nowrap;
+  z-index: 15;
+}
+
+.book-series-progress.completed {
+  background: #10b981;
+  color: white;
 }
