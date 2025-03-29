@@ -10,5 +10,10 @@ export const isUsingDemoCredentials = false;
 
 // Helper to determine if we should use localStorage fallback
 export const shouldUseFallback = () => {
-  return isUsingDemoCredentials || !supabase || typeof supabase.from !== 'function';
+  try {
+    return isUsingDemoCredentials || !supabase || typeof supabase.from !== 'function';
+  } catch (error) {
+    console.error('Error checking for Supabase availability:', error);
+    return true; // If there's any error, use fallback
+  }
 };
