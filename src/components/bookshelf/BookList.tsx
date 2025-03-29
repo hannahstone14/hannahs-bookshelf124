@@ -83,14 +83,6 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
               <div className="flex-1">
                 <h3 className="font-medium">{displayTitle}</h3>
                 <p className="text-sm text-gray-500">{book.author}</p>
-                {book.isSeries && book.seriesName && (
-                  <div className="flex items-center mt-0.5">
-                    <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300 flex items-center gap-1 px-2 py-0">
-                      <BookMarked className="h-3 w-3" />
-                      <span>{book.seriesName}</span>
-                    </Badge>
-                  </div>
-                )}
                 {book.pages && (
                   <p className="text-xs text-gray-400">{book.pages} pages</p>
                 )}

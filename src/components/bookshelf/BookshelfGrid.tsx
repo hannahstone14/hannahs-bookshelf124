@@ -84,13 +84,6 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                   {book.author}
                 </div>
                 
-                {book.isSeries && book.seriesName && (
-                  <div className="text-xs text-purple-600 font-medium truncate max-w-full flex items-center justify-center mt-0.5">
-                    <BookMarked className="h-3 w-3 mr-1 inline" />
-                    <span>{book.seriesName}</span>
-                  </div>
-                )}
-                
                 {book.recommendedBy && (
                   <div className="text-xs text-center mt-1 text-blue-500 max-w-28 truncate">
                     From: {book.recommendedBy}
