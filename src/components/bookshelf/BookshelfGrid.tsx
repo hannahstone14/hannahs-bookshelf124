@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MoreVertical, Pencil, Trash2, BookMarked, BookOpenCheck } from 'lucide-react';
 import { Book } from '@/types/book';
@@ -41,13 +40,25 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
     );
   }
 
+  // Filter out duplicate series books (keep only one entry per series)
+  const uniqueBooks = books.reduce((acc: Book[], book: Book) => {
+    // For series books, check if we already have one with the same series name
+    if (book.isSeries && book.seriesName) {
+      const seriesAlreadyExists = acc.some(b => 
+        b.isSeries && b.seriesName === book.seriesName && b.id !== book.id
+      );
+      if (seriesAlreadyExists) {
+        return acc;
+      }
+    }
+    acc.push(book);
+    return acc;
+  }, []);
+
   return (
     <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        {books.map(book => {
-          // Create a modified title that adds "Series" for series books
-          const displayTitle = book.title;
-          
+        {uniqueBooks.map(book => {
           return (
             <div 
               key={book.id}
@@ -89,7 +100,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               
               <div className="mt-1 text-center">
                 <div className="text-sm font-medium break-words max-w-full whitespace-normal">
-                  {displayTitle}
+                  {book.title}
                 </div>
                 <div className="text-xs text-gray-500 break-words max-w-full">
                   {book.author}

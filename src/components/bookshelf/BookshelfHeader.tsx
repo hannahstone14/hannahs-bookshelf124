@@ -1,17 +1,15 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown } from 'lucide-react';
 
 interface BookshelfHeaderProps {
-  onAddBook: () => void;
   onSort: (option?: any) => void;
   totalBooks?: number;
   totalCompleteSeries?: number;
 }
 
 const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({ 
-  onAddBook, 
   onSort, 
   totalBooks, 
   totalCompleteSeries 
@@ -19,7 +17,7 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex-1">
-        {/* Removed "Your Books" heading as requested */}
+        {/* Empty space where "Your Books" heading was */}
       </div>
       <div className="flex gap-2 items-center">
         <Button 
