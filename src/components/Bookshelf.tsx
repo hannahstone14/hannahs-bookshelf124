@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked, RefreshCw } from 'lucide-react';
+import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
@@ -16,8 +16,7 @@ type DisplayStyle = 'shelf' | 'list';
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   
-  const { books, recommendations, reorderBooks, removeBook, refreshData } = useBookshelf();
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -213,31 +212,9 @@ const Bookshelf: React.FC = () => {
     }
   }, []);
 
-  const handleRefreshClick = useCallback(async () => {
-    if (!isMounted.current) return;
-    
-    setIsRefreshing(true);
-    try {
-      await refreshData();
-    } finally {
-      if (isMounted.current) {
-        setIsRefreshing(false);
-      }
-    }
-  }, [refreshData]);
-
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <div className="flex justify-between mb-4">
-        <Button 
-          className="bg-green-600 hover:bg-green-700 text-md px-4 py-2 h-12"
-          onClick={handleRefreshClick}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`h-5 w-5 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh Books'}
-        </Button>
-        
+      <div className="flex justify-end mb-4">
         <Button 
           className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
           id="add-book-button"

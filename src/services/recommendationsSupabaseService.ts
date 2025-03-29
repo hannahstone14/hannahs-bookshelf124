@@ -65,6 +65,27 @@ const mapBookToDbRecommendation = (book: Omit<Book, 'id'> | Partial<Book>): Reco
   return dbRecommendation;
 };
 
+// Define the type for recommendation database record
+type RecommendationInsert = {
+  title: string;
+  author: string;
+  status: string;
+  progress: number;
+  cover_url?: string;
+  pages?: number;
+  color?: string;
+  genres?: string[];
+  date_read?: string;
+  recommended_by?: string;
+  favorite?: boolean;
+  is_series?: boolean;
+  series_name?: string;
+  series_position?: number;
+  tags?: string[];
+  total_series_books?: number;
+  total_series_pages?: number;
+};
+
 /**
  * Get all recommendations from the database
  */
@@ -90,6 +111,12 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
     return result.data.map(mapDbRecommendationToBook);
   } catch (error) {
     console.error('Error fetching recommendations:', error);
+    // Use localStorage as fallback
+    const storedRecs = storageService.getStoredRecommendations();
+    if (storedRecs.length > 0) {
+      console.log('Using localStorage fallback for recommendations');
+      return storedRecs;
+    }
     return [];
   }
 };
@@ -106,27 +133,6 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
     if (!dbRecommendation.title || !dbRecommendation.author) {
       throw new Error('Recommendation must have a title and author');
     }
-    
-    // Explicitly type the recommendation for TypeScript
-    type RecommendationInsert = {
-      title: string;
-      author: string;
-      status: string;
-      progress: number;
-      cover_url?: string;
-      pages?: number;
-      color?: string;
-      genres?: string[];
-      date_read?: string;
-      recommended_by?: string;
-      favorite?: boolean;
-      is_series?: boolean;
-      series_name?: string;
-      series_position?: number;
-      tags?: string[];
-      total_series_books?: number;
-      total_series_pages?: number;
-    };
     
     // Insert the recommendation into the database with proper typing
     const result = await withTimeout(
@@ -146,7 +152,12 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
       throw new Error('Failed to add recommendation');
     }
 
-    return mapDbRecommendationToBook(result.data);
+    const newBook = mapDbRecommendationToBook(result.data);
+    
+    // Also add to localStorage as backup
+    storageService.addStoredBook(newBook, true);
+    
+    return newBook;
   } catch (error) {
     console.error('Error adding recommendation:', error);
     throw error;
@@ -177,9 +188,22 @@ export const updateRecommendation = async (id: string, bookData: Partial<Book>):
       throw new Error(`Recommendation with id ${id} not found`);
     }
 
-    return mapDbRecommendationToBook(result.data);
+    const updatedBook = mapDbRecommendationToBook(result.data);
+    
+    // Also update in localStorage as backup
+    storageService.updateStoredBook(id, bookData, true);
+    
+    return updatedBook;
   } catch (error) {
     console.error('Error updating recommendation:', error);
+    
+    // Try using localStorage as fallback
+    const updatedBook = storageService.updateStoredBook(id, bookData, true);
+    if (updatedBook) {
+      console.log('Used localStorage fallback for updating recommendation');
+      return updatedBook;
+    }
+    
     throw error;
   }
 };
@@ -200,8 +224,15 @@ export const deleteRecommendation = async (id: string): Promise<void> => {
     if (result.error) {
       throw result.error;
     }
+    
+    // Also delete from localStorage
+    storageService.deleteStoredBook(id, true);
   } catch (error) {
     console.error('Error deleting recommendation:', error);
+    
+    // Try using localStorage as fallback
+    storageService.deleteStoredBook(id, true);
+    
     throw error;
   }
 };

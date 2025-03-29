@@ -19,7 +19,6 @@ interface BookshelfContextType {
   toggleFavorite: (id: string) => void;
   recoverData: () => void;
   hasBackup: boolean;
-  refreshData: () => Promise<void>; // Add a function to manually refresh data
 }
 
 const BookshelfContext = createContext<BookshelfContextType | undefined>(undefined);
@@ -68,11 +67,11 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Add a function to manually refresh data
+  // Private refresh data function
   const refreshData = async () => {
     try {
       setIsLoading(true);
-      console.log('Manually refreshing data...');
+      console.log('Auto-refreshing data...');
       const [booksData, recommendationsData] = await Promise.all([
         bookService.getAllBooks(),
         bookService.getAllRecommendations()
@@ -83,11 +82,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setBooks(booksData);
         setRecommendations(recommendationsData);
         lastRefreshTime.current = Date.now();
-        toast.success('Data refreshed successfully');
       }
     } catch (error) {
       console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
     } finally {
       if (isMounted.current) {
         setIsLoading(false);
@@ -138,6 +135,9 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setBooks(prev => [...prev, newBook]);
           }
           console.log(`Book added successfully. New count: ${book.status === 'recommendation' ? recommendations.length + 1 : books.length + 1}`);
+        } else {
+          // Always refresh after adding a book
+          await refreshData();
         }
         
         if (book.status === 'recommendation') {
@@ -145,15 +145,11 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else {
           toast.success('Book added to your shelf!');
         }
-        
-        // Refresh data after adding a book
-        if (!useLocalStorageState) {
-          await refreshData();
-        }
       }
     } catch (error) {
       console.error('Error adding book:', error);
       toast.error('Failed to add book');
+      await refreshData(); // Try to refresh data anyway
     }
   };
 
@@ -169,15 +165,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else {
           setBooks(prev => prev.filter(book => book.id !== id));
         }
-      } else {
-        // Always refresh data after removing a book when using Supabase
-        await refreshData();
       }
+      
+      // Always refresh after removing a book for consistency
+      await refreshData();
       
       toast.info(isRecommendation ? 'Recommendation removed' : 'Book removed from your shelf');
     } catch (error) {
       console.error('Error removing book:', error);
       toast.error('Failed to remove book');
+      await refreshData(); // Try to refresh data anyway
     }
   };
 
@@ -197,20 +194,18 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             prev.map(book => book.id === id ? { ...book, ...updatedBook } : book)
           );
         }
-      } else {
-        // Always refresh data after editing a book when using Supabase
-        await refreshData();
       }
+      
+      // Always refresh after editing a book to ensure consistency
+      await refreshData();
       
       toast.success('Book updated successfully!');
     } catch (error) {
       console.error('Error editing book:', error);
       toast.error('Failed to update book');
       
-      // Try to refresh data if there was an error
-      if (!useLocalStorageState) {
-        await refreshData();
-      }
+      // Always try to refresh data if there was an error
+      await refreshData();
     }
   };
 
@@ -224,15 +219,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setBooks(prev => 
           prev.map(book => book.id === id ? { ...book, progress, status } : book)
         );
-      } else {
-        // Always refresh data after updating progress when using Supabase
-        await refreshData();
       }
+      
+      // Always refresh data after updating progress for consistency
+      await refreshData();
       
       toast.success('Reading progress updated!');
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error('Failed to update progress');
+      await refreshData(); // Try to refresh data anyway
     }
   };
 
@@ -255,15 +251,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b)
             );
           }
-        } else {
-          // Always refresh data after toggling favorite when using Supabase
-          await refreshData();
         }
+        
+        // Always refresh data after toggling favorite for consistency
+        await refreshData();
         
         toast.success('Favorite status updated!');
       } catch (error) {
         console.error('Error toggling favorite:', error);
         toast.error('Failed to update favorite status');
+        await refreshData(); // Try to refresh data anyway
       }
     }
   };
@@ -282,15 +279,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         );
         
         setBooks([...orderedBooks, ...unorderedBooks]);
-      } else {
-        // Always refresh data after reordering books when using Supabase
-        await refreshData();
       }
+      
+      // Always refresh data after reordering books for consistency
+      await refreshData();
       
       toast.success('Books reordered successfully!');
     } catch (error) {
       console.error('Error reordering books:', error);
       toast.error('Failed to reorder books');
+      await refreshData(); // Try to refresh data anyway
     }
   };
 
@@ -315,23 +313,54 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Add auto-refresh every 30 seconds when using Supabase
+  // Set up a more aggressive auto-refresh every 10 seconds
   useEffect(() => {
-    if (useLocalStorageState) return;
-    
     const intervalId = setInterval(() => {
       const now = Date.now();
       const timeSinceLastRefresh = now - lastRefreshTime.current;
       
-      // Only refresh if it's been more than 30 seconds since the last refresh
-      if (timeSinceLastRefresh > 30000 && !isLoading) {
-        console.log('Auto-refreshing data...');
+      // Refresh every 10 seconds if not loading
+      if (timeSinceLastRefresh > 10000 && !isLoading) {
         refreshData();
       }
-    }, 30000);
+    }, 10000);
     
     return () => clearInterval(intervalId);
-  }, [useLocalStorageState, isLoading]);
+  }, [isLoading]);
+
+  // Refresh data after user interactions
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshData();
+      }
+    };
+    
+    const handleUserActivity = () => {
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime.current;
+      
+      // Only refresh if it's been more than 5 seconds since the last refresh
+      if (timeSinceLastRefresh > 5000) {
+        refreshData();
+      }
+    };
+    
+    // Listen for visibility changes (tab focus)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Listen for user interactions
+    window.addEventListener('mousedown', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('scroll', handleUserActivity);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+    };
+  }, []);
 
   const value = {
     books,
@@ -343,8 +372,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     toggleFavorite,
     reorderBooks,
     recoverData,
-    hasBackup,
-    refreshData
+    hasBackup
   };
 
   useEffect(() => {
