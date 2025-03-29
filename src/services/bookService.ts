@@ -46,123 +46,289 @@ const convertDBToBook = (dbBook: any): Book => {
   };
 };
 
+// Check if we should use localStorage fallback (simplified check)
+const shouldUseFallback = () => {
+  return typeof supabase.from !== 'function';
+};
+
 // Get all books
 export const getAllBooks = async (): Promise<Book[]> => {
-  const { data, error } = await supabase
-    .from(BOOKS_TABLE)
-    .select('*')
-    .order('order', { ascending: true });
-  
-  if (error) {
-    console.error('Error fetching books:', error);
-    throw error;
+  // Fallback to empty array if using mock client
+  if (shouldUseFallback()) {
+    try {
+      const storedBooks = localStorage.getItem('books');
+      return storedBooks ? JSON.parse(storedBooks) : [];
+    } catch (error) {
+      console.error('Error getting books from localStorage:', error);
+      return [];
+    }
   }
   
-  return (data || []).map(convertDBToBook);
+  try {
+    const { data, error } = await supabase
+      .from(BOOKS_TABLE)
+      .select('*')
+      .order('order', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching books:', error);
+      throw error;
+    }
+    
+    return (data || []).map(convertDBToBook);
+  } catch (error) {
+    console.error('Error in getAllBooks:', error);
+    return [];
+  }
 };
 
 // Get all recommendations
 export const getAllRecommendations = async (): Promise<Book[]> => {
-  const { data, error } = await supabase
-    .from(RECOMMENDATIONS_TABLE)
-    .select('*')
-    .order('date_read', { ascending: false });
-  
-  if (error) {
-    console.error('Error fetching recommendations:', error);
-    throw error;
+  // Fallback to empty array if using mock client
+  if (shouldUseFallback()) {
+    try {
+      const storedRecommendations = localStorage.getItem('recommendations');
+      return storedRecommendations ? JSON.parse(storedRecommendations) : [];
+    } catch (error) {
+      console.error('Error getting recommendations from localStorage:', error);
+      return [];
+    }
   }
   
-  return (data || []).map(convertDBToBook);
+  try {
+    const { data, error } = await supabase
+      .from(RECOMMENDATIONS_TABLE)
+      .select('*')
+      .order('date_read', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching recommendations:', error);
+      throw error;
+    }
+    
+    return (data || []).map(convertDBToBook);
+  } catch (error) {
+    console.error('Error in getAllRecommendations:', error);
+    return [];
+  }
 };
 
 // Add a book
 export const addBook = async (book: Omit<Book, 'id'>): Promise<Book> => {
   const newBook = prepareBookForDB(book);
   
-  const { data, error } = await supabase
-    .from(book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
-    .insert(newBook)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error adding book:', error);
-    throw error;
+  // If using localStorage, generate a new book and store it
+  if (shouldUseFallback()) {
+    const bookWithId = {
+      ...book,
+      id: newBook.id,
+    } as Book;
+    
+    // Save to localStorage
+    try {
+      const storageKey = book.status === 'recommendation' ? 'recommendations' : 'books';
+      const existing = localStorage.getItem(storageKey);
+      const items = existing ? JSON.parse(existing) : [];
+      localStorage.setItem(storageKey, JSON.stringify([...items, bookWithId]));
+      
+      return bookWithId;
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+      throw error;
+    }
   }
   
-  return convertDBToBook(data);
+  try {
+    const { data, error } = await supabase
+      .from(book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
+      .insert(newBook)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error adding book:', error);
+      throw error;
+    }
+    
+    return convertDBToBook(data);
+  } catch (error) {
+    console.error('Error in addBook:', error);
+    throw error;
+  }
 };
 
 // Update a book
 export const updateBook = async (id: string, bookData: Partial<Book>, isRecommendation: boolean = false): Promise<Book> => {
   const tableName = isRecommendation ? RECOMMENDATIONS_TABLE : BOOKS_TABLE;
   
-  // First check if the book exists in the specified table
-  const { data: existingBook } = await supabase
-    .from(tableName)
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  if (!existingBook) {
-    throw new Error(`Book with id ${id} not found in ${tableName}`);
+  // If using localStorage, update the book directly
+  if (shouldUseFallback()) {
+    try {
+      const storageKey = isRecommendation ? 'recommendations' : 'books';
+      const existing = localStorage.getItem(storageKey);
+      
+      if (!existing) {
+        throw new Error(`No ${storageKey} found in localStorage`);
+      }
+      
+      const items = JSON.parse(existing);
+      const itemIndex = items.findIndex((item: Book) => item.id === id);
+      
+      if (itemIndex === -1) {
+        throw new Error(`Book with id ${id} not found in ${storageKey}`);
+      }
+      
+      const updatedBook = { ...items[itemIndex], ...bookData };
+      items[itemIndex] = updatedBook;
+      
+      localStorage.setItem(storageKey, JSON.stringify(items));
+      
+      return updatedBook;
+    } catch (error) {
+      console.error('Error updating book in localStorage:', error);
+      throw error;
+    }
   }
   
-  // Prepare the update data
-  const updateData: any = {};
-  
-  if (bookData.title !== undefined) updateData.title = bookData.title;
-  if (bookData.author !== undefined) updateData.author = bookData.author;
-  if (bookData.coverUrl !== undefined) updateData.cover_url = bookData.coverUrl;
-  if (bookData.status !== undefined) updateData.status = bookData.status;
-  if (bookData.progress !== undefined) updateData.progress = bookData.progress;
-  if (bookData.pages !== undefined) updateData.pages = bookData.pages;
-  if (bookData.genres !== undefined) updateData.genres = bookData.genres;
-  if (bookData.favorite !== undefined) updateData.favorite = bookData.favorite;
-  if (bookData.color !== undefined) updateData.color = bookData.color;
-  if (bookData.dateRead !== undefined) updateData.date_read = new Date(bookData.dateRead).toISOString();
-  if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
-  if (bookData.order !== undefined) updateData.order = bookData.order;
-  
-  const { data, error } = await supabase
-    .from(tableName)
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error updating book:', error);
+  try {
+    // First check if the book exists in the specified table
+    const { data: existingBook } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (!existingBook) {
+      throw new Error(`Book with id ${id} not found in ${tableName}`);
+    }
+    
+    // Prepare the update data
+    const updateData: any = {};
+    
+    if (bookData.title !== undefined) updateData.title = bookData.title;
+    if (bookData.author !== undefined) updateData.author = bookData.author;
+    if (bookData.coverUrl !== undefined) updateData.cover_url = bookData.coverUrl;
+    if (bookData.status !== undefined) updateData.status = bookData.status;
+    if (bookData.progress !== undefined) updateData.progress = bookData.progress;
+    if (bookData.pages !== undefined) updateData.pages = bookData.pages;
+    if (bookData.genres !== undefined) updateData.genres = bookData.genres;
+    if (bookData.favorite !== undefined) updateData.favorite = bookData.favorite;
+    if (bookData.color !== undefined) updateData.color = bookData.color;
+    if (bookData.dateRead !== undefined) updateData.date_read = new Date(bookData.dateRead).toISOString();
+    if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
+    if (bookData.order !== undefined) updateData.order = bookData.order;
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating book:', error);
+      throw error;
+    }
+    
+    return convertDBToBook(data);
+  } catch (error) {
+    console.error('Error in updateBook:', error);
     throw error;
   }
-  
-  return convertDBToBook(data);
 };
 
 // Delete a book
 export const deleteBook = async (id: string, isRecommendation: boolean = false): Promise<void> => {
-  const { error } = await supabase
-    .from(isRecommendation ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
-    .delete()
-    .eq('id', id);
+  // If using localStorage, delete the book directly
+  if (shouldUseFallback()) {
+    try {
+      const storageKey = isRecommendation ? 'recommendations' : 'books';
+      const existing = localStorage.getItem(storageKey);
+      
+      if (!existing) {
+        return; // Nothing to delete
+      }
+      
+      const items = JSON.parse(existing);
+      const updatedItems = items.filter((item: Book) => item.id !== id);
+      
+      localStorage.setItem(storageKey, JSON.stringify(updatedItems));
+      
+      return;
+    } catch (error) {
+      console.error('Error deleting book from localStorage:', error);
+      throw error;
+    }
+  }
   
-  if (error) {
-    console.error('Error deleting book:', error);
+  try {
+    const { error } = await supabase
+      .from(isRecommendation ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting book:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in deleteBook:', error);
     throw error;
   }
 };
 
 // Update book order
 export const updateBookOrder = async (orderedIds: string[]): Promise<void> => {
-  // Create a batch of updates using an array of promises
-  const updates = orderedIds.map((id, index) => {
-    return supabase
-      .from(BOOKS_TABLE)
-      .update({ order: index })
-      .eq('id', id);
-  });
+  // If using localStorage, update the order directly
+  if (shouldUseFallback()) {
+    try {
+      const existing = localStorage.getItem('books');
+      
+      if (!existing) {
+        return; // Nothing to update
+      }
+      
+      const books = JSON.parse(existing);
+      
+      // Create a map of id to books
+      const bookMap = books.reduce((map: any, book: Book) => {
+        map[book.id] = book;
+        return map;
+      }, {});
+      
+      // Reorder books based on orderedIds
+      const orderedBooks = orderedIds
+        .filter(id => bookMap[id]) // Only include existing books
+        .map((id, index) => ({
+          ...bookMap[id],
+          order: index
+        }));
+      
+      // Add any books that weren't in the ordered list
+      const unorderedBooks = books.filter((book: Book) => !orderedIds.includes(book.id));
+      
+      localStorage.setItem('books', JSON.stringify([...orderedBooks, ...unorderedBooks]));
+      
+      return;
+    } catch (error) {
+      console.error('Error updating book order in localStorage:', error);
+      throw error;
+    }
+  }
   
-  // Execute all updates concurrently
-  await Promise.all(updates);
+  try {
+    // Create a batch of updates using an array of promises
+    const updates = orderedIds.map((id, index) => {
+      return supabase
+        .from(BOOKS_TABLE)
+        .update({ order: index })
+        .eq('id', id);
+    });
+    
+    // Execute all updates concurrently
+    await Promise.all(updates);
+  } catch (error) {
+    console.error('Error in updateBookOrder:', error);
+    throw error;
+  }
 };
