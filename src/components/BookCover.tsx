@@ -96,18 +96,18 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - positioned more like the reference image */}
+      {/* Layer effect for series books - positioned straight and to the right/bottom */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute top-0 left-0.5 w-full h-full rounded-md z-0 transform -rotate-1" 
+            className="absolute top-1 left-1 w-full h-full rounded-md z-0" 
             style={{ 
               backgroundColor: '#eaeaea', 
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
             }}
           />
           <div 
-            className="absolute top-0 left-1 w-full h-full rounded-md z-0 transform -rotate-2" 
+            className="absolute top-2 left-2 w-full h-full rounded-md z-0" 
             style={{ 
               backgroundColor: '#dedede',
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
@@ -116,13 +116,13 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         </>
       )}
       
-      <div className="relative">
+      <div className="relative z-10">
         {book.coverUrl ? (
           <img
             src={book.coverUrl}
             alt={displayTitle}
             className={cn(
-              "w-32 h-48 object-cover rounded-md shadow-lg z-10 relative",
+              "w-32 h-48 object-cover rounded-md shadow-lg",
               book.isSeries && "border-2",
             )}
             style={book.isSeries ? { borderColor: layerColors.primary } : {}}
@@ -130,7 +130,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         ) : (
           <div
             className={cn(
-              "w-32 h-48 flex items-center justify-center rounded-md shadow-lg relative z-10",
+              "w-32 h-48 flex items-center justify-center rounded-md shadow-lg",
               book.isSeries && "bg-gradient-to-b from-purple-50 to-transparent"
             )}
             style={{ backgroundColor: book.isSeries ? '#F3EEFF' : (book.color || '#3B82F6') }}

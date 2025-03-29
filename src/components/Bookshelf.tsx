@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -29,8 +30,6 @@ const Bookshelf: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('dateRead');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
-  // Remove the series filtering state:
-  // const [isFilteringSeries, setIsFilteringSeries] = useState(false);
 
   React.useEffect(() => {
     return () => {
@@ -62,6 +61,7 @@ const Bookshelf: React.FC = () => {
         displayedBooks = getSortedBooks(toReadBooks);
         break;
       case 'recommendations':
+        // Only show recommendations, not regular books
         displayedBooks = getSortedBooks(recommendations);
         break;
       case 'shelf':
@@ -70,11 +70,6 @@ const Bookshelf: React.FC = () => {
         displayedBooks = getSortedBooks(allShelfBooks);
         break;
     }
-    
-    // Remove series filtering
-    // if (isFilteringSeries) {
-    //   displayedBooks = displayedBooks.filter(book => book.isSeries);
-    // }
     
     setBooksToDisplay(displayedBooks);
   }, [viewTab, sortBy, sortOrder, books, recommendations, toReadBooks, allShelfBooks]);
@@ -132,11 +127,6 @@ const Bookshelf: React.FC = () => {
       setSortOrder('desc');
     }
   }, [sortBy, sortOrder]);
-  
-  // Remove the handleFilterSeries function
-  // const handleFilterSeries = useCallback(() => {
-  //  setIsFilteringSeries(prev => !prev);
-  // }, []);
 
   const handleDragStart = useCallback((book: Book) => {
     setDraggedBook(book);
@@ -225,10 +215,6 @@ const Bookshelf: React.FC = () => {
     <div className="w-full max-w-6xl mx-auto">
       <BookshelfHeader 
         onAddBook={handleAddBookClick}
-        // Remove the series filtering props:
-        // totalSeries={seriesCount}
-        // onFilterSeries={handleFilterSeries}
-        // isFilteringSeries={isFilteringSeries}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
@@ -267,8 +253,6 @@ const Bookshelf: React.FC = () => {
             sortOrder={sortOrder}
             onSort={handleSort}
           />
-
-          {/* Remove the series filtering notice */}
 
           {viewTab === 'recommendations' ? (
             <BookshelfSection

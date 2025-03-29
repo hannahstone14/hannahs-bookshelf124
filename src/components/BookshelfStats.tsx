@@ -129,7 +129,7 @@ const BookshelfStats: React.FC = () => {
       {/* Profile and statistics header */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-white shadow-md">
+          <Avatar className="h-20 w-20 border-2 border-white shadow-md">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
@@ -142,15 +142,34 @@ const BookshelfStats: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 min-w-56">
-          <div className="text-4xl font-bold">
-            {formatPagesRead(pagesRead)}
+        <div className="bg-white rounded-xl shadow-sm p-5 flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="text-4xl font-bold">
+              {formatPagesRead(pagesRead)}
+            </div>
+            <div>
+              <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
+              <div className="flex items-center text-sm text-gray-500 mt-1">
+                <BookOpen className="h-4 w-4 mr-1" />
+                <span>From {books.length} books</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <BookOpen className="h-4 w-4 mr-1" />
-              <span>From {books.length} books</span>
+          
+          <div className="grid grid-cols-3 gap-3 flex-1">
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-xs text-gray-500 mb-1">Books Read</div>
+              <div className="text-xl font-semibold">{totalBooksRead}</div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-xs text-gray-500 mb-1">Read in {currentYear}</div>
+              <div className="text-xl font-semibold">{booksReadThisYear}</div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="text-xs text-gray-500 mb-1">Series Read</div>
+              <div className="text-xl font-semibold">{totalSeriesRead}</div>
             </div>
           </div>
         </div>
@@ -158,22 +177,30 @@ const BookshelfStats: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-xs text-gray-500 mb-1">Total Books Read</div>
-              <div className="text-xl font-semibold">{totalBooksRead}</div>
+          <h3 className="text-sm text-gray-500 font-medium mb-4">TOP 3 GENRES</h3>
+          {topGenres.length > 0 ? (
+            <div className="space-y-4">
+              {topGenres.map((item, index) => (
+                <div key={item.genre} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-600' : 
+                      index === 1 ? 'bg-gray-100 text-gray-600' : 
+                      'bg-amber-100 text-amber-600'
+                    }`}>
+                      {getGenreIcon(item.genre)}
+                    </div>
+                    <span className="font-medium">{item.genre}</span>
+                  </div>
+                  <span className="text-gray-500">{item.count} books</span>
+                </div>
+              ))}
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-xs text-gray-500 mb-1">Books Read in {currentYear}</div>
-              <div className="text-xl font-semibold">{booksReadThisYear}</div>
+          ) : (
+            <div className="text-gray-500 text-center py-4">
+              Add books with genres to see statistics
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-xs text-gray-500 mb-1">Total Series Read</div>
-              <div className="text-xl font-semibold">{totalSeriesRead}</div>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6">
