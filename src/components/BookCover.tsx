@@ -14,8 +14,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   // Get an appropriate color for the layered effect based on cover or book color
   const [layerColors, setLayerColors] = useState({
     primary: '#9b87f5',  // Default purple primary color
-    secondary: '#888888', // Darker gray for secondary layer
-    tertiary: '#AAAAAA'   // Medium gray for tertiary layer
+    secondary: '#e2e2e2', // Light gray for secondary layer
+    tertiary: '#cccccc'   // Medium gray for tertiary layer
   });
 
   // Create a modified title that adds "Series" for series books
@@ -28,8 +28,8 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       const baseColor = book.color;
       setLayerColors({
         primary: baseColor,
-        secondary: convertToGrayTone(baseColor, 0.8),  // Darker gray variant with higher opacity
-        tertiary: convertToGrayTone(baseColor, 0.7)    // Medium gray variant with higher opacity
+        secondary: convertToGrayTone(baseColor, 0.9),  // Light gray variant
+        tertiary: convertToGrayTone(baseColor, 0.8)    // Medium gray variant
       });
     }
   }, [book.color]);
@@ -96,23 +96,21 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - darker gray layers with improved spacing and shadows */}
+      {/* Layer effect for series books - updated to match reference image */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute -right-2.5 -bottom-2.5 w-32 h-48 rounded-md z-0 rotate-2" 
+            className="absolute top-1 -right-1 w-[140px] h-[215px] rounded-md z-0" 
             style={{ 
-              backgroundColor: layerColors.tertiary, 
-              opacity: 0.85,
-              boxShadow: '0 3px 4px rgba(0, 0, 0, 0.25)'
+              backgroundColor: '#eaeaea', 
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
             }}
           />
           <div 
-            className="absolute -right-1.25 -bottom-1.25 w-32 h-48 rounded-md z-0 rotate-1" 
+            className="absolute top-2 -right-2 w-[140px] h-[215px] rounded-md z-0" 
             style={{ 
-              backgroundColor: layerColors.secondary, 
-              opacity: 0.9,
-              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.3)'
+              backgroundColor: '#dedede',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
             }}
           />
         </>

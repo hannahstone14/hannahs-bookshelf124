@@ -2,7 +2,6 @@
 import React from 'react';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface BookshelfHeaderProps {
   onAddBook: () => void;
@@ -16,21 +15,7 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
   totalCompleteSeries
 }) => {
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 border-2 border-white shadow-md">
-          <AvatarImage 
-            src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
-            alt="Hannah's profile" 
-          />
-          <AvatarFallback>HL</AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-3xl font-medium">Hannah's Library</h1>
-          <p className="text-gray-500 text-sm italic">I do not endorse everything I read. Books read for school, development, and pleasure since 2022.</p>
-        </div>
-      </div>
-      
+    <div className="flex justify-end items-center mb-6">
       <div className="flex items-center gap-3">
         {totalBooks !== undefined && (
           <span className="text-gray-500 mr-2">

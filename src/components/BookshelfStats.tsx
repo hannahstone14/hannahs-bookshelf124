@@ -116,30 +116,49 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
+  // Get the next book to read (first book in the to-read list)
+  const toReadBooks = books.filter(book => book.status === 'to-read');
+  const nextToRead = toReadBooks.length > 0 ? toReadBooks[0] : null;
+
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
   };
 
   return (
     <div className="mb-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="text-4xl font-bold">
-                {formatPagesRead(pagesRead)}
-              </div>
-              <div>
-                <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
-                <div className="flex items-center text-sm text-gray-500 mt-1">
-                  <BookOpen className="h-4 w-4 mr-1" />
-                  <span>From {books.length} books in your collection</span>
-                </div>
-              </div>
+      {/* Profile and statistics header */}
+      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 border-2 border-white shadow-md">
+            <AvatarImage 
+              src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
+              alt="Hannah's profile" 
+            />
+            <AvatarFallback>HL</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-3xl font-medium">Hannah's Library</h1>
+            <p className="text-gray-500 text-sm italic">I do not endorse everything I read. Books read for school, development, and pleasure since 2022.</p>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
+          <div className="text-4xl font-bold">
+            {formatPagesRead(pagesRead)}
+          </div>
+          <div>
+            <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
+            <div className="flex items-center text-sm text-gray-500 mt-1">
+              <BookOpen className="h-4 w-4 mr-1" />
+              <span>From {books.length} books in your collection</span>
             </div>
           </div>
-          
-          <div className="grid grid-cols-3 gap-4 mt-4">
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="text-xs text-gray-500 mb-1">Total Books Read</div>
               <div className="text-xl font-semibold">{totalBooksRead}</div>
@@ -185,36 +204,72 @@ const BookshelfStats: React.FC = () => {
         </div>
       </div>
 
-      {latestRead && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h3 className="text-sm text-gray-500 font-medium mb-4">LAST BOOK YOU FINISHED</h3>
-          <div className="flex items-start gap-3">
-            <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
-              {latestRead.coverUrl ? (
-                <img 
-                  src={latestRead.coverUrl} 
-                  alt={latestRead.title} 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div 
-                  className="w-full h-full flex items-center justify-center"
-                  style={{ backgroundColor: latestRead.color || '#3B82F6' }}
-                >
-                  <span className="text-white text-xs font-bold">{latestRead.title.substring(0, 2)}</span>
-                </div>
-              )}
-            </div>
-            <div>
-              <h4 className="text-xl font-medium">{latestRead.title}</h4>
-              <p className="text-gray-600">{latestRead.author}</p>
-              <p className="text-gray-400 text-sm mt-1">
-                {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
-              </p>
+      {/* Book Highlights Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Last finished book */}
+        {latestRead && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-sm text-gray-500 font-medium mb-4">LAST BOOK HANNAH FINISHED</h3>
+            <div className="flex items-start gap-3">
+              <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
+                {latestRead.coverUrl ? (
+                  <img 
+                    src={latestRead.coverUrl} 
+                    alt={latestRead.title} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: latestRead.color || '#3B82F6' }}
+                  >
+                    <span className="text-white text-xs font-bold">{latestRead.title.substring(0, 2)}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-xl font-medium">{latestRead.title}</h4>
+                <p className="text-gray-600">{latestRead.author}</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Next book to read */}
+        {nextToRead && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-sm text-gray-500 font-medium mb-4">NEXT BOOK HANNAH WILL READ</h3>
+            <div className="flex items-start gap-3">
+              <div className="w-16 h-24 shadow-md rounded-sm overflow-hidden">
+                {nextToRead.coverUrl ? (
+                  <img 
+                    src={nextToRead.coverUrl} 
+                    alt={nextToRead.title} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: nextToRead.color || '#3B82F6' }}
+                  >
+                    <span className="text-white text-xs font-bold">{nextToRead.title.substring(0, 2)}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-xl font-medium">{nextToRead.title}</h4>
+                <p className="text-gray-600">{nextToRead.author}</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  {nextToRead.pages} pages · {nextToRead.genres && nextToRead.genres.length > 0 ? nextToRead.genres[0] : 'No genre'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
