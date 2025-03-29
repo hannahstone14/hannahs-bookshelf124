@@ -4,8 +4,6 @@ import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Book, BookOpenText, Library } from 'lucide-react';
 
 const Index = () => {
   const { books, recommendations } = useBookshelf();
@@ -29,16 +27,6 @@ const Index = () => {
       <header className="py-6 bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Book Tracker</h1>
-          <div className="flex items-center space-x-4">
-            <div className="text-right mr-2">
-              <p className="font-medium">Jane Doe</p>
-              <p className="text-sm text-gray-500">Book enthusiast</p>
-            </div>
-            <Avatar className="h-10 w-10 border border-gray-200">
-              <AvatarImage src="/placeholder.svg" alt="Avatar" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-          </div>
         </div>
       </header>
       
