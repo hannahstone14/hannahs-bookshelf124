@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
-import { RECOMMENDATIONS_TABLE, SupabaseResponse } from '@/lib/supabase';
+import { RECOMMENDATIONS_TABLE, SupabaseResponse, shouldUseFallback } from '@/lib/supabase';
 import { withTimeout } from '@/utils/timeoutUtils';
 import * as storageService from './storageService';
 
@@ -90,6 +90,12 @@ type RecommendationInsert = {
  * Get all recommendations from the database
  */
 export const getAllRecommendations = async (): Promise<Book[]> => {
+  // If should use fallback, immediately return localStorage data
+  if (shouldUseFallback()) {
+    console.log('Using localStorage fallback for recommendations');
+    return storageService.getStoredRecommendations();
+  }
+  
   try {
     const result = await withTimeout(
       supabase
@@ -126,6 +132,14 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
  */
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
+    // If using fallback, immediately use localStorage
+    if (shouldUseFallback()) {
+      const id = crypto.randomUUID();
+      const newBook = { ...book, id } as Book;
+      storageService.addStoredBook(newBook, true);
+      return newBook;
+    }
+    
     // Convert the book to the database format
     const dbRecommendation = mapBookToDbRecommendation(book);
     
@@ -160,6 +174,15 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
     return newBook;
   } catch (error) {
     console.error('Error adding recommendation:', error);
+    
+    // If using fallback, create a new book with UUID
+    if (shouldUseFallback()) {
+      const id = crypto.randomUUID();
+      const newBook = { ...book, id } as Book;
+      storageService.addStoredBook(newBook, true);
+      return newBook;
+    }
+    
     throw error;
   }
 };
@@ -168,6 +191,15 @@ export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> =
  * Update a recommendation in the database
  */
 export const updateRecommendation = async (id: string, bookData: Partial<Book>): Promise<Book> => {
+  // If using fallback, immediately use localStorage
+  if (shouldUseFallback()) {
+    const updatedBook = storageService.updateStoredBook(id, bookData, true);
+    if (!updatedBook) {
+      throw new Error(`Recommendation with id ${id} not found`);
+    }
+    return updatedBook;
+  }
+  
   try {
     const dbRecommendation = mapBookToDbRecommendation(bookData);
     const result = await withTimeout(
@@ -212,6 +244,12 @@ export const updateRecommendation = async (id: string, bookData: Partial<Book>):
  * Delete a recommendation from the database
  */
 export const deleteRecommendation = async (id: string): Promise<void> => {
+  // If using fallback, immediately use localStorage only
+  if (shouldUseFallback()) {
+    storageService.deleteStoredBook(id, true);
+    return;
+  }
+  
   try {
     const result = await withTimeout(
       supabase
