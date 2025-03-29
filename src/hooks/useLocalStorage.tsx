@@ -1,16 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Book } from '@/types/book';
 
 export const useLocalStorage = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [initialized, setInitialized] = useState<boolean>(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load data from localStorage on initialization
   useEffect(() => {
     if (initialized) return;
     
     try {
+      console.log('Loading data from localStorage...');
       const storedBooks = localStorage.getItem('books');
       const storedRecommendations = localStorage.getItem('recommendations');
       
@@ -18,17 +21,22 @@ export const useLocalStorage = () => {
         const parsedBooks = JSON.parse(storedBooks);
         setBooks(parsedBooks);
         console.log('Loaded books from localStorage:', parsedBooks.length);
+      } else {
+        console.log('No books found in localStorage');
       }
       
       if (storedRecommendations) {
         const parsedRecommendations = JSON.parse(storedRecommendations);
         setRecommendations(parsedRecommendations);
         console.log('Loaded recommendations from localStorage:', parsedRecommendations.length);
+      } else {
+        console.log('No recommendations found in localStorage');
       }
       
       setInitialized(true);
     } catch (error) {
       console.error('Error loading from localStorage:', error);
+      setInitialized(true); // Still mark as initialized to avoid infinite loop
     }
   }, [initialized]);
 
@@ -48,6 +56,7 @@ export const useLocalStorage = () => {
   const setAndSaveBooks = useCallback((newBooks: Book[] | ((prev: Book[]) => Book[])) => {
     setBooks(prev => {
       const updatedBooks = typeof newBooks === 'function' ? newBooks(prev) : newBooks;
+      console.log('Setting books:', updatedBooks.length);
       // Immediately save to localStorage
       saveToLocalStorage('books', updatedBooks);
       return updatedBooks;
@@ -57,38 +66,42 @@ export const useLocalStorage = () => {
   const setAndSaveRecommendations = useCallback((newRecs: Book[] | ((prev: Book[]) => Book[])) => {
     setRecommendations(prev => {
       const updatedRecs = typeof newRecs === 'function' ? newRecs(prev) : newRecs;
+      console.log('Setting recommendations:', updatedRecs.length);
       // Immediately save to localStorage
       saveToLocalStorage('recommendations', updatedRecs);
       return updatedRecs;
     });
   }, [saveToLocalStorage]);
 
-  // Still keep the periodic sync for extra safety
+  // Debounced save to localStorage to prevent too many writes
   useEffect(() => {
     if (!initialized) return;
     
-    const syncInterval = setInterval(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      console.log('Periodic save to localStorage...');
       saveToLocalStorage('books', books);
       saveToLocalStorage('recommendations', recommendations);
-    }, 3000); // Sync every 3 seconds
-    
-    const handleBeforeUnload = () => {
-      saveToLocalStorage('books', books);
-      saveToLocalStorage('recommendations', recommendations);
-      console.log('Saved data before page unload');
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    }, 1000); // 1 second debounce
     
     return () => {
-      clearInterval(syncInterval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      
-      // Save one last time on component unmount
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [books, recommendations, initialized, saveToLocalStorage]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      console.log('Saving data before unmount...');
       saveToLocalStorage('books', books);
       saveToLocalStorage('recommendations', recommendations);
     };
-  }, [books, recommendations, initialized, saveToLocalStorage]);
+  }, [books, recommendations, saveToLocalStorage]);
 
   return {
     books,

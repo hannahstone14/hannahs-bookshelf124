@@ -16,7 +16,7 @@ const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: false,
       staleTime: 30000, // 30 seconds
-      cacheTime: 300000, // 5 minutes
+      gcTime: 300000, // 5 minutes (formerly cacheTime)
       onError: (error) => {
         console.error('Query error:', error);
       }
