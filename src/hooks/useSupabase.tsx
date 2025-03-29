@@ -9,6 +9,7 @@ export const useSupabase = () => {
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isMounted = useRef(true);
+  const channelsRef = useRef<{ books: any; recommendations: any } | null>(null);
 
   // Load initial data and set up real-time subscriptions
   useEffect(() => {
@@ -38,12 +39,15 @@ export const useSupabase = () => {
     
     // Set up real-time subscriptions if possible
     try {
-      const channels = supabase.getChannels();
-      
       // Close any existing channels
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
+      if (channelsRef.current) {
+        if (channelsRef.current.books) {
+          supabase.removeChannel(channelsRef.current.books);
+        }
+        if (channelsRef.current.recommendations) {
+          supabase.removeChannel(channelsRef.current.recommendations);
+        }
+      }
       
       // Create new channels for real-time updates
       const booksChannel = supabase.channel('books-changes')
@@ -71,19 +75,29 @@ export const useSupabase = () => {
           }
         )
         .subscribe();
+      
+      channelsRef.current = {
+        books: booksChannel,
+        recommendations: recommendationsChannel
+      };
         
       return () => {
         isMounted.current = false;
-        supabase.removeChannel(booksChannel);
-        supabase.removeChannel(recommendationsChannel);
+        if (channelsRef.current) {
+          if (channelsRef.current.books) {
+            supabase.removeChannel(channelsRef.current.books);
+          }
+          if (channelsRef.current.recommendations) {
+            supabase.removeChannel(channelsRef.current.recommendations);
+          }
+        }
       };
     } catch (error) {
       console.error('Error setting up real-time subscriptions:', error);
+      return () => {
+        isMounted.current = false;
+      };
     }
-    
-    return () => {
-      isMounted.current = false;
-    };
   }, []);
 
   return {

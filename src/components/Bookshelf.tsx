@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import BookCover from './BookCover';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -31,7 +31,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
 
 type SortOption = 'title' | 'author' | 'dateRead' | 'progress' | 'favorite';
 type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
@@ -40,7 +39,7 @@ type DisplayStyle = 'shelf' | 'list';
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   
-  const { books, recommendations, reorderBooks, removeBook, recoverData } = useBookshelf();
+  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -180,11 +179,7 @@ const Bookshelf: React.FC = () => {
     if (!isMounted.current) return;
     
     setSelectedBook(book);
-    setTimeout(() => {
-      if (isMounted.current) {
-        setIsEditDialogOpen(true);
-      }
-    }, 0);
+    setIsEditDialogOpen(true);
   }, []);
 
   const handleDelete = useCallback((bookId: string) => {
@@ -222,6 +217,12 @@ const Bookshelf: React.FC = () => {
         setSelectedBook(null);
       }
     }, 100);
+  }, []);
+
+  const handleAddBookButtonClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAddDialogOpen(true);
   }, []);
 
   const renderListItem = (book: Book) => {
@@ -355,30 +356,23 @@ const Bookshelf: React.FC = () => {
         <h1 className="text-3xl font-medium">Hannah's Library</h1>
         
         <div className="flex items-center gap-3">
-          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button 
-                className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
-                id="add-book-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (isMounted.current) {
-                    setIsAddDialogOpen(true);
-                  }
-                }}
-              >
-                <PlusCircle className="h-6 w-6 mr-2" />
-                Add Book
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogTitle>Add New Book</DialogTitle>
-              <AddBookForm onSuccess={handleAddSuccess} />
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
+            id="add-book-button"
+            onClick={handleAddBookButtonClick}
+          >
+            <PlusCircle className="h-6 w-6 mr-2" />
+            Add Book
+          </Button>
         </div>
       </div>
+
+      <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogTitle>Add New Book</DialogTitle>
+          <AddBookForm onSuccess={handleAddSuccess} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
