@@ -25,6 +25,20 @@ export const prepareBookForDB = (book: Omit<Book, 'id'> | Book): any => {
 
 // Helper to convert DB response to Book object
 export const convertDBToBook = (dbBook: any): Book => {
+  // Ensure dateRead is a valid Date object
+  let dateRead: Date;
+  try {
+    dateRead = dbBook.date_read ? new Date(dbBook.date_read) : new Date();
+    // Validate the date is valid
+    if (isNaN(dateRead.getTime())) {
+      console.warn(`Invalid date for book ${dbBook.title}, using current date`);
+      dateRead = new Date(); // Fallback to current date if invalid
+    }
+  } catch (error) {
+    console.error(`Error parsing date for book ${dbBook.title}:`, error);
+    dateRead = new Date(); // Fallback to current date on error
+  }
+
   return {
     id: dbBook.id,
     title: dbBook.title,
@@ -36,7 +50,7 @@ export const convertDBToBook = (dbBook: any): Book => {
     genres: dbBook.genres || [],
     favorite: !!dbBook.favorite,
     color: dbBook.color,
-    dateRead: dbBook.date_read ? new Date(dbBook.date_read) : new Date(),
+    dateRead: dateRead,
     recommendedBy: dbBook.recommended_by,
     order: dbBook.order || 0
   };

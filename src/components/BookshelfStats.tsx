@@ -16,6 +16,14 @@ const genreIconMap: Record<string, React.ReactNode> = {
   'Self-Help': <Coffee className="h-4 w-4 text-teal-500" />
 };
 
+// Helper function to ensure a date is a Date object
+const ensureDate = (date: Date | string | number): Date => {
+  if (date instanceof Date) {
+    return date;
+  }
+  return new Date(date);
+};
+
 const BookshelfStats: React.FC = () => {
   const { books } = useBookshelf();
   
@@ -27,7 +35,15 @@ const BookshelfStats: React.FC = () => {
   
   // Calculate books read this year
   const booksReadThisYear = books.filter(
-    book => book.status === 'read' && book.dateRead.getFullYear() === currentYear
+    book => {
+      try {
+        const dateRead = ensureDate(book.dateRead);
+        return book.status === 'read' && dateRead.getFullYear() === currentYear;
+      } catch (error) {
+        console.error('Error processing date for book:', book.title, error);
+        return false;
+      }
+    }
   ).length;
   
   // Calculate total pages read
@@ -74,7 +90,14 @@ const BookshelfStats: React.FC = () => {
   const latestRead = readBooks.length > 0 
     ? readBooks.reduce((latest: Book | null, book) => {
         if (!latest) return book;
-        return book.dateRead > latest.dateRead ? book : latest;
+        try {
+          const bookDate = ensureDate(book.dateRead);
+          const latestDate = ensureDate(latest.dateRead);
+          return bookDate > latestDate ? book : latest;
+        } catch (error) {
+          console.error('Error comparing dates for book:', book.title, error);
+          return latest;
+        }
       }, null)
     : null;
 
