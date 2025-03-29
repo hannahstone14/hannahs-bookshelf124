@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { Book } from '@/types/book';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,7 +47,7 @@ const convertDBToBook = (dbBook: any): Book => {
 
 // Check if we should use localStorage fallback (simplified check)
 const shouldUseFallback = () => {
-  return typeof supabase.from !== 'function';
+  return !supabase || typeof supabase.from !== 'function';
 };
 
 // Get all books
@@ -65,17 +64,19 @@ export const getAllBooks = async (): Promise<Book[]> => {
   }
   
   try {
-    const { data, error } = await supabase
+    const result = await supabase
       .from(BOOKS_TABLE)
-      .select('*')
-      .order('order', { ascending: true });
-    
-    if (error) {
-      console.error('Error fetching books:', error);
-      throw error;
+      .select('*');
+      
+    if (result.error) {
+      console.error('Error fetching books:', result.error);
+      throw result.error;
     }
     
-    return (data || []).map(convertDBToBook);
+    // Sort by order
+    const sortedData = (result.data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    return sortedData.map(convertDBToBook);
   } catch (error) {
     console.error('Error in getAllBooks:', error);
     return [];
@@ -96,17 +97,21 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
   }
   
   try {
-    const { data, error } = await supabase
+    const result = await supabase
       .from(RECOMMENDATIONS_TABLE)
-      .select('*')
-      .order('date_read', { ascending: false });
+      .select('*');
     
-    if (error) {
-      console.error('Error fetching recommendations:', error);
-      throw error;
+    if (result.error) {
+      console.error('Error fetching recommendations:', result.error);
+      throw result.error;
     }
     
-    return (data || []).map(convertDBToBook);
+    // Sort by date_read (descending)
+    const sortedData = (result.data || []).sort((a, b) => 
+      new Date(b.date_read).getTime() - new Date(a.date_read).getTime()
+    );
+    
+    return sortedData.map(convertDBToBook);
   } catch (error) {
     console.error('Error in getAllRecommendations:', error);
     return [];
@@ -139,18 +144,23 @@ export const addBook = async (book: Omit<Book, 'id'>): Promise<Book> => {
   }
   
   try {
-    const { data, error } = await supabase
-      .from(book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE)
-      .insert(newBook)
-      .select()
-      .single();
+    const tableName = book.status === 'recommendation' ? RECOMMENDATIONS_TABLE : BOOKS_TABLE;
     
-    if (error) {
-      console.error('Error adding book:', error);
-      throw error;
+    const result = await supabase
+      .from(tableName)
+      .insert(newBook);
+      
+    // Fetch the inserted record
+    if (result.error) {
+      console.error('Error adding book:', result.error);
+      throw result.error;
     }
     
-    return convertDBToBook(data);
+    // Return the book with the generated ID
+    return {
+      ...book,
+      id: newBook.id
+    } as Book;
   } catch (error) {
     console.error('Error in addBook:', error);
     throw error;
@@ -192,11 +202,12 @@ export const updateBook = async (id: string, bookData: Partial<Book>, isRecommen
   
   try {
     // First check if the book exists in the specified table
-    const { data: existingBook } = await supabase
+    const checkResult = await supabase
       .from(tableName)
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    
+    const existingBook = checkResult.data?.[0];
     
     if (!existingBook) {
       throw new Error(`Book with id ${id} not found in ${tableName}`);
@@ -218,19 +229,22 @@ export const updateBook = async (id: string, bookData: Partial<Book>, isRecommen
     if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
     if (bookData.order !== undefined) updateData.order = bookData.order;
     
-    const { data, error } = await supabase
+    const updateResult = await supabase
       .from(tableName)
       .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
     
-    if (error) {
-      console.error('Error updating book:', error);
-      throw error;
+    if (updateResult.error) {
+      console.error('Error updating book:', updateResult.error);
+      throw updateResult.error;
     }
     
-    return convertDBToBook(data);
+    // Return the updated book
+    return {
+      ...existingBook,
+      ...bookData,
+      id // Ensure ID is preserved
+    } as Book;
   } catch (error) {
     console.error('Error in updateBook:', error);
     throw error;

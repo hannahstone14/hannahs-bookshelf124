@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
@@ -31,19 +30,15 @@ export const useBookshelf = () => {
 export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [recommendations, setRecommendations] = useState<Book[]>([]);
-  const [hasBackup, setHasBackup] = useState<boolean>(true); // Always true with Supabase
+  const [hasBackup, setHasBackup] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(true);
-  
   const isMounted = useRef(true);
 
-  // Check if Supabase is configured
   useEffect(() => {
-    // Simple check - if the mock client is in use, we'll assume Supabase is not configured
     if (typeof supabase.from !== 'function' || !supabase.from('books')) {
       setIsSupabaseConfigured(false);
       console.warn('Supabase appears to be misconfigured. Using local storage fallback.');
-      // Load from localStorage as fallback
       try {
         const storedBooks = localStorage.getItem('books');
         const storedRecommendations = localStorage.getItem('recommendations');
@@ -61,7 +56,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // Initial data load from Supabase
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -80,7 +74,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.error('Error loading initial data:', error);
         toast.error('Failed to load your books');
         
-        // Fallback to localStorage if Supabase fails
         if (!isSupabaseConfigured) {
           try {
             const storedBooks = localStorage.getItem('books');
@@ -106,7 +99,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     loadData();
     
-    // Set up localStorage sync if Supabase is not configured
     if (!isSupabaseConfigured) {
       const syncInterval = setInterval(() => {
         console.log('Performing periodic save');
@@ -118,9 +110,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } catch (error) {
           console.error('Error saving to localStorage:', error);
         }
-      }, 15000); // Save every 15 seconds
+      }, 15000);
       
-      // Also save when the page unloads
       const handleBeforeUnload = () => {
         console.log('Page unloading, saving data');
         try {
@@ -139,46 +130,52 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     }
     
-    // Set up real-time listeners for both tables if Supabase IS configured
     if (isSupabaseConfigured) {
-      const booksSubscription = supabase
-        .channel('books-changes')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'books' 
-        }, async (payload) => {
-          console.log('Real-time books update:', payload);
-          // Reload all books to ensure we have the latest state
-          const updatedBooks = await bookService.getAllBooks();
-          if (isMounted.current) {
-            setBooks(updatedBooks);
-          }
-        })
-        .subscribe();
+      try {
+        const booksSubscription = supabase
+          .channel('books-changes')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'books' 
+          }, async (payload) => {
+            console.log('Real-time books update:', payload);
+            const updatedBooks = await bookService.getAllBooks();
+            if (isMounted.current) {
+              setBooks(updatedBooks);
+            }
+          })
+          .subscribe();
+          
+        const recommendationsSubscription = supabase
+          .channel('recommendations-changes')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'recommendations' 
+          }, async (payload) => {
+            console.log('Real-time recommendations update:', payload);
+            const updatedRecommendations = await bookService.getAllRecommendations();
+            if (isMounted.current) {
+              setRecommendations(updatedRecommendations);
+            }
+          })
+          .subscribe();
         
-      const recommendationsSubscription = supabase
-        .channel('recommendations-changes')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'recommendations' 
-        }, async (payload) => {
-          console.log('Real-time recommendations update:', payload);
-          // Reload all recommendations
-          const updatedRecommendations = await bookService.getAllRecommendations();
-          if (isMounted.current) {
-            setRecommendations(updatedRecommendations);
+        return () => {
+          isMounted.current = false;
+          if (typeof supabase.removeChannel === 'function') {
+            try {
+              supabase.removeChannel(booksSubscription);
+              supabase.removeChannel(recommendationsSubscription);
+            } catch (error) {
+              console.error('Error removing channels:', error);
+            }
           }
-        })
-        .subscribe();
-      
-      return () => {
-        isMounted.current = false;
-        // Clean up subscriptions
-        supabase.removeChannel(booksSubscription);
-        supabase.removeChannel(recommendationsSubscription);
-      };
+        };
+      } catch (error) {
+        console.error('Error setting up real-time subscriptions:', error);
+      }
     }
     
     return () => {
@@ -186,12 +183,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, [isSupabaseConfigured, books, recommendations]);
 
-  // Add a book
   const addBook = async (book: Omit<Book, 'id'>) => {
     try {
       const newBook = await bookService.addBook(book);
       
-      // If Supabase is not configured, update local state
       if (!isSupabaseConfigured) {
         if (book.status === 'recommendation') {
           setRecommendations(prev => [...prev, newBook]);
@@ -211,15 +206,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Remove a book
   const removeBook = async (id: string) => {
     try {
-      // First determine if this is a book or recommendation
       const isRecommendation = recommendations.some(rec => rec.id === id);
       
       await bookService.deleteBook(id, isRecommendation);
       
-      // If Supabase is not configured, update local state
       if (!isSupabaseConfigured) {
         if (isRecommendation) {
           setRecommendations(prev => prev.filter(book => book.id !== id));
@@ -235,15 +227,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Edit a book
   const editBook = async (id: string, bookData: Partial<Book>) => {
     try {
-      // Determine if this is a book or recommendation
       const isRecommendation = recommendations.some(rec => rec.id === id);
       
       const updatedBook = await bookService.updateBook(id, bookData, isRecommendation);
       
-      // If Supabase is not configured, update local state
       if (!isSupabaseConfigured) {
         if (isRecommendation) {
           setRecommendations(prev => 
@@ -263,15 +252,12 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Update reading progress
   const updateProgress = async (id: string, progress: number) => {
     try {
-      // Update progress and status based on progress
       const status = progress === 100 ? 'read' : 'reading';
       
       await bookService.updateBook(id, { progress, status });
       
-      // If Supabase is not configured, update local state
       if (!isSupabaseConfigured) {
         setBooks(prev => 
           prev.map(book => book.id === id ? { ...book, progress, status } : book)
@@ -285,10 +271,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Toggle favorite status
   const toggleFavorite = async (id: string) => {
     try {
-      // Determine if this is a book or recommendation
       const isRecommendation = recommendations.some(rec => rec.id === id);
       const collection = isRecommendation ? recommendations : books;
       const book = collection.find(b => b.id === id);
@@ -296,7 +280,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (book) {
         await bookService.updateBook(id, { favorite: !book.favorite }, isRecommendation);
         
-        // If Supabase is not configured, update local state
         if (!isSupabaseConfigured) {
           if (isRecommendation) {
             setRecommendations(prev => 
@@ -317,12 +300,10 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Reorder books
   const reorderBooks = async (currentOrder: string[], newOrder: string[]) => {
     try {
       await bookService.updateBookOrder(newOrder);
       
-      // If Supabase is not configured, update local state with the new order
       if (!isSupabaseConfigured) {
         const orderedBooks = newOrder.map(
           id => books.find(book => book.id === id)
@@ -342,7 +323,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Recovery function (not really needed with Supabase, but keeping for API compatibility)
   const recoverData = async () => {
     try {
       const [booksData, recommendationsData] = await Promise.all([
@@ -361,7 +341,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Return the context value
   const value = {
     books,
     recommendations,
@@ -375,7 +354,6 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     hasBackup
   };
 
-  // Show loading state if we're still loading initial data
   if (isLoading) {
     return (
       <BookshelfContext.Provider value={value}>

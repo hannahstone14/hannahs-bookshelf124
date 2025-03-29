@@ -20,19 +20,64 @@ function createMockSupabaseClient() {
     'For now, using mock client that returns empty data.'
   );
   
-  // Create a basic mock with empty data responses
+  // Create a more comprehensive mock with properly chained methods
   return {
     from: () => ({
-      select: () => Promise.resolve({ data: [], error: null }),
-      insert: () => Promise.resolve({ data: null, error: null }),
-      update: () => Promise.resolve({ data: null, error: null }),
-      delete: () => Promise.resolve({ data: null, error: null }),
-      eq: () => ({ select: () => Promise.resolve({ data: null, error: null }) }),
-      single: () => Promise.resolve({ data: null, error: null }),
-      order: () => ({ select: () => Promise.resolve({ data: [], error: null }) })
+      select: () => ({
+        order: () => ({
+          data: [],
+          error: null,
+          then: (callback: Function) => Promise.resolve(callback({ data: [], error: null }))
+        }),
+        eq: () => ({
+          single: () => Promise.resolve({ data: null, error: null }),
+          data: null,
+          error: null
+        }),
+        single: () => Promise.resolve({ data: null, error: null }),
+        data: [],
+        error: null,
+        then: (callback: Function) => Promise.resolve(callback({ data: [], error: null }))
+      }),
+      insert: () => ({
+        select: () => ({
+          single: () => Promise.resolve({ data: null, error: null })
+        }),
+        data: null, 
+        error: null,
+        then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
+      }),
+      update: () => ({
+        eq: () => ({
+          select: () => ({
+            single: () => Promise.resolve({ data: null, error: null })
+          }),
+          data: null,
+          error: null,
+          then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
+        })
+      }),
+      delete: () => ({
+        eq: () => ({
+          data: null,
+          error: null,
+          then: (callback: Function) => Promise.resolve(callback({ data: null, error: null }))
+        })
+      }),
+      eq: () => ({
+        select: () => Promise.resolve({ data: null, error: null }),
+        data: null,
+        error: null
+      }),
+      order: () => ({
+        select: () => Promise.resolve({ data: [], error: null })
+      })
     }),
     channel: () => ({
-      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) })
+      on: () => ({
+        subscribe: () => ({ unsubscribe: () => {} })
+      }),
+      subscribe: () => ({ unsubscribe: () => {} })
     }),
     removeChannel: () => {}
   };
