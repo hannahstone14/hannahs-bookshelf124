@@ -127,7 +127,7 @@ const BookshelfStats: React.FC = () => {
   return (
     <div className="mb-10">
       {/* Profile and statistics header */}
-      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16 border-2 border-white shadow-md">
             <AvatarImage 
@@ -138,11 +138,11 @@ const BookshelfStats: React.FC = () => {
           </Avatar>
           <div>
             <h1 className="text-3xl font-medium">Hannah's Library</h1>
-            <p className="text-gray-500 text-sm italic">I do not endorse everything I read. Books read for school, development, and pleasure since 2022.</p>
+            <p className="text-gray-500 text-sm italic">I do not endorse everything I read.</p>
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4 min-w-56">
           <div className="text-4xl font-bold">
             {formatPagesRead(pagesRead)}
           </div>
@@ -150,7 +150,7 @@ const BookshelfStats: React.FC = () => {
             <h3 className="text-sm text-gray-500 font-medium">PAGES READ</h3>
             <div className="flex items-center text-sm text-gray-500 mt-1">
               <BookOpen className="h-4 w-4 mr-1" />
-              <span>From {books.length} books in your collection</span>
+              <span>From {books.length} books</span>
             </div>
           </div>
         </div>
@@ -159,17 +159,17 @@ const BookshelfStats: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-lg p-3">
+            <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-xs text-gray-500 mb-1">Total Books Read</div>
               <div className="text-xl font-semibold">{totalBooksRead}</div>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-3">
+            <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-xs text-gray-500 mb-1">Books Read in {currentYear}</div>
               <div className="text-xl font-semibold">{booksReadThisYear}</div>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-3">
+            <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-xs text-gray-500 mb-1">Total Series Read</div>
               <div className="text-xl font-semibold">{totalSeriesRead}</div>
             </div>

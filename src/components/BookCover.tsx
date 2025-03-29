@@ -96,18 +96,18 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       "relative", 
       book.isSeries && "transform transition-transform hover:scale-105"
     )}>
-      {/* Layer effect for series books - updated to match reference image */}
+      {/* Layer effect for series books - positioned more like the reference image */}
       {book.isSeries && (
         <>
           <div 
-            className="absolute top-1 -right-1 w-[140px] h-[215px] rounded-md z-0" 
+            className="absolute top-0 left-0.5 w-full h-full rounded-md z-0 transform -rotate-1" 
             style={{ 
               backgroundColor: '#eaeaea', 
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
             }}
           />
           <div 
-            className="absolute top-2 -right-2 w-[140px] h-[215px] rounded-md z-0" 
+            className="absolute top-0 left-1 w-full h-full rounded-md z-0 transform -rotate-2" 
             style={{ 
               backgroundColor: '#dedede',
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'

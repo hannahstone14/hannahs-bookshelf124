@@ -57,7 +57,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               onDrop={(e) => onDrop?.(e, book)}
               className={`${onDragStart ? 'cursor-move' : ''} book-container relative group ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
             >
-              <div className="absolute right-1 top-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute right-1 top-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-7 w-7 bg-white">
@@ -77,7 +77,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               <BookCover book={book} showStatus={showStatus} />
               
               <div className="mt-1 text-center">
-                <div className="text-sm font-medium break-words max-w-full">
+                <div className="text-sm font-medium break-words max-w-full whitespace-normal">
                   {displayTitle}
                 </div>
                 <div className="text-xs text-gray-500 break-words max-w-full">
