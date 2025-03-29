@@ -99,9 +99,15 @@ export const getAllRecommendations = async (): Promise<Book[]> => {
  */
 export const addRecommendation = async (book: Omit<Book, 'id'>): Promise<Book> => {
   try {
+    // Convert the book to the database format
     const dbRecommendation = mapBookToDbRecommendation(book);
     
-    // Fix: Ensure we're passing a valid object structure to insert
+    // Explicitly verify that required fields are present
+    if (!dbRecommendation.title || !dbRecommendation.author) {
+      throw new Error('Recommendation must have a title and author');
+    }
+    
+    // Insert the recommendation into the database
     const result = await withTimeout(
       supabase
         .from(RECOMMENDATIONS_TABLE)
