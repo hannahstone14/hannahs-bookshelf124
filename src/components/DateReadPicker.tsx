@@ -26,8 +26,10 @@ interface DateReadPickerProps {
 const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) => {
   const [selectedTab, setSelectedTab] = useState<'full-date' | 'year-only'>('full-date');
   
-  // Create a default date if none is provided
-  const safeDate = date || new Date();
+  // Create a default date if none is provided or if it's invalid
+  const safeDate = date instanceof Date && !isNaN(date.getTime()) 
+    ? date 
+    : new Date();
   
   const handleYearChange = (year: number) => {
     const newDate = new Date(safeDate);
@@ -45,7 +47,7 @@ const DateReadPicker: React.FC<DateReadPickerProps> = ({ date, onDateChange }) =
             !date && "text-muted-foreground"
           )}
         >
-          {date ? (
+          {date instanceof Date && !isNaN(date.getTime()) ? (
             selectedTab === 'year-only' 
               ? format(date, "yyyy") 
               : format(date, "PPP")
