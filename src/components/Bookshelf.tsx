@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -38,8 +37,9 @@ const Bookshelf: React.FC = () => {
     };
   }, []);
   
-  const toReadBooks = books.filter(book => book.status === 'to-read');
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
+  
+  const toReadBooks: Book[] = [];
   
   const seriesBooks = books.filter(book => book.isSeries);
   const uniqueSeriesNames = new Set();
@@ -54,7 +54,6 @@ const Bookshelf: React.FC = () => {
   
   const seriesCount = uniqueSeriesNames.size;
   
-  // Fix infinite loop by adding proper dependencies
   useEffect(() => {
     if (!isMounted.current) return;
     

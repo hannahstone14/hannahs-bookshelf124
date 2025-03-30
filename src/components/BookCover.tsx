@@ -126,7 +126,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
           </div>
         )}
 
-        {/* Reading status badge */}
+        {/* Reading status badge - Only display on BookCover, not in the grid */}
         {showStatus && book.status === 'reading' && (
           <div className="absolute top-1 left-1 z-20">
             <Badge variant="secondary" className="bg-blue-600 text-white text-xs px-2 py-0.5">

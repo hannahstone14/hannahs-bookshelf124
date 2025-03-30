@@ -82,9 +82,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                   <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">Series</Badge>
                 )}
                 
-                {book.status === 'reading' && (
-                  <Badge className="absolute top-2 right-2 bg-blue-700 text-white text-xs">Reading</Badge>
-                )}
+                {/* Removed duplicate reading badge that was here */}
               </div>
               
               <div className="mt-1 text-center">
