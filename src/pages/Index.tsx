@@ -31,9 +31,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="py-6 bg-white shadow-sm">
+      <header className="py-6 bg-pink-400 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold">Book Tracker</h1>
+          <h1 className="text-2xl font-semibold text-white">Book Tracker</h1>
         </div>
       </header>
       
