@@ -26,17 +26,17 @@ const BookshelfHeader: React.FC<BookshelfHeaderProps> = ({
           variant="outline" 
           size="icon"
           onClick={() => onSort()}
-          className="h-9 w-9 border-pink-300 hover:bg-pink-50"
+          className="h-9 w-9"
         >
-          <ArrowUpDown className="h-4 w-4 text-pink-500" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={onAddBook}
-          className="flex items-center border-pink-300 hover:bg-pink-50"
+          className="flex items-center"
         >
-          <Plus className="h-4 w-4 mr-1 text-pink-500" /> <span className="text-pink-500">Add Book</span>
+          <Plus className="h-4 w-4 mr-1" /> Add Book
         </Button>
       </div>
     </div>
