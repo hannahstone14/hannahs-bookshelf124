@@ -48,6 +48,9 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
+// Log the current basename for debugging
+console.log('Using basename:', '/books');
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BookshelfProvider>
