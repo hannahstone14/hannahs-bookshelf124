@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { BookshelfProvider } from "./context/BookshelfContext";
 import { useEffect } from "react";
+import './App.css';
 
 // Configure React Query for better caching and retries
 const queryClient = new QueryClient({
@@ -48,26 +49,41 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
-// Detect if we're running in development or production
-const basePath = import.meta.env.MODE === 'development' ? "/" : "/books/";
+// Debug the current environment
+console.log('Current environment:', import.meta.env.MODE);
+console.log('Is development:', import.meta.env.MODE === 'development');
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BookshelfProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <DataPersistenceLogger />
-        
-        <BrowserRouter basename={basePath}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </BookshelfProvider>
-  </QueryClientProvider>
-);
+// Base path configuration
+const basePath = import.meta.env.MODE === 'development' ? "/" : "/books/";
+console.log('Using base path:', basePath);
+
+const App = () => {
+  console.log('App component rendering');
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BookshelfProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <DataPersistenceLogger />
+          
+          <BrowserRouter basename={basePath}>
+            <div className="flex flex-col min-h-screen">
+              <div className="bg-blue-100 p-4 text-center">
+                <h1 className="text-2xl font-bold">Shelf Chronicle</h1>
+              </div>
+              
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </BookshelfProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
