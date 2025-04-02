@@ -3,19 +3,19 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
-  base: "/books/", // 👈 THIS is the key line for GitHub Pages
+export default defineConfig({
+  base: "/books/", // 👈 MUST be here
   server: {
     host: "::",
     port: 8080,
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+    componentTagger(), // optional: wrap with mode check if needed
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+});
