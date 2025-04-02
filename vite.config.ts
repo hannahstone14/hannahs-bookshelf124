@@ -5,7 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/books/", // ✅ this makes GitHub Pages load assets from /books/
+  base: mode === 'development' ? '/' : "/books/", // Use root path in development, /books/ in production
   plugins: [
     react(),
     mode === 'development' && componentTagger(),

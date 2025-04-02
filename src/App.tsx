@@ -48,6 +48,9 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
+// Detect if we're running in development or production
+const basePath = import.meta.env.DEV ? "/" : "/books/";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BookshelfProvider>
@@ -56,7 +59,7 @@ const App = () => (
         <Sonner />
         <DataPersistenceLogger />
         
-        <BrowserRouter basename="/books">
+        <BrowserRouter basename={basePath}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="*" element={<NotFound />} />
