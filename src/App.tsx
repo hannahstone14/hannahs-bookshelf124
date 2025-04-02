@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,25 +48,26 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
+// Detect if we're running in development or production
+const basePath = import.meta.env.MODE === 'development' ? "/" : "/books/";
+
 const App = () => (
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BookshelfProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <DataPersistenceLogger />
-          
-          <BrowserRouter basename="/books">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </BookshelfProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <BookshelfProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <DataPersistenceLogger />
+        
+        <BrowserRouter basename={basePath}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </BookshelfProvider>
+  </QueryClientProvider>
 );
 
 export default App;
