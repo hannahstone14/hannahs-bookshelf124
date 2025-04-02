@@ -5,7 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: mode === 'development' ? '/' : "/books/", // Use root path in development, /books/ in production
+  base: "/books/", // Always use /books/ as the base path
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
