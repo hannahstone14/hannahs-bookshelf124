@@ -5,7 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/", // Change base path to root
+  base: "/", // Root path for deployment assets
   plugins: [
     react(),
     mode === 'development' && componentTagger(),

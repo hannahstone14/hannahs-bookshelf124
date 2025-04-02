@@ -39,6 +39,7 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [useLocalStorageState, setUseLocalStorageState] = useState<boolean>(shouldUseFallback());
   const isMounted = useRef(true);
   const initialLoadRef = useRef(false);
+  const recoveryAttempts = useRef(0);
   
   const localStorage = useLocalStorage();
   const supabaseStorage = useSupabase();
@@ -64,10 +65,21 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [useLocalStorageState, supabaseStorage]);
 
   useEffect(() => {
+    // Force a recovery if empty after initial load
+    const timer = setTimeout(() => {
+      if ((books.length === 0 && recommendations.length === 0) && 
+          !isLoading && recoveryAttempts.current < 2) {
+        console.log('No data after initial load, forcing recovery...');
+        recoveryAttempts.current += 1;
+        recoverData();
+      }
+    }, 3000);
+    
     return () => {
+      clearTimeout(timer);
       isMounted.current = false;
     };
-  }, []);
+  }, [books.length, recommendations.length, isLoading]);
 
   const updateLocalState = (book: Book, isRecommendation: boolean) => {
     if (isRecommendation) {
@@ -306,6 +318,8 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setRecommendations(recommendationsData);
         if (booksData.length > 0 || recommendationsData.length > 0) {
           toast.success(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
+        } else {
+          console.log('No data found during recovery');
         }
       }
     } catch (error) {

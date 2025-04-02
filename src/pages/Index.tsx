@@ -26,18 +26,18 @@ const Index = () => {
         recoverData();
       }
       
-      // Ensure loading state resolves after a short timeout as a fallback
+      // Fallback for loading state in case the context never resolves
       const timer = setTimeout(() => {
         setLocalLoading(false);
         console.log('Forcing loading state to complete after timeout');
-      }, 2000); // Reduced timeout to 2 seconds
+      }, 5000); // Increased timeout to ensure data has time to load
       
       return () => clearTimeout(timer);
     } catch (error) {
       console.error('Error checking localStorage:', error);
       setLocalLoading(false);
     }
-  }, []);  // Run only on mount to prevent infinite loops
+  }, [books.length, recommendations.length, recoverData]); // Add dependencies to ensure recovery works properly
 
   // Update localLoading when the context's isLoading changes
   useEffect(() => {
@@ -46,6 +46,18 @@ const Index = () => {
       console.log('Loading complete from context');
     }
   }, [isLoading]);
+
+  // Force recovery if no data is loaded after initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (books.length === 0 && recommendations.length === 0) {
+        console.log('No data loaded after timeout, forcing recovery...');
+        recoverData();
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [books.length, recommendations.length, recoverData]);
 
   // Log re-renders
   useEffect(() => {

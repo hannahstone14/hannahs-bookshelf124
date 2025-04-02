@@ -13,12 +13,11 @@ import { useEffect } from "react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
+      retry: 3,  // Increase retries
       refetchOnWindowFocus: false,
-      staleTime: 30000, // 30 seconds
+      staleTime: 60000, // 1 minute
       gcTime: 300000, // 5 minutes (formerly cacheTime)
       meta: {
-        // Use meta for error handling in newer versions of tanstack/react-query
         onError: (error: any) => {
           console.error('Query error:', error);
         }
@@ -35,13 +34,16 @@ const DataPersistenceLogger = () => {
       const books = localStorage.getItem('books');
       const recommendations = localStorage.getItem('recommendations');
       console.log(`Found ${books ? JSON.parse(books).length : 0} books and ${recommendations ? JSON.parse(recommendations).length : 0} recommendations in localStorage`);
+      
+      // Log window location for debugging
+      console.log('Window location:', window.location.href);
+      console.log('Path:', window.location.pathname);
     } catch (error) {
       console.error('Error checking localStorage:', error);
     }
     
     return () => {
       console.log('App unmounting, ensuring data is saved');
-      // No need to do anything, our hooks handle saving on unmount
     };
   }, []);
   
