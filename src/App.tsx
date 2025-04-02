@@ -49,7 +49,7 @@ const DataPersistenceLogger = () => {
 };
 
 // Detect if we're running in development or production
-const basePath = import.meta.env.DEV ? "/" : "/books/";
+const basePath = import.meta.env.MODE === 'development' ? "/" : "/books/";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
