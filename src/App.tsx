@@ -56,7 +56,7 @@ const App = () => (
         <Sonner />
         <DataPersistenceLogger />
         
-        <BrowserRouter>
+        <BrowserRouter basename="/books">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="*" element={<NotFound />} />
