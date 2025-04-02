@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/books/',  // ✅ THIS is the fix!
   server: {
     host: "::",
     port: 8080,
