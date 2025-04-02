@@ -12,7 +12,7 @@ const Index = () => {
 
   // Debug log on mount and ensure loading state resolves
   useEffect(() => {
-    console.log(`Index page loaded. Books: ${books.length}, Recommendations: ${recommendations.length}`);
+    console.log(`Index page mounted. Books: ${books.length}, Recommendations: ${recommendations.length}`);
     console.log(`Using localStorage: ${shouldUseFallback()}`);
     
     // Check if books are in localStorage
@@ -26,18 +26,18 @@ const Index = () => {
         recoverData();
       }
       
-      // Ensure loading state resolves after a timeout as a fallback
+      // Ensure loading state resolves after a short timeout as a fallback
       const timer = setTimeout(() => {
         setLocalLoading(false);
         console.log('Forcing loading state to complete after timeout');
-      }, 3000);
+      }, 2000); // Reduced timeout to 2 seconds
       
       return () => clearTimeout(timer);
     } catch (error) {
       console.error('Error checking localStorage:', error);
       setLocalLoading(false);
     }
-  }, [books.length, recommendations.length, recoverData]);
+  }, []);  // Run only on mount to prevent infinite loops
 
   // Update localLoading when the context's isLoading changes
   useEffect(() => {
@@ -46,6 +46,11 @@ const Index = () => {
       console.log('Loading complete from context');
     }
   }, [isLoading]);
+
+  // Log re-renders
+  useEffect(() => {
+    console.log('Index component re-rendered');
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -59,7 +64,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <BookshelfStats />
           
-          {localLoading && isLoading ? (
+          {localLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <span className="ml-2 text-lg text-blue-600">Loading your books...</span>

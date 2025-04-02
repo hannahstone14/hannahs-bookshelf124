@@ -48,9 +48,7 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
-// Log the current basename for debugging
-console.log('Using basename:', '/books');
-
+// App with basename set to root
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BookshelfProvider>
@@ -59,7 +57,7 @@ const App = () => (
         <Sonner />
         <DataPersistenceLogger />
         
-        <BrowserRouter basename="/books">
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="*" element={<NotFound />} />
