@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
@@ -8,8 +8,9 @@ import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { books, recommendations, recoverData, isLoading } = useBookshelf();
+  const [localLoading, setLocalLoading] = useState(true);
 
-  // Debug log on mount
+  // Debug log on mount and ensure loading state resolves
   useEffect(() => {
     console.log(`Index page loaded. Books: ${books.length}, Recommendations: ${recommendations.length}`);
     console.log(`Using localStorage: ${shouldUseFallback()}`);
@@ -24,10 +25,27 @@ const Index = () => {
         console.log('Mismatch between state and localStorage, recovering data...');
         recoverData();
       }
+      
+      // Ensure loading state resolves after a timeout as a fallback
+      const timer = setTimeout(() => {
+        setLocalLoading(false);
+        console.log('Forcing loading state to complete after timeout');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
     } catch (error) {
       console.error('Error checking localStorage:', error);
+      setLocalLoading(false);
     }
   }, [books.length, recommendations.length, recoverData]);
+
+  // Update localLoading when the context's isLoading changes
+  useEffect(() => {
+    if (!isLoading) {
+      setLocalLoading(false);
+      console.log('Loading complete from context');
+    }
+  }, [isLoading]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -41,7 +59,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <BookshelfStats />
           
-          {isLoading ? (
+          {localLoading && isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <span className="ml-2 text-lg text-blue-600">Loading your books...</span>
