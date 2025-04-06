@@ -254,33 +254,13 @@ const BookshelfStats: React.FC = () => {
                   data={chartGenreData}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
+                  labelLine={true} // Enable label lines
                   outerRadius={80}
-                  innerRadius={50}
+                  innerRadius={50} // Keep inner radius for donut
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ cx, cy, midAngle, outerRadius, percent, index, name }) => {
-                    const RADIAN = Math.PI / 180;
-                    const radius = outerRadius + 15;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                    const percentage = (percent * 100).toFixed(0);
-
-                    if (parseFloat(percentage) < 4) return null; 
-
-                    return (
-                      <text
-                        x={x}
-                        y={y}
-                        fill="#333"
-                        textAnchor={x > cx ? 'start' : 'end'}
-                        dominantBaseline="central"
-                        className="text-[10px] font-medium pointer-events-none"
-                      >
-                        {`${name} (${percentage}%)`}
-                      </text>
-                    );
-                  }}
+                  // Simpler label function for outside lines
+                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                 >
                   {chartGenreData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_BLUE[index % PIE_CHART_COLORS_BLUE.length]} />
@@ -305,9 +285,8 @@ const BookshelfStats: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
           <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Currently Reading</h3> {/* Adjusted margin */}
           {currentlyReading ? (
-            // Added flex-grow to allow content to take available space
-            <div className="flex items-start gap-5 flex-grow"> {/* Increased gap */}
-              <div className="w-32 h-48 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased size w-32 h-48 */}
+            <div className="flex items-start gap-4 flex-grow"> {/* Increased gap */} 
+              <div className="w-28 h-44 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased cover size */}
                 {currentlyReading.coverUrl ? (
                   <img 
                     src={currentlyReading.coverUrl} 
@@ -319,21 +298,21 @@ const BookshelfStats: React.FC = () => {
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: currentlyReading.color || '#3B82F6' }}
                   >
-                    <span className="text-white text-[10px] font-bold">{currentlyReading.title.substring(0, 2)}</span>
+                    <span className="text-white text-base font-bold">{currentlyReading.title.substring(0, 2)}</span> {/* Increased fallback text */} 
                   </div>
                 )}
               </div>
-              <div className="overflow-hidden flex flex-col justify-between flex-grow h-48"> {/* Match height h-48 */}
-                <div> {/* Wrapper for top text */} 
-                  <h4 className="text-lg font-semibold line-clamp-3 mb-2">{currentlyReading.title}</h4> {/* Increased size/weight/margin */}
-                  <p className="text-gray-600 text-base line-clamp-2 mb-2">{currentlyReading.author}</p> {/* Increased size/margin */}
-                  <p className="text-gray-500 text-sm mt-1"> {/* Increased size */}
+              <div className="overflow-hidden flex-grow flex flex-col justify-between h-44"> {/* Increased text size and spacing */}
+                <div>
+                  <h4 className="text-base font-medium line-clamp-2 mb-1">{currentlyReading.title}</h4>
+                  <p className="text-gray-600 text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> {/* Increased size/margin */} 
+                  <p className="text-gray-500 text-sm mt-1 line-clamp-1"> {/* Increased size/margin */} 
                     {currentlyReading.pages} pages
                   </p>
                 </div>
-                <div className="mt-3"> {/* Increased margin */} 
-                  <div className="text-base text-gray-600 mb-1">{currentlyReading.progress}% completed</div> {/* Increased size */}
-                  <Progress value={currentlyReading.progress} className="h-2.5 bg-gray-200" /> {/* Increased height */}
+                <div className="mt-2">
+                  <div className="text-sm text-gray-600 mb-1">{currentlyReading.progress}% completed</div> {/* Increased size/margin */} 
+                  <Progress value={currentlyReading.progress} className="h-2 bg-gray-200" /> {/* Increased height */} 
                 </div>
               </div>
             </div>
@@ -355,8 +334,8 @@ const BookshelfStats: React.FC = () => {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
             <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Last Finished</h3> {/* Adjusted margin */}
              {/* Added flex-grow */}
-            <div className="flex items-start gap-5 flex-grow"> {/* Increased gap */}
-              <div className="w-32 h-48 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased size w-32 h-48 */}
+            <div className="flex items-start gap-4 flex-grow"> {/* Increased gap */} 
+              <div className="w-28 h-44 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased cover size */}
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -368,14 +347,15 @@ const BookshelfStats: React.FC = () => {
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: latestRead.color || '#3B82F6' }}
                   >
-                    <span className="text-white text-[10px] font-bold">{latestRead.title.substring(0, 2)}</span>
+                     <span className="text-white text-base font-bold">{latestRead.title.substring(0, 2)}</span> {/* Increased fallback text */} 
                   </div>
                 )}
               </div>
-              <div className="overflow-hidden flex-grow"> {/* Added flex-grow */} 
-                <h4 className="text-lg font-semibold line-clamp-3 mb-2">{latestRead.title}</h4> {/* Increased size/weight/margin */} 
-                <p className="text-gray-600 text-base line-clamp-2 mb-2">{latestRead.author}</p> {/* Increased size/margin */} 
-                <p className="text-gray-500 text-sm mt-1"> {/* Increased size */} 
+               {/* Increased text size and spacing */}
+              <div className="overflow-hidden flex-grow h-44"> 
+                <h4 className="text-base font-medium line-clamp-2 mb-1">{latestRead.title}</h4>
+                <p className="text-gray-600 text-sm line-clamp-1 mb-2">{latestRead.author}</p> {/* Increased size/margin */} 
+                <p className="text-gray-500 text-sm mt-1 line-clamp-1"> {/* Increased size/margin */} 
                   {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
                 </p>
               </div>

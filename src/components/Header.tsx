@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Header: React.FC = () => {
   return (
     <header className="py-4 border-b border-gray-200 bg-white">
-      <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center">
           <Link to="/">

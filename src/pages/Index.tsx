@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
@@ -7,23 +7,18 @@ import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { books, recommendations, recoverData, isLoading } = useBookshelf();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const handleAddBookClick = () => {
-    setIsAddDialogOpen(true);
-  };
-  const handleDialogClose = () => {
-    setIsAddDialogOpen(false);
-  };
-
+  // Debug log on mount
   useEffect(() => {
     console.log(`Index page loaded. Books: ${books.length}, Recommendations: ${recommendations.length}`);
     console.log(`Using localStorage: ${shouldUseFallback()}`);
     
+    // Check if books are in localStorage
     try {
       const storedBooks = localStorage.getItem('books');
       console.log(`Books in localStorage: ${storedBooks ? JSON.parse(storedBooks).length : 0}`);
       
+      // If there's a mismatch between state and localStorage, recover data
       if (books.length === 0 && storedBooks && JSON.parse(storedBooks).length > 0) {
         console.log('Mismatch between state and localStorage, recovering data...');
         recoverData();
@@ -45,11 +40,7 @@ const Index = () => {
               <span className="ml-2 text-lg text-blue-600">Loading your books...</span>
             </div>
           ) : (
-            <Bookshelf 
-              isAddDialogOpen={isAddDialogOpen} 
-              onDialogClose={handleDialogClose} 
-              onAddBookClick={handleAddBookClick}
-            />
+            <Bookshelf />
           )}
         </div>
       </main>

@@ -1,13 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked, PlusCircle } from 'lucide-react';
+import { BookOpen, BookOpenCheck, Bookmark, LightbulbIcon, BookMarked } from 'lucide-react';
 import AddBookForm from './AddBookForm';
 import { Book } from '@/types/book';
 import BookshelfTabs, { ViewTab, SortOption } from './bookshelf/BookshelfTabs';
 import EmptyBookshelf from './bookshelf/EmptyBookshelf';
 import BookshelfSection from './bookshelf/BookshelfSection';
 import { Button } from './ui/button';
+import { PlusCircle } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
@@ -17,13 +18,7 @@ import { useNavigate } from 'react-router-dom';
 
 type DisplayStyle = 'shelf' | 'list';
 
-interface BookshelfProps {
-  isAddDialogOpen: boolean;
-  onDialogClose: () => void;
-  onAddBookClick: () => void;
-}
-
-const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, onAddBookClick }) => {
+const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
   const navigate = useNavigate();
   
@@ -34,6 +29,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
   
   const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   
@@ -219,6 +215,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
     removeBook(bookId);
   }, [removeBook, isAllowedUser, navigate]);
 
+  const handleAddDialogOpenChange = useCallback((open: boolean) => {
+    if (!isMounted.current) return;
+    setIsAddDialogOpen(open);
+  }, []);
+
   const handleEditDialogOpenChange = useCallback((open: boolean) => {
     if (!isMounted.current) return;
     setIsEditDialogOpen(open);
@@ -229,6 +230,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
         }
       }, 100);
     }
+  }, []);
+
+  const handleAddSuccess = useCallback(() => {
+    if (!isMounted.current) return;
+    setIsAddDialogOpen(false);
   }, []);
 
   const handleEditSuccess = useCallback(() => {
@@ -242,12 +248,41 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
     }, 100);
   }, []);
 
+  const handleAddBookClick = useCallback(() => {
+    if (!isMounted.current) return;
+
+    // Use the actual auth state and check for the specific user
+    if (!isAllowedUser) { 
+      alert('Please log in with the authorized account to add books.');
+      console.log("User not authorized. Redirecting to login...");
+      navigate('/login'); // Redirect to login page
+      return;
+    }
+    
+    setIsAddDialogOpen(true);
+  }, [isAllowedUser, navigate]);
+
   return (
-    <div className="space-y-8">
-      <Dialog open={isAddDialogOpen} onOpenChange={(open) => !open && onDialogClose()}>
-        <DialogContent className="sm:max-w-[425px] bg-white">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-end mb-6">
+        <Button 
+          className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
+          id="add-book-button"
+          onClick={handleAddBookClick}
+        >
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Add Book
+        </Button>
+      </div>
+
+      <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogTitle>Add New Book</DialogTitle>
-          <AddBookForm onSuccess={onDialogClose} />
+          <AddBookForm 
+            isOpen={isAddDialogOpen} 
+            onClose={() => setIsAddDialogOpen(false)} 
+            onSuccess={handleAddSuccess} 
+          />
         </DialogContent>
       </Dialog>
 
@@ -265,32 +300,16 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-6">
-        <h2 className="text-xl font-medium flex items-center">
-          <BookOpen className={`h-5 w-5 mr-2 text-blue-700`} />
-          Bookshelf
-        </h2>
-        <div className="flex items-center gap-3">
-          <BookshelfTabs 
-            activeTab={viewTab}
-            onTabChange={handleTabChange}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
-          <Button 
-            onClick={onAddBookClick}
-            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
-            id="add-book-button"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Book
-          </Button>
-        </div>
-      </div>
-
+      <BookshelfTabs 
+        activeTab={viewTab} 
+        onTabChange={handleTabChange} 
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={handleSort}
+      />
+      
       {books.length === 0 && recommendations.length === 0 ? (
-        <EmptyBookshelf onAddBookClick={onAddBookClick} />
+        <EmptyBookshelf onAddBookClick={handleAddBookClick} />
       ) : (
         <>
           {viewTab === 'recommendations' ? (
