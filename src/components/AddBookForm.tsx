@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -48,7 +47,7 @@ interface AddBookFormProps {
 }
 
 const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, bookToEdit }) => {
-  const { addBook } = useBookshelf();
+  const { addBook, editBook } = useBookshelf();
   const [showSeriesOptions, setShowSeriesOptions] = useState(bookToEdit?.isSeries || false);
   const [totalSeriesBooks, setTotalSeriesBooks] = useState<number>(0);
   const [totalSeriesPages, setTotalSeriesPages] = useState<number>(0);
@@ -171,9 +170,14 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         seriesPosition: data.isSeries ? data.seriesPosition : undefined,
       };
       
-      if (data.isSeries && totalSeriesBooks > 1 && totalSeriesPages > 0) {
+      if (bookToEdit) {
+        // If we're editing an existing book
+        await editBook(bookToEdit.id, bookData);
+      } else if (data.isSeries && totalSeriesBooks > 1 && totalSeriesPages > 0) {
+        // If we're adding a new series
         await addBook(bookData, totalSeriesBooks, totalSeriesPages);
       } else {
+        // If we're adding a new single book
         await addBook(bookData);
       }
       

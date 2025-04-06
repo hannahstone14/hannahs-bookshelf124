@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Book } from '@/types/book';
 import { toast } from "sonner";
@@ -219,9 +218,34 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const status = progress === 100 ? 'read' : 'reading';
     
     try {
+      // Find books with matching information (possible duplicates)
       const currentBook = books.find(b => b.id === id);
       if (!currentBook) {
         throw new Error(`Book with id ${id} not found`);
+      }
+      
+      // Remove any potential duplicates (same title and author)
+      const duplicates = books.filter(b => 
+        b.id !== id && 
+        b.title === currentBook.title && 
+        b.author === currentBook.author
+      );
+      
+      if (duplicates.length > 0) {
+        console.log(`Found ${duplicates.length} duplicate books, removing them`);
+        // Remove duplicates from UI state
+        setBooks(prev => prev.filter(book => 
+          !duplicates.some(dup => dup.id === book.id)
+        ));
+        
+        // Remove duplicates from storage
+        try {
+          for (const dup of duplicates) {
+            await bookService.deleteBook(dup.id, false);
+          }
+        } catch (deleteError) {
+          console.error('Error deleting duplicate books:', deleteError);
+        }
       }
       
       const updatedBook = { ...currentBook, progress, status } as Book;

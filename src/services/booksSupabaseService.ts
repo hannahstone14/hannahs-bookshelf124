@@ -1,4 +1,3 @@
-
 /**
  * Service for book-related Supabase operations
  */
@@ -107,32 +106,7 @@ export const updateBook = async (
   bookData: Partial<Book>
 ): Promise<Book> => {
   try {
-    const existingBookResult = await withTimeout<SupabaseResponse<any>>(
-      supabase.from(BOOKS_TABLE).select('*').eq('id', id).single(),
-      TIMEOUT_MS,
-      () => ({ data: null, error: new Error(`Fallback: Timed out fetching book ${id}`) })
-    );
-    
-    const existingBook = existingBookResult.data;
-    const checkError = existingBookResult.error;
-    
-    if (checkError || !existingBook) {
-      console.warn(`Book with id ${id} not found in Supabase ${BOOKS_TABLE}, checking localStorage`);
-      
-      const collection = storageService.getStoredBooks();
-      
-      const localBook = collection.find(b => b.id === id);
-      
-      if (!localBook) {
-        throw new Error(`Book with id ${id} not found in ${BOOKS_TABLE} or localStorage`);
-      }
-      
-      const updatedBook = { ...localBook, ...bookData };
-      storageService.updateStoredBook(id, bookData, false);
-      
-      return updatedBook;
-    }
-    
+    // Construct update data
     const updateData: any = {};
     
     if (bookData.title !== undefined) updateData.title = bookData.title;
@@ -144,7 +118,9 @@ export const updateBook = async (
     if (bookData.genres !== undefined) updateData.genres = bookData.genres;
     if (bookData.favorite !== undefined) updateData.favorite = bookData.favorite;
     if (bookData.color !== undefined) updateData.color = bookData.color;
-    if (bookData.dateRead !== undefined) updateData.date_read = new Date(bookData.dateRead).toISOString();
+    if (bookData.dateRead !== undefined && bookData.dateRead !== null) {
+      updateData.date_read = new Date(bookData.dateRead).toISOString();
+    }
     if (bookData.recommendedBy !== undefined) updateData.recommended_by = bookData.recommendedBy;
     if (bookData.order !== undefined) updateData.order = bookData.order;
     if (bookData.isSeries !== undefined) updateData.is_series = bookData.isSeries;
@@ -152,37 +128,45 @@ export const updateBook = async (
     if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
     if (bookData.tags !== undefined) updateData.tags = bookData.tags;
     
-    const updateResult = await withTimeout<SupabaseResponse<any>>(
-      supabase.from(BOOKS_TABLE).update(updateData).eq('id', id),
+    // Perform the update operation
+    const updateResult = await withTimeout<SupabaseResponse<any[]>>(
+      supabase.from(BOOKS_TABLE).update(updateData).eq('id', id).select(), // Add .select() to return updated record
       TIMEOUT_MS,
       () => ({ data: null, error: new Error(`Fallback: Timed out updating book ${id}`) })
     );
     
-    if (updateResult.error) {
-      console.error('Error updating book in Supabase:', updateResult.error);
+    if (updateResult.error || !updateResult.data || updateResult.data.length === 0) {
+      console.error('Error updating book in Supabase or no data returned:', updateResult.error);
       
-      storageService.updateStoredBook(id, bookData, false);
-      
-      console.log('Updated book in localStorage as fallback');
-    } else {
-      storageService.updateStoredBook(id, bookData, false);
+      // Fallback to localStorage update if Supabase fails
+      const updatedLocalBook = storageService.updateStoredBook(id, bookData, false);
+      if (!updatedLocalBook) {
+        throw new Error(`Book with id ${id} not found in localStorage either after Supabase error`);
+      }
+      console.log('Updated book in localStorage as fallback after Supabase error.');
+      return updatedLocalBook;
     }
     
-    return {
-      ...convertDBToBook(existingBook),
-      ...bookData,
-      id
-    } as Book;
+    // Successfully updated in Supabase, convert the returned record
+    const updatedBookFromDB = convertDBToBook(updateResult.data[0]);
+    
+    // Also update localStorage for consistency and offline fallback
+    storageService.updateStoredBook(id, updatedBookFromDB, false);
+    
+    return updatedBookFromDB;
+
   } catch (error) {
     console.error('Error in updateBook:', error);
     
+    // Fallback to localStorage update on general error
     const updatedBook = storageService.updateStoredBook(id, bookData, false);
     
     if (!updatedBook) {
-      throw error;
+      console.error(`Book with id ${id} not found in localStorage during error recovery`);
+      throw error; // Re-throw the original error if localStorage update also fails
     }
     
-    console.log('Updated book in localStorage as fallback after error');
+    console.log('Updated book in localStorage as fallback after general error');
     return updatedBook;
   }
 };

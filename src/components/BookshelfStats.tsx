@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
@@ -29,7 +30,6 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import TopGenresChart from './charts/TopGenresChart';
 
 const genreIconMap: Record<string, React.ReactNode> = {
   'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
@@ -172,26 +172,26 @@ const BookshelfStats: React.FC = () => {
     <div className="mb-10">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-24 w-24 border-2 border-white shadow-md rounded-full">
+          <Avatar className="h-32 w-32 border-2 border-white shadow-md">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
             />
-            <AvatarFallback>HS</AvatarFallback>
+            <AvatarFallback>HL</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold">This Is What I Read</h1>
-            <p className="text-gray-600 text-sm">I do not endorse everything I read.</p>
+            <h1 className="text-3xl font-medium">Hannah's Library</h1>
+            <p className="text-gray-500 text-sm">I do not endorse everything I read.</p>
           </div>
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-4 flex flex-col items-center">
+          <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col items-center">
             <div className="text-4xl font-bold">{formatPagesRead(pagesRead)}</div>
             <h3 className="text-xs text-gray-500 font-medium">PAGES READ</h3>
           </div>
           
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-4 flex items-center gap-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-6">
             <div className="flex flex-col items-center px-3">
               <div className="text-2xl font-bold">{totalBooksRead}</div>
               <h3 className="text-xs text-gray-500 font-medium text-center">BOOKS READ</h3>
@@ -211,7 +211,31 @@ const BookshelfStats: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <TopGenresChart books={books} />
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Top Genres</h3>
+          {topGenres.length > 0 ? (
+            <div className="space-y-4">
+              {topGenres.map((item, index) => (
+                <div key={item.genre} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-600' : 
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {getGenreIcon(item.genre)}
+                    </div>
+                    <span className="font-medium">{item.genre}</span>
+                  </div>
+                  <span className="text-gray-500">{item.count} books</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-500 text-center py-4">
+              Add books with genres to see statistics
+            </div>
+          )}
+        </div>
 
         <div className="bg-white rounded-xl shadow-md p-6 h-full">
           <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Currently Reading</h3>

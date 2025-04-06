@@ -232,11 +232,11 @@ const Bookshelf: React.FC = () => {
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex justify-end mb-4">
         <Button 
-          className="bg-gray-900 hover:bg-gray-800 text-white text-md px-6 py-2 h-10 rounded-md"
+          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
           id="add-book-button"
           onClick={handleAddBookClick}
         >
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="h-5 w-5 mr-2" />
           Add Book
         </Button>
       </div>

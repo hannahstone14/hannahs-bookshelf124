@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { cn } from '@/lib/utils';
@@ -102,15 +103,15 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
             src={book.coverUrl}
             alt={displayTitle}
             className={cn(
-              "w-32 h-48 object-cover rounded-md border border-gray-200 shadow-sm",
+              "w-32 h-48 object-cover rounded-md shadow-lg",
             )}
           />
         ) : (
           <div
             className={cn(
-              "w-32 h-48 flex items-center justify-center rounded-md border border-gray-200 shadow-sm",
+              "w-32 h-48 flex items-center justify-center rounded-md shadow-lg",
             )}
-            style={{ backgroundColor: book.color || '#333333' }}
+            style={{ backgroundColor: book.color || '#3B82F6' }}
           >
             <span className="text-lg font-bold text-white">
               {displayTitle.substring(0, 1)}
@@ -128,7 +129,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
         {/* Reading status badge - Only display on BookCover, not in the grid */}
         {showStatus && book.status === 'reading' && (
           <div className="absolute top-1 left-1 z-20">
-            <Badge variant="secondary" className="bg-gray-900 text-white text-xs px-2 py-0.5">
+            <Badge variant="secondary" className="bg-blue-600 text-white text-xs px-2 py-0.5">
               Reading
             </Badge>
           </div>
@@ -152,7 +153,7 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
       
       {/* Reading progress */}
       {showStatus && book.status === 'reading' && (
-        <div className="absolute bottom-0 left-0 right-0 w-full bg-gray-900 text-white text-xs text-center py-1 rounded-b-md z-20 overflow-hidden">
+        <div className="absolute bottom-0 left-0 w-full bg-blue-700 text-white text-xs text-center py-1 rounded-b-md z-20">
           {book.progress}%
         </div>
       )}

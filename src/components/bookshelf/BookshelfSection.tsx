@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Book } from '@/types/book';
 import { LucideIcon } from 'lucide-react';
@@ -24,7 +25,7 @@ interface BookshelfSectionProps {
 const BookshelfSection: React.FC<BookshelfSectionProps> = ({
   title,
   icon: Icon,
-  iconColor = 'text-gray-900',
+  iconColor = 'text-blue-700',
   books,
   displayStyle,
   onEdit,
@@ -39,16 +40,16 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold flex items-center border-b border-gray-200 pb-2 mb-3">
+      <h2 className="text-xl font-medium flex items-center border-b border-gray-200 pb-2 mb-3">
         <Icon className={`h-5 w-5 mr-2 ${iconColor}`} />
         {title}
       </h2>
       
       {books.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-gray-200 rounded-md">
-          <p className="text-gray-600">{emptyMessage}</p>
+        <div className="text-center py-12 bg-gray-50 rounded-md">
+          <p className="text-gray-500">{emptyMessage}</p>
           {emptySubMessage && (
-            <p className="text-sm text-gray-500 mt-2">{emptySubMessage}</p>
+            <p className="text-sm text-gray-400 mt-2">{emptySubMessage}</p>
           )}
         </div>
       ) : (
