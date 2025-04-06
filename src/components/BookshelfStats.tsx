@@ -182,45 +182,17 @@ const BookshelfStats: React.FC = () => {
   
   const chartGenreData = processGenreDataForChart(genreCounts);
 
-  // Define distinct, colorful accent colors for the pie chart (up to 6)
-  const PIE_CHART_COLORS = [
-    '#88d8b0', // Mint Green
-    '#64b5f6', // Light Blue
-    '#ffcc80', // Light Orange
-    '#ba68c8', // Light Purple
-    '#f06292', // Pink
-    '#ff8a65', // Coral
-    '#a1887f', // Brownish Gray
-    '#90a4ae', // Blue Gray
+  // Define distinct, harmonious blue colors for the pie chart
+  const PIE_CHART_COLORS_BLUE = [
+    '#ade8f4', // Light Sky Blue
+    '#90e0ef', // Medium Sky Blue
+    '#48cae4', // Bright Cerulean
+    '#00b4d8', // Standard Cerulean
+    '#0096c7', // Deeper Cerulean
+    '#0077b6', // Steel Blue
+    '#023e8a', // Dark Blue
+    '#03045e'  // Very Dark Blue
   ].slice(0, chartGenreData.length); // Use only as many colors as needed
-
-  // Find the largest value for labeling
-  const largestValue = Math.max(...chartGenreData.map(item => item.value));
-
-  // Custom label function
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
-    if (value !== largestValue || chartGenreData.length <= 1) {
-      return null; // Only label the largest slice, or if there's only one slice
-    }
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5; // Position label inside slice
-    const x = cx + (radius + 10) * Math.cos(-midAngle * RADIAN);
-    const y = cy + (radius + 10) * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text 
-        x={x}
-        y={y} 
-        fill="#333" // Dark text for contrast 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        fontSize="10px" // Small font size
-        fontWeight="500"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
 
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
@@ -275,36 +247,56 @@ const BookshelfStats: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> {/* Reduced padding slightly, added flex flex-col */}
           <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3> {/* Adjusted margin */}
           {chartGenreData.length > 0 ? (
-            // Added flex-grow to allow chart to take available space
-            <div className="flex-grow flex items-center justify-center min-h-[150px]"> 
-              <ResponsiveContainer width="100%" height={150}> {/* Adjusted height slightly */}
-                <PieChart>
-                  <Pie
-                    data={chartGenreData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomizedLabel}
-                    outerRadius={65} // Adjusted radius
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    isAnimationActive={true}
-                    animationDuration={800}
-                  >
-                    {chartGenreData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                    formatter={(value, name) => [`${value} books`, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            // Fix: ResponsiveContainer should directly wrap PieChart
+            <ResponsiveContainer width="100%" height={180} className="flex-grow min-h-[150px]"> 
+              <PieChart>
+                <Pie
+                  data={chartGenreData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false} // Disable label lines
+                  outerRadius={80}
+                  innerRadius={50} // Add inner radius for donut
+                  fill="#8884d8"
+                  dataKey="value"
+                  // Add small labels inside slices
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const percentage = (percent * 100).toFixed(0);
+
+                    // Don't render label if slice is too small
+                    if (parseFloat(percentage) < 4) return null; 
+
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="white" // White text for contrast on blue
+                        textAnchor={x > cx ? 'start' : 'end'}
+                        dominantBaseline="central"
+                        className="text-[9px] font-medium pointer-events-none" // Small text, prevent hover events
+                      >
+                        {`${name} (${percentage}%)`}
+                      </text>
+                    );
+                  }}
+                >
+                  {chartGenreData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_BLUE[index % PIE_CHART_COLORS_BLUE.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'white', borderRadius: '4px', border: '1px solid #e5e7eb', padding: '4px 8px', fontSize: '12px' }}
+                />
+                {/* Optional: Remove Legend if labels are sufficient */}
+                {/* <Legend /> */}
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <div className="text-gray-500 text-center py-4 h-[170px] flex flex-col items-center justify-center flex-grow">
+            <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
               <BookOpenCheck className="h-8 w-8 text-gray-300 mb-2" />
               <p className="text-xs text-gray-400">Add books with genres</p>
               <p className="text-xs text-gray-400">to see distribution</p>

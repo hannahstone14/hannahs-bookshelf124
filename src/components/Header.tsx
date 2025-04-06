@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 
 const Header: React.FC = () => {
   return (
-    <header className="py-4 border-b border-gray-200">
+    <header className="py-4 border-b border-gray-200 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="text-2xl font-bold tracking-tight text-gray-900 hover:text-gray-700">
-            HANNAH <span className="text-gray-500">STONE</span>
+          <Link to="/">
+            <img src="/images/hannahstone-logo.png" alt="Hannah Stone Logo" className="h-8" />
           </Link>
         </div>
 
