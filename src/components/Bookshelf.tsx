@@ -13,8 +13,30 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import BookshelfSection from './bookshelf/BookshelfSection';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import { 
+  List, 
+  BookOpen as BookOpenIcon, 
+  Bookmark as BookmarkIcon, 
+  ArrowDown10, 
+  ArrowDownAZ, 
+  ArrowDownZA, 
+  Percent,
+  Star,
+  ArrowUpDown
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Add types for props that will be passed down
+// Define types locally again
 export type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
 export type SortOption = 'title' | 'author' | 'dateRead' | 'progress' | 'favorite';
 
@@ -28,20 +50,12 @@ interface BookshelfProps {
   isAddDialogOpen: boolean;
   onDialogClose: () => void;
   onAddBookClick: () => void; // Handler for EmptyBookshelf button
-  viewTab: ViewTab;
-  sortBy: SortOption;
-  sortOrder: 'asc' | 'desc';
-  // Note: onTabChange and onSort handlers are not needed here anymore
-  // as the controls are moving to BookshelfStats
 }
 
 const Bookshelf: React.FC<BookshelfProps> = ({ 
   isAddDialogOpen, 
   onDialogClose, 
-  onAddBookClick, // Receive handler for empty state
-  viewTab,        // Receive viewTab state
-  sortBy,         // Receive sortBy state
-  sortOrder       // Receive sortOrder state
+  onAddBookClick 
 }) => { 
   const isMounted = useRef(true);
   const navigate = useNavigate();
@@ -61,6 +75,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
   
+  // Add state back
+  const [viewTab, setViewTab] = useState<ViewTab>('shelf');
+  const [sortBy, setSortBy] = useState<SortOption>('dateRead');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const [booksToDisplay, setBooksToDisplay] = useState<Book[]>([]);
 
   useEffect(() => {
@@ -86,7 +105,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   
   const seriesCount = uniqueSeriesNames.size;
 
-  // Use props for sorting
+  // Use local state for sorting
   const getSortedBooks = useCallback((booksToSort: Book[]) => {
     return [...booksToSort].sort((a, b) => {
       let comparison = 0;
@@ -121,13 +140,13 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     });
   }, [sortBy, sortOrder]);
   
-  // Use props in useEffect
+  // Use local state in useEffect
   useEffect(() => {
     if (!isMounted.current) return;
     
     let displayedBooks: Book[] = [];
     
-    switch(viewTab) { // Use viewTab from props
+    switch(viewTab) { // Use viewTab from local state
       case 'to-read':
         displayedBooks = getSortedBooks(toReadBooks);
         break;
@@ -163,7 +182,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     if (viewTab === 'shelf' || viewTab === 'list') {
       setDisplayStyle(viewTab);
     }
-  }, [viewTab, sortBy, sortOrder, books, recommendations, getSortedBooks, allShelfBooks, toReadBooks]); // Depend on props
+  }, [viewTab, sortBy, sortOrder, books, recommendations, getSortedBooks, allShelfBooks, toReadBooks]); // Depend on local state
 
   const handleEdit = useCallback((book: Book) => {
     if (!isMounted.current) return;
@@ -241,48 +260,111 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     setDraggedOverBook(null);
   };
 
+  // Add handlers back
+  const handleTabChange = useCallback((value: string) => {
+    const newTab = value as ViewTab;
+    setViewTab(newTab);
+  }, []);
+
+  const handleSort = useCallback((option: SortOption) => {
+    if (sortBy === option) {
+      setSortOrder(currentOrder => (currentOrder === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(option);
+      setSortOrder('desc'); 
+    }
+  }, [sortBy]);
+
   return (
     <div className="space-y-8">
-      <div className="flex justify-end mb-6">
-        <Button 
-          className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
-          id="add-book-button"
-          onClick={onAddBookClick}
-        >
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add Book
-        </Button>
-      </div>
+       {/* Controls Row: Tabs, Sort, Add Button */}
+       <div className="flex justify-between items-center mb-6 gap-4"> { /* Use justify-between and gap */ }
+          {/* Wrapper for Tabs and Sort */}
+          <div className="flex items-center gap-4 flex-grow"> { /* Allow this section to grow */ }
+            {/* Tabs */} 
+            <Tabs value={viewTab} onValueChange={handleTabChange} className="hidden sm:block"> 
+              <TabsList className="bg-gray-100 p-1 rounded-lg h-10"> { /* Match height with buttons */ }
+                <TabsTrigger value="shelf" className={cn("px-3 text-sm", viewTab === 'shelf' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookOpenIcon className="h-4 w-4 mr-1.5"/>Shelf</TabsTrigger>
+                <TabsTrigger value="list" className={cn("px-3 text-sm", viewTab === 'list' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><List className="h-4 w-4 mr-1.5"/>List</TabsTrigger>
+                <TabsTrigger value="to-read" className={cn("px-3 text-sm", viewTab === 'to-read' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookmarkIcon className="h-4 w-4 mr-1.5"/>To Read</TabsTrigger>
+                <TabsTrigger value="recommendations" className={cn("px-3 text-sm", viewTab === 'recommendations' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><LightbulbIcon className="h-4 w-4 mr-1.5"/>Recs</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {/* Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-10 w-10"> { /* Match height */ }
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-white z-50">
+                 <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => handleSort('dateRead')} className="text-sm">
+                    {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
+                    Date Read
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('title')} className="text-sm">
+                    {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                    Title
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('author')} className="text-sm">
+                    {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                    Author
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('progress')} className="text-sm">
+                    {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
+                    Progress
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('favorite')} className="text-sm">
+                    {sortBy === 'favorite' && (sortOrder === 'desc' ? <Star className="h-4 w-4 mr-2" /> : <Star className="h-4 w-4 mr-2 opacity-50" />)}
+                    Favorites First
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {/* Existing Black Add Book Button (Shrink-0 to prevent growing) */} 
+          <Button 
+            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0" { /* Added h-10 and flex-shrink-0 */ }
+            id="add-book-button"
+            onClick={onAddBookClick} // Use prop passed from Index
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Book
+          </Button>
+       </div>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={onDialogClose}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogTitle>Add New Book</DialogTitle>
-          <AddBookForm 
-            isOpen={isAddDialogOpen} 
-            onClose={onDialogClose} 
-            onSuccess={onDialogClose} 
-          />
-        </DialogContent>
-      </Dialog>
+     <Dialog open={isAddDialogOpen} onOpenChange={onDialogClose}>
+       <DialogContent className="sm:max-w-[425px]">
+         <DialogTitle>Add New Book</DialogTitle>
+         <AddBookForm 
+           isOpen={isAddDialogOpen} 
+           onClose={onDialogClose} 
+           onSuccess={onDialogClose} 
+         />
+       </DialogContent>
+     </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogTitle>Edit Book</DialogTitle>
-          {selectedBook && (
-            <AddBookForm 
-              isOpen={isEditDialogOpen}
-              onClose={() => setIsEditDialogOpen(false)}
-              onSuccess={handleEditSuccess} 
-              bookToEdit={selectedBook}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+     <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
+       <DialogContent className="sm:max-w-[425px]">
+         <DialogTitle>Edit Book</DialogTitle>
+         {selectedBook && (
+           <AddBookForm 
+             isOpen={isEditDialogOpen}
+             onClose={() => setIsEditDialogOpen(false)}
+             onSuccess={handleEditSuccess} 
+             bookToEdit={selectedBook}
+           />
+         )}
+       </DialogContent>
+     </Dialog>
 
-      {/* Conditional Rendering based on Tab (uses viewTab prop) */}
-      {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
-        <EmptyBookshelf onAddBookClick={onAddBookClick} /> // Use the passed prop
-      ) : (
+     {/* Conditional Rendering based on Tab (uses local viewTab state) */}
+     {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
+       <EmptyBookshelf onAddBookClick={onAddBookClick} />
+     ) : (
         <div className="space-y-8">
           {/* Render Grid or List directly without BookshelfSection props */}
           {viewTab === 'shelf' || viewTab === 'list' ? (
@@ -332,7 +414,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             />
           ) : null}
         </div>
-      )}
+     )}
     </div>
   );
 };

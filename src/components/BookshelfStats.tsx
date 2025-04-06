@@ -31,8 +31,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { ViewTab, SortOption } from '@/components/Bookshelf';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -91,20 +89,10 @@ const ensureDate = (dateInput: string | Date | undefined): Date => {
 
 interface BookshelfStatsProps {
   onAddBookClick: () => void;
-  viewTab: ViewTab;
-  sortBy: SortOption;
-  sortOrder: 'asc' | 'desc';
-  onTabChange: (value: string) => void;
-  onSort: (option: SortOption) => void;
 }
 
 const BookshelfStats: React.FC<BookshelfStatsProps> = ({ 
-  onAddBookClick, 
-  viewTab, 
-  sortBy, 
-  sortOrder, 
-  onTabChange, 
-  onSort 
+  onAddBookClick
 }) => {
   const { books } = useBookshelf();
   
@@ -280,56 +268,6 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
             </div>
           </div>
 
-          <Tabs value={viewTab} onValueChange={onTabChange} className="hidden sm:block">
-            <TabsList className="bg-gray-100 p-1 rounded-lg">
-              <TabsTrigger value="shelf" className={cn("py-2 px-3 text-sm", viewTab === 'shelf' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookOpenIcon className="h-4 w-4 mr-1.5"/>Shelf</TabsTrigger>
-              <TabsTrigger value="list" className={cn("py-2 px-3 text-sm", viewTab === 'list' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><List className="h-4 w-4 mr-1.5"/>List</TabsTrigger>
-              <TabsTrigger value="to-read" className={cn("py-2 px-3 text-sm", viewTab === 'to-read' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookmarkIcon className="h-4 w-4 mr-1.5"/>To Read</TabsTrigger>
-              <TabsTrigger value="recommendations" className={cn("py-2 px-3 text-sm", viewTab === 'recommendations' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><LightbulbIcon className="h-4 w-4 mr-1.5"/>Recs</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-10 w-10">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-white z-50">
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onSort('dateRead')} className="text-sm">
-                  {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
-                  Date Read
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSort('title')} className="text-sm">
-                  {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                  Title
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSort('author')} className="text-sm">
-                  {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                  Author
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSort('progress')} className="text-sm">
-                  {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
-                  Progress
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSort('favorite')} className="text-sm">
-                  {sortBy === 'favorite' && (sortOrder === 'desc' ? <Star className="h-4 w-4 mr-2" /> : <Star className="h-4 w-4 mr-2 opacity-50" />)}
-                  Favorites First
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <button 
-            aria-label="Add Book"
-            className="bg-white rounded-lg border border-gray-200 shadow-sm p-0 flex items-center justify-center h-[68px] w-[68px] hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition-colors"
-            onClick={onAddBookClick} 
-          >
-            <PlusCircle className="h-6 w-6" />
-          </button>
         </div>
       </div>
       

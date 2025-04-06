@@ -4,16 +4,10 @@ import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
 import { Loader2, BookOpen } from 'lucide-react';
-import { ViewTab, SortOption } from '@/components/Bookshelf';
 
 const Index = () => {
   const { books, recommendations, recoverData, isLoading } = useBookshelf();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-
-  // Lifted State for View/Sort
-  const [viewTab, setViewTab] = useState<ViewTab>('shelf');
-  const [sortBy, setSortBy] = useState<SortOption>('dateRead');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Debug log on mount
   useEffect(() => {
@@ -43,32 +37,12 @@ const Index = () => {
     setIsAddDialogOpen(false);
   };
 
-  // Lifted Handlers for View/Sort
-  const handleTabChange = useCallback((value: string) => {
-    const newTab = value as ViewTab;
-    setViewTab(newTab);
-  }, []);
-
-  const handleSort = useCallback((option: SortOption) => {
-    if (sortBy === option) {
-      setSortOrder(currentOrder => (currentOrder === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(option);
-      setSortOrder('desc'); // Default to descending on new sort column
-    }
-  }, [sortBy]);
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <BookshelfStats 
             onAddBookClick={handleAddBookClick} 
-            viewTab={viewTab}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onTabChange={handleTabChange}
-            onSort={handleSort}
           />
           
           <h2 className="text-xl font-medium flex items-center mt-10 mb-4 border-b border-gray-200 pb-2">
@@ -86,9 +60,6 @@ const Index = () => {
               isAddDialogOpen={isAddDialogOpen} 
               onDialogClose={handleDialogClose} 
               onAddBookClick={handleAddBookClick}
-              viewTab={viewTab}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
             />
           )}
         </div>
