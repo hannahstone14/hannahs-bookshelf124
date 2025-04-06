@@ -279,13 +279,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({ isAddDialogOpen, onDialogClose, o
             onSort={handleSort}
           />
           <Button 
-            variant="outline"
-            size="icon"
-            aria-label="Add Book"
             onClick={onAddBookClick}
-            className="h-9 w-9 border-gray-300 text-gray-600 hover:bg-gray-100"
+            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
+            id="add-book-button"
           >
-            <PlusCircle className="h-4 w-4" />
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Book
           </Button>
         </div>
       </div>
