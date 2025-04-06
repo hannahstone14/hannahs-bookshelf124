@@ -259,8 +259,30 @@ const BookshelfStats: React.FC = () => {
                   innerRadius={50} // Keep inner radius for donut
                   fill="#8884d8"
                   dataKey="value"
-                  // Simpler label function for outside lines
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  // Custom label component for outside lines with smaller text
+                  label={({ cx, cy, midAngle, outerRadius, percent, name }) => {
+                    const RADIAN = Math.PI / 180;
+                    // Calculate position for the label slightly outside the outer radius
+                    const radius = outerRadius + 15; // Adjust this value for desired distance
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const percentage = (percent * 100).toFixed(0);
+                    
+                    // Hide label for small slices
+                    if (parseFloat(percentage) < 3) return null;
+
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        className="text-[10px] fill-gray-700" // Smaller text, dark gray fill
+                        textAnchor={x > cx ? 'start' : 'end'}
+                        dominantBaseline="central"
+                      >
+                        {`${name} (${percentage}%)`}
+                      </text>
+                    );
+                  }}
                 >
                   {chartGenreData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_BLUE[index % PIE_CHART_COLORS_BLUE.length]} />
