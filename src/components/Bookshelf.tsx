@@ -10,10 +10,17 @@ import BookshelfSection from './bookshelf/BookshelfSection';
 import { Button } from './ui/button';
 import { PlusCircle } from 'lucide-react';
 
+// Placeholder: Assume an AuthContext exists
+// import { useAuth } from '@/context/AuthContext'; 
+
 type DisplayStyle = 'shelf' | 'list';
 
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
+  
+  // Placeholder: Get authentication status
+  // const { isAuthenticated } = useAuth(); 
+  const isAuthenticated = true; // Replace with actual auth check
   
   const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
@@ -181,9 +188,17 @@ const Bookshelf: React.FC = () => {
   const handleEdit = useCallback((book: Book) => {
     if (!isMounted.current) return;
     
+    if (!isAuthenticated) {
+      // Placeholder: Redirect to login or show login modal
+      alert('Please log in to edit books.'); 
+      console.log("User not authenticated. Redirecting to login...");
+      // Example: navigate('/login'); 
+      return;
+    }
+    
     setSelectedBook(book);
     setIsEditDialogOpen(true);
-  }, []);
+  }, [isAuthenticated]);
 
   const handleDelete = useCallback((bookId: string) => {
     removeBook(bookId);
@@ -223,10 +238,18 @@ const Bookshelf: React.FC = () => {
   }, []);
 
   const handleAddBookClick = useCallback(() => {
-    if (isMounted.current) {
-      setIsAddDialogOpen(true);
+    if (!isMounted.current) return;
+
+    if (!isAuthenticated) {
+      // Placeholder: Redirect to login or show login modal
+      alert('Please log in to add books.');
+      console.log("User not authenticated. Redirecting to login...");
+      // Example: navigate('/login');
+      return;
     }
-  }, []);
+    
+    setIsAddDialogOpen(true);
+  }, [isAuthenticated]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -182,15 +182,45 @@ const BookshelfStats: React.FC = () => {
   
   const chartGenreData = processGenreDataForChart(genreCounts);
 
-  // Define distinct light blue accent colors for the pie chart (up to 6)
+  // Define distinct, colorful accent colors for the pie chart (up to 6)
   const PIE_CHART_COLORS = [
-    '#a0d2eb', // Lightest Blue
-    '#8ecae6', // Sky Blue
-    '#7cc0e0', // Medium Blue
-    '#6bb4d9', // Steel Blue
-    '#5aa8d3', // Deeper Blue
-    '#499ccf'  // Darkest Blue for 'Other' or 6th category
-  ];
+    '#88d8b0', // Mint Green
+    '#64b5f6', // Light Blue
+    '#ffcc80', // Light Orange
+    '#ba68c8', // Light Purple
+    '#f06292', // Pink
+    '#ff8a65', // Coral
+    '#a1887f', // Brownish Gray
+    '#90a4ae', // Blue Gray
+  ].slice(0, chartGenreData.length); // Use only as many colors as needed
+
+  // Find the largest value for labeling
+  const largestValue = Math.max(...chartGenreData.map(item => item.value));
+
+  // Custom label function
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
+    if (value !== largestValue || chartGenreData.length <= 1) {
+      return null; // Only label the largest slice, or if there's only one slice
+    }
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5; // Position label inside slice
+    const x = cx + (radius + 10) * Math.cos(-midAngle * RADIAN);
+    const y = cy + (radius + 10) * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x}
+        y={y} 
+        fill="#333" // Dark text for contrast 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize="10px" // Small font size
+        fontWeight="500"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
@@ -238,18 +268,21 @@ const BookshelfStats: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1">
-          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg text-center">Genre Distribution</h3>
+      {/* Grid for Pie Chart, Currently Reading, Last Finished */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"> {/* Adjusted gap */}
+        {/* Genre Distribution Card */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:col-span-1"> {/* Adjusted padding */}
+          <h3 className="text-xs text-gray-500 font-medium mb-3 uppercase text-center">Genre Distribution</h3> {/* Adjusted size/margin */}
           {chartGenreData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={160}> {/* Further reduced height */}
               <PieChart>
                 <Pie
                   data={chartGenreData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
+                  label={renderCustomizedLabel}
+                  outerRadius={60} // Further reduced radius
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
@@ -275,11 +308,12 @@ const BookshelfStats: React.FC = () => {
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1 h-full">
-          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Currently Reading</h3>
+        {/* Currently Reading Card */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:col-span-1 h-full"> {/* Adjusted padding */}
+          <h3 className="text-xs text-gray-500 font-medium mb-3 uppercase">Currently Reading</h3> {/* Adjusted size/margin */}
           {currentlyReading ? (
             <div className="flex items-start gap-3">
-              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
+              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Adjusted size */}
                 {currentlyReading.coverUrl ? (
                   <img 
                     src={currentlyReading.coverUrl} 
@@ -291,31 +325,31 @@ const BookshelfStats: React.FC = () => {
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: currentlyReading.color || '#3B82F6' }}
                   >
-                    <span className="text-white text-xs font-bold">{currentlyReading.title.substring(0, 2)}</span>
+                    <span className="text-white text-[10px] font-bold">{currentlyReading.title.substring(0, 2)}</span> {/* Adjusted size */}
                   </div>
                 )}
               </div>
               <div className="overflow-hidden">
-                <h4 className="text-md font-medium line-clamp-2">{currentlyReading.title}</h4>
-                <p className="text-gray-600 text-xs line-clamp-1">{currentlyReading.author}</p>
-                <p className="text-gray-400 text-xs mt-1 line-clamp-1">
+                <h4 className="text-sm font-medium line-clamp-2">{currentlyReading.title}</h4> {/* Adjusted size */}
+                <p className="text-gray-600 text-[11px] line-clamp-1">{currentlyReading.author}</p> {/* Adjusted size */}
+                <p className="text-gray-400 text-[11px] mt-0.5 line-clamp-1">
                   {currentlyReading.pages} pages
                 </p>
-                <div className="mt-2">
-                  <div className="text-xs text-gray-600 mb-1">{currentlyReading.progress}% completed</div>
-                  <Progress value={currentlyReading.progress} className="h-2 bg-gray-200" />
+                <div className="mt-1.5"> {/* Adjusted margin */}
+                  <div className="text-[11px] text-gray-600 mb-0.5">{currentlyReading.progress}% completed</div> {/* Adjusted size */}
+                  <Progress value={currentlyReading.progress} className="h-1.5 bg-gray-200" /> {/* Adjusted size */}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-3">
-              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-                <BookOpenCheck className="h-8 w-8 text-gray-400" />
+            <div className="flex items-start gap-3 h-full items-center">
+              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                <BookOpenCheck className="h-6 w-6 text-gray-400" />
               </div>
               <div>
-                <h4 className="text-md font-medium">None</h4>
-                <p className="text-gray-600 text-xs">No books currently being read</p>
-                <p className="text-gray-400 text-xs mt-1">
+                <h4 className="text-sm font-medium">None</h4>
+                <p className="text-gray-500 text-xs">No books currently being read</p>
+                <p className="text-gray-400 text-[11px] mt-1">
                   Mark a book as "Reading" to see it here
                 </p>
               </div>
@@ -323,11 +357,12 @@ const BookshelfStats: React.FC = () => {
           )}
         </div>
 
+        {/* Last Finished Card */}
         {latestRead && (
-          <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1 h-full">
-            <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Last Finished</h3>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:col-span-1 h-full"> {/* Adjusted padding */}
+            <h3 className="text-xs text-gray-500 font-medium mb-3 uppercase">Last Finished</h3> {/* Adjusted size/margin */}
             <div className="flex items-start gap-3">
-              <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
+              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Adjusted size */}
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -339,14 +374,14 @@ const BookshelfStats: React.FC = () => {
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: latestRead.color || '#3B82F6' }}
                   >
-                    <span className="text-white text-xs font-bold">{latestRead.title.substring(0, 2)}</span>
+                    <span className="text-white text-[10px] font-bold">{latestRead.title.substring(0, 2)}</span> {/* Adjusted size */}
                   </div>
                 )}
               </div>
               <div className="overflow-hidden">
-                <h4 className="text-md font-medium line-clamp-2">{latestRead.title}</h4>
-                <p className="text-gray-600 text-xs line-clamp-1">{latestRead.author}</p>
-                <p className="text-gray-400 text-xs mt-1 line-clamp-1">
+                <h4 className="text-sm font-medium line-clamp-2">{latestRead.title}</h4> {/* Adjusted size */}
+                <p className="text-gray-600 text-[11px] line-clamp-1">{latestRead.author}</p> {/* Adjusted size */}
+                <p className="text-gray-400 text-[11px] mt-0.5 line-clamp-1">
                   {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
                 </p>
               </div>
