@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MoreVertical, Pencil, Trash2, BookMarked, BookOpenCheck } from 'lucide-react';
 import { Book } from '@/types/book';
@@ -11,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 interface BookshelfGridProps {
   books: Book[];
@@ -21,6 +21,7 @@ interface BookshelfGridProps {
   onDrop?: (e: React.DragEvent<HTMLDivElement>, book: Book) => void;
   draggedOverBook?: Book | null;
   showStatus?: boolean;
+  cardClassName?: string;
 }
 
 const BookshelfGrid: React.FC<BookshelfGridProps> = ({ 
@@ -31,7 +32,8 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
   onDragOver,
   onDrop,
   draggedOverBook,
-  showStatus = false
+  showStatus = false,
+  cardClassName
 }) => {
   if (books.length === 0) {
     return (
@@ -42,7 +44,10 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-transparent rounded-md p-4 relative">
+    <div className={cn(
+      "bg-white border border-gray-200 rounded-lg shadow-sm p-6 relative",
+      cardClassName
+    )}>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {books.map(book => {
           // Create a modified title that adds "Series" for series books

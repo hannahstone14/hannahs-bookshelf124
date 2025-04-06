@@ -13,6 +13,7 @@ import { BookIcon, BookMarked, Upload, Link, Tag, X } from 'lucide-react';
 import DateReadPicker from './DateReadPicker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 // Predefined list of genres
 const GENRES = [
@@ -276,7 +277,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                       <Button
                         type="button"
                         variant={field.value === 'to-read' ? 'default' : 'outline'}
-                        className="flex-1"
+                        className={cn(
+                          "flex-1",
+                          field.value === 'to-read' ? 'bg-gray-900 text-white hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        )}
                         onClick={() => field.onChange('to-read')}
                       >
                         To Read
@@ -284,7 +288,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                       <Button
                         type="button"
                         variant={field.value === 'reading' ? 'default' : 'outline'}
-                        className="flex-1"
+                        className={cn(
+                          "flex-1",
+                          field.value === 'reading' ? 'bg-gray-900 text-white hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        )}
                         onClick={() => field.onChange('reading')}
                       >
                         Reading
@@ -292,7 +299,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                       <Button
                         type="button"
                         variant={field.value === 'read' ? 'default' : 'outline'}
-                        className="flex-1"
+                        className={cn(
+                          "flex-1",
+                          field.value === 'read' ? 'bg-gray-900 text-white hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        )}
                         onClick={() => field.onChange('read')}
                       >
                         Read
@@ -506,6 +516,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                     variant="outline" 
                     onClick={addTag}
                     disabled={!newTag.trim()}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <Tag className="h-4 w-4 mr-1" /> Add
                   </Button>
@@ -642,10 +653,10 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
             )}
             
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCancel}>
+              <Button type="button" variant="outline" onClick={handleCancel} className="border-gray-300 text-gray-700 hover:bg-gray-100">
                 Cancel
               </Button>
-              <Button type="submit">{bookToEdit ? 'Update' : 'Add'} Book</Button>
+              <Button type="submit" className="bg-gray-900 text-white hover:bg-gray-700">{bookToEdit ? 'Update' : 'Add'} Book</Button>
             </DialogFooter>
           </form>
         </Form>

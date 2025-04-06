@@ -56,11 +56,11 @@ const genreIconMap: Record<string, React.ReactNode> = {
   'Philosophy': <Lightbulb className="h-4 w-4 text-yellow-500" />
 };
 
-const ensureDate = (date: Date | string | number): Date => {
-  if (date instanceof Date) {
-    return date;
+const ensureDate = (dateInput: string | Date | undefined): Date => {
+  if (dateInput instanceof Date) {
+    return dateInput;
   }
-  return new Date(date);
+  return new Date(dateInput);
 };
 
 const BookshelfStats: React.FC = () => {
@@ -164,13 +164,32 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
-  // Define light blue accent colors for the pie chart
+  // Process genres for Pie Chart (Top 5 + Other)
+  const processGenreDataForChart = (genres: Record<string, number>) => {
+    const sortedGenres = Object.entries(genres)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .map(([name, value]) => ({ name, value }));
+      
+    if (sortedGenres.length <= 5) {
+      return sortedGenres;
+    }
+    
+    const top5 = sortedGenres.slice(0, 5);
+    const otherCount = sortedGenres.slice(5).reduce((sum, current) => sum + current.value, 0);
+    
+    return [...top5, { name: 'Other', value: otherCount }];
+  };
+  
+  const chartGenreData = processGenreDataForChart(genreCounts);
+
+  // Define distinct light blue accent colors for the pie chart (up to 6)
   const PIE_CHART_COLORS = [
-    '#a0d2eb', // Light Blue
-    '#8ecae6', // Slightly darker blue
-    '#7cc0e0', // Medium blue
-    '#6bb4d9', // Deeper blue
-    '#5aa8d3'  // Darkest blue
+    '#a0d2eb', // Lightest Blue
+    '#8ecae6', // Sky Blue
+    '#7cc0e0', // Medium Blue
+    '#6bb4d9', // Steel Blue
+    '#5aa8d3', // Deeper Blue
+    '#499ccf'  // Darkest Blue for 'Other' or 6th category
   ];
 
   const getGenreIcon = (genre: string) => {
@@ -222,22 +241,22 @@ const BookshelfStats: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1">
           <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg text-center">Genre Distribution</h3>
-          {topGenres.length > 0 ? (
+          {chartGenreData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
-                  data={topGenres}
+                  data={chartGenreData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
-                  dataKey="count"
-                  nameKey="genre"
+                  dataKey="value"
+                  nameKey="name"
                   isAnimationActive={true}
                   animationDuration={800}
                 >
-                  {topGenres.map((entry, index) => (
+                  {chartGenreData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
                   ))}
                 </Pie>

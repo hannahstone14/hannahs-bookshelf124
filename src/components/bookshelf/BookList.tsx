@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Star, MoreVertical, Pencil, Trash2, BookMarked } from 'lucide-react';
 import { Book } from '@/types/book';
@@ -16,19 +15,23 @@ interface BookListProps {
   books: Book[];
   onEdit: (book: Book) => void;
   onDelete: (bookId: string) => void;
+  cardClassName?: string;
 }
 
-const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete }) => {
+const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete, cardClassName }) => {
   if (books.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-md">
-        <p className="text-gray-500">No books to display</p>
+        <p className="text-gray-600">No books to display</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <div className={cn(
+      "bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden",
+      cardClassName
+    )}>
       <div className="divide-y divide-gray-200">
         {books.map(book => {
           // Create a modified title that adds "Series" for series books

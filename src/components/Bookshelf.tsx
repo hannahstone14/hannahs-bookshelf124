@@ -229,14 +229,14 @@ const Bookshelf: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      <div className="flex justify-end mb-4">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-end mb-6">
         <Button 
-          className="bg-blue-700 hover:bg-blue-800 text-md px-6 py-2 h-12"
+          className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
           id="add-book-button"
           onClick={handleAddBookClick}
         >
-          <PlusCircle className="h-5 w-5 mr-2" />
+          <PlusCircle className="h-4 w-4 mr-2" />
           Add Book
         </Button>
       </div>
@@ -266,39 +266,38 @@ const Bookshelf: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      <BookshelfTabs 
+        activeTab={viewTab} 
+        onTabChange={handleTabChange} 
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={handleSort}
+      />
+      
       {books.length === 0 && recommendations.length === 0 ? (
-        <EmptyBookshelf onAddBook={handleAddBookClick} />
+        <EmptyBookshelf onAddBookClick={handleAddBookClick} />
       ) : (
         <>
-          <BookshelfTabs 
-            viewTab={viewTab}
-            onTabChange={handleTabChange}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
-
           {viewTab === 'recommendations' ? (
             <BookshelfSection
-              title="Book Recommendations From Others"
+              title="Recommendations"
               icon={LightbulbIcon}
               iconColor="text-yellow-500"
               books={booksToDisplay}
               displayStyle={displayStyle}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
               draggedOverBook={draggedOverBook}
               emptyMessage="No recommendations yet"
-              emptySubMessage="Recommendations will appear when others add books without a verification code"
+              emptySubMessage="Recommendations from friends will appear here"
+              cardClassName="bg-white border border-gray-200 rounded-lg shadow-sm"
             />
-          ) : viewTab === 'to-read' ? (
+          ) :
+          viewTab === 'to-read' ? (
             <BookshelfSection
-              title="Books To Read"
+              title="To Read"
               icon={Bookmark}
-              iconColor="text-amber-600"
+              iconColor="text-blue-500"
               books={booksToDisplay}
               displayStyle={displayStyle}
               onEdit={handleEdit}
@@ -309,12 +308,13 @@ const Bookshelf: React.FC = () => {
               draggedOverBook={draggedOverBook}
               emptyMessage="Your To Read list is empty"
               emptySubMessage="Add books you want to read next"
+              cardClassName="bg-white border border-gray-200 rounded-lg shadow-sm"
             />
           ) : (
             <BookshelfSection
               title="Bookshelf"
               icon={BookOpen}
-              iconColor="text-green-600"
+              iconColor="text-gray-700"
               books={booksToDisplay}
               displayStyle={displayStyle}
               onEdit={handleEdit}
@@ -324,6 +324,7 @@ const Bookshelf: React.FC = () => {
               onDrop={handleDrop}
               draggedOverBook={draggedOverBook}
               showStatus={true}
+              cardClassName="bg-white border border-gray-200 rounded-lg shadow-sm"
             />
           )}
         </>

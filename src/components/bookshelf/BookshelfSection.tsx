@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Book } from '@/types/book';
 import { LucideIcon } from 'lucide-react';
 import BookList from './BookList';
 import BookshelfGrid from './BookshelfGrid';
+import { cn } from '@/lib/utils';
 
 interface BookshelfSectionProps {
   title: string;
@@ -20,6 +20,7 @@ interface BookshelfSectionProps {
   showStatus?: boolean;
   emptyMessage?: string;
   emptySubMessage?: string;
+  cardClassName?: string;
 }
 
 const BookshelfSection: React.FC<BookshelfSectionProps> = ({
@@ -37,6 +38,7 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
   showStatus = false,
   emptyMessage = 'No books to display',
   emptySubMessage,
+  cardClassName,
 }) => {
   return (
     <div className="space-y-4">
@@ -46,7 +48,10 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
       </h2>
       
       {books.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-md">
+        <div className={cn(
+          "text-center py-12 bg-gray-50 rounded-md",
+          cardClassName
+        )}>
           <p className="text-gray-500">{emptyMessage}</p>
           {emptySubMessage && (
             <p className="text-sm text-gray-400 mt-2">{emptySubMessage}</p>
@@ -54,7 +59,7 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
         </div>
       ) : (
         displayStyle === 'list' ? (
-          <BookList books={books} onEdit={onEdit} onDelete={onDelete} />
+          <BookList books={books} onEdit={onEdit} onDelete={onDelete} cardClassName={cardClassName} />
         ) : (
           <BookshelfGrid 
             books={books} 
@@ -65,6 +70,7 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
             onDrop={onDrop}
             draggedOverBook={draggedOverBook}
             showStatus={showStatus}
+            cardClassName={cardClassName}
           />
         )
       )}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   BookOpen, 
@@ -10,7 +9,8 @@ import {
   ArrowDownZA, 
   Percent,
   Star,
-  SortAsc
+  SortAsc,
+  ArrowUpDown
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -23,12 +23,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 export type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
 export type SortOption = 'title' | 'author' | 'dateRead' | 'progress' | 'favorite';
 
 interface BookshelfTabsProps {
-  viewTab: ViewTab;
+  activeTab: ViewTab;
   onTabChange: (value: string) => void;
   sortBy: SortOption;
   sortOrder: 'asc' | 'desc';
@@ -36,49 +37,68 @@ interface BookshelfTabsProps {
 }
 
 const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
-  viewTab,
+  activeTab,
   onTabChange,
   sortBy,
   sortOrder,
   onSort
 }) => {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
-      <div className="flex items-center gap-3 w-full">
-        <Tabs 
-          defaultValue="shelf" 
-          value={viewTab} 
-          onValueChange={onTabChange}
-          className="w-full md:w-[540px]"
-        >
-          <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Shelf View
-            </TabsTrigger>
-            <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <List className="h-4 w-4 mr-2" />
-              List View
-            </TabsTrigger>
-            <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <Bookmark className="h-4 w-4 mr-2" />
-              To Read
-            </TabsTrigger>
-            <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
-              <LightbulbIcon className="h-4 w-4 mr-2" />
-              Recommendations
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
+    <div className="mb-6 border-b border-gray-200">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg">
+          <TabsTrigger 
+            value="shelf"
+            className={cn(
+              "py-2 text-sm font-medium",
+              activeTab === 'shelf' ? 'bg-white text-gray-900 shadow-sm rounded-md' : 'text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Shelf View
+          </TabsTrigger>
+          <TabsTrigger 
+            value="list"
+            className={cn(
+              "py-2 text-sm font-medium",
+              activeTab === 'list' ? 'bg-white text-gray-900 shadow-sm rounded-md' : 'text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <List className="h-4 w-4 mr-2" />
+            List View
+          </TabsTrigger>
+          <TabsTrigger 
+            value="to-read"
+            className={cn(
+              "py-2 text-sm font-medium",
+              activeTab === 'to-read' ? 'bg-white text-gray-900 shadow-sm rounded-md' : 'text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <Bookmark className="h-4 w-4 mr-2" />
+            To Read
+          </TabsTrigger>
+          <TabsTrigger 
+            value="recommendations"
+            className={cn(
+              "py-2 text-sm font-medium",
+              activeTab === 'recommendations' ? 'bg-white text-gray-900 shadow-sm rounded-md' : 'text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            <LightbulbIcon className="h-4 w-4 mr-2" />
+            Recommendations
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      <div className="flex items-center gap-3 w-full mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
               size="icon"
-              className="border-blue-700 text-blue-700 h-12 w-12"
+              className="border-gray-300 text-gray-600 hover:bg-gray-100 h-10 w-10 ml-auto"
             >
-              <SortAsc className="h-5 w-5" />
+              <ArrowUpDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-white z-50">

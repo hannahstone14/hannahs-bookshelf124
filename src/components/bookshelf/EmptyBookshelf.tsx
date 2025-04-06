@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, BookOpenCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog, 
@@ -11,23 +10,22 @@ import {
 import AddBookForm from '@/components/AddBookForm';
 
 interface EmptyBookshelfProps {
-  onAddBook: () => void;
+  onAddBookClick: () => void;
 }
 
-const EmptyBookshelf: React.FC<EmptyBookshelfProps> = ({ onAddBook }) => {
+const EmptyBookshelf: React.FC<EmptyBookshelfProps> = ({ onAddBookClick }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-lg text-center">
-      <h3 className="text-xl font-medium mb-4">Your bookshelf is empty</h3>
-      <p className="text-gray-600 mb-6">Start by adding the books you've read to build your collection</p>
+    <div className="text-center py-16 px-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+      <BookOpenCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">Your Bookshelf is Empty</h3>
+      <p className="text-sm text-gray-500 mb-6">
+        Looks like you haven't added any books yet. Get started by adding your first book!
+      </p>
       <Button 
-        className="bg-blue-700 hover:bg-blue-800 text-lg px-8 py-6 h-auto"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          onAddBook();
-        }}
+        onClick={onAddBookClick} 
+        className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md"
       >
-        <PlusCircle className="h-6 w-6 mr-2" />
+        <PlusCircle className="h-4 w-4 mr-2" />
         Add Your First Book
       </Button>
     </div>
