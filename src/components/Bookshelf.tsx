@@ -327,7 +327,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           </div>
           {/* Existing Black Add Book Button (Shrink-0 to prevent growing) */} 
           <Button 
-            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0" { /* Added h-10 and flex-shrink-0 */ }
+            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0"
             id="add-book-button"
             onClick={onAddBookClick} // Use prop passed from Index
           >
