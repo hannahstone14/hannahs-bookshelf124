@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { cn } from '@/lib/utils';
@@ -9,9 +8,12 @@ import { Badge } from '@/components/ui/badge';
 interface BookCoverProps {
   book: Book;
   showStatus?: boolean;
+  showProgress?: boolean;
+  showControls?: boolean;
+  className?: string;
 }
 
-const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
+const BookCover: React.FC<BookCoverProps> = ({ book, showStatus, showProgress, showControls, className }) => {
   // Get an appropriate color for the book cover
   const [layerColors, setLayerColors] = useState({
     primary: '#9b87f5',  // Default purple primary color
@@ -93,71 +95,74 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus }) => {
   const seriesProgress = book.isSeries ? getSeriesProgress() : null;
 
   return (
-    <div className={cn(
-      "relative", 
-      "transform transition-transform hover:scale-105"
-    )}>
-      <div className="relative z-10">
+    <div className={cn("relative aspect-[2/3] w-full overflow-hidden rounded-md shadow-md bg-gray-100 group", className)}>
+      {/* Wrapper for Image/Fallback and Progress Bar */}
+      <div className="relative w-full h-full">
         {book.coverUrl ? (
           <img
             src={book.coverUrl}
-            alt={displayTitle}
-            className={cn(
-              "w-32 h-48 object-cover rounded-md shadow-lg",
-            )}
+            alt={book.title}
+            className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+            loading="lazy"
           />
         ) : (
-          <div
-            className={cn(
-              "w-32 h-48 flex items-center justify-center rounded-md shadow-lg",
-            )}
-            style={{ backgroundColor: book.color || '#3B82F6' }}
+          <div 
+            className="w-full h-full flex items-center justify-center"
+            style={{ backgroundColor: book.color || '#3B82F6' }} // Use a default color
           >
-            <span className="text-lg font-bold text-white">
-              {displayTitle.substring(0, 1)}
-            </span>
-          </div>
-        )}
-        
-        {/* Favorite star badge */}
-        {book.favorite && (
-          <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
-            <Star size={14} fill="white" />
+            <span className="text-white text-sm font-medium px-2 text-center line-clamp-2">{book.title}</span>
           </div>
         )}
 
-        {/* Reading status badge - Only display on BookCover, not in the grid */}
-        {showStatus && book.status === 'reading' && (
-          <div className="absolute top-1 left-1 z-20">
-            <Badge variant="secondary" className="bg-blue-600 text-white text-xs px-2 py-0.5">
-              Reading
-            </Badge>
+        {/* Progress Bar (Now positioned relative to this inner wrapper) */}
+        {showProgress && book.status === 'reading' && book.progress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-200/80 backdrop-blur-sm">
+            <div 
+              className="h-full bg-[#219ebc]/90" 
+              style={{ width: `${book.progress}%` }}
+            ></div>
           </div>
         )}
-        
-        {/* Tags badges */}
-        {book.tags && book.tags.length > 0 && (
-          <div className="absolute bottom-2 left-0 right-0 flex flex-wrap justify-center gap-1 px-1 z-20">
-            {book.tags.map((tag, index) => (
-              <Badge 
-                key={index} 
-                variant="outline" 
-                className="bg-black/70 border-none text-white text-[10px] px-1.5 py-0 truncate max-w-[80px]"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {/* Reading progress */}
+      </div> { /* End of inner wrapper */ }
+
+      {/* Edit/Delete Buttons (Remain relative to outer container) */}
+      {showControls && (
+        <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
+          <Star size={14} fill="white" />
+        </div>
+      )}
+
+      {/* Favorite star badge */}
+      {book.favorite && (
+        <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
+          <Star size={14} fill="white" />
+        </div>
+      )}
+
+      {/* Reading status badge - Only display on BookCover, not in the grid */}
       {showStatus && book.status === 'reading' && (
-        <div className="absolute bottom-0 left-0 w-full bg-blue-700 text-white text-xs text-center py-1 rounded-b-md z-20">
-          {book.progress}%
+        <div className="absolute top-1 left-1 z-20">
+          <Badge variant="secondary" className="bg-blue-600 text-white text-xs px-2 py-0.5">
+            Reading
+          </Badge>
         </div>
       )}
       
+      {/* Tags badges */}
+      {book.tags && book.tags.length > 0 && (
+        <div className="absolute bottom-2 left-0 right-0 flex flex-wrap justify-center gap-1 px-1 z-20">
+          {book.tags.map((tag, index) => (
+            <Badge 
+              key={index} 
+              variant="outline" 
+              className="bg-black/70 border-none text-white text-[10px] px-1.5 py-0 truncate max-w-[80px]"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Series progress tracker */}
       {book.isSeries && seriesProgress && (
         <div className="mt-1 w-full">

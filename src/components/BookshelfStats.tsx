@@ -212,16 +212,16 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
   
   const chartGenreData = processGenreDataForChart(genreCounts);
 
-  // Define distinct, harmonious blue colors for the pie chart
+  // Define distinct, harmonious blue colors for the pie chart, based on #219ebc
   const PIE_CHART_COLORS_BLUE = [
-    '#ade8f4', // Light Sky Blue
-    '#90e0ef', // Medium Sky Blue
-    '#48cae4', // Bright Cerulean
-    '#00b4d8', // Standard Cerulean
-    '#0096c7', // Deeper Cerulean
-    '#0077b6', // Steel Blue
-    '#023e8a', // Dark Blue
-    '#03045e'  // Very Dark Blue
+    '#a9d6e5', // Lighter Sky Blue
+    '#89c2d9', // Light Steel Blue
+    '#61a5c2', // Medium Steel Blue
+    '#468faf', // Slightly Deeper Blue
+    '#2c7da0', // Deeper Blue
+    '#219ebc', // Target Blue
+    '#1a7f9c', // Darker Target Blue
+    '#014f86'  // Navy
   ].slice(0, chartGenreData.length); // Use only as many colors as needed
 
   const getGenreIcon = (genre: string) => {

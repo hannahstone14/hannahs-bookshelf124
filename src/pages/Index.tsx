@@ -46,7 +46,7 @@ const Index = () => {
           />
           
           <h2 className="text-xl font-medium flex items-center mt-10 mb-4 border-b border-gray-200 pb-2">
-            <BookOpen className={`h-5 w-5 mr-2 text-blue-700`} />
+            <BookOpen className={`h-5 w-5 mr-2 text-[#219ebc]`} />
             Bookshelf
           </h2>
           

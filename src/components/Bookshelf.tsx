@@ -325,11 +325,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          {/* Existing Black Add Book Button (Shrink-0 to prevent growing) */} 
+          {/* Existing Black Add Book Button (Update color) */} 
           <Button 
-            className="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0"
+            className="bg-[#219ebc] hover:bg-[#1a7f9c] text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0"
             id="add-book-button"
-            onClick={onAddBookClick} // Use prop passed from Index
+            onClick={onAddBookClick} 
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             Add Book
