@@ -53,38 +53,7 @@ const Bookshelf: React.FC = () => {
   });
   
   const seriesCount = uniqueSeriesNames.size;
-  
-  useEffect(() => {
-    if (!isMounted.current) return;
-    
-    let displayedBooks: Book[] = [];
-    
-    switch(viewTab) {
-      case 'to-read':
-        displayedBooks = getSortedBooks(toReadBooks);
-        break;
-      case 'recommendations':
-        displayedBooks = getSortedBooks(recommendations);
-        break;
-      case 'shelf':
-      case 'list':
-      default:
-        displayedBooks = getSortedBooks(allShelfBooks);
-        break;
-    }
-    
-    setBooksToDisplay(displayedBooks);
-  }, [viewTab, sortBy, sortOrder, books, recommendations]);
 
-  const handleTabChange = useCallback((value: string) => {
-    const newTab = value as ViewTab;
-    setViewTab(newTab);
-    
-    if (newTab === 'shelf' || newTab === 'list') {
-      setDisplayStyle(newTab);
-    }
-  }, []);
-  
   const getSortedBooks = useCallback((booksToSort: Book[]) => {
     return [...booksToSort].sort((a, b) => {
       let comparison = 0;
@@ -118,6 +87,54 @@ const Bookshelf: React.FC = () => {
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [sortBy, sortOrder]);
+  
+  useEffect(() => {
+    if (!isMounted.current) return;
+    
+    let displayedBooks: Book[] = [];
+    
+    switch(viewTab) {
+      case 'to-read':
+        displayedBooks = getSortedBooks(toReadBooks);
+        break;
+      case 'recommendations':
+        displayedBooks = getSortedBooks(recommendations);
+        break;
+      case 'shelf':
+      case 'list':
+      default:
+        // First separate reading books from other books
+        const readingBooks = allShelfBooks.filter(book => book.status === 'reading')
+          .sort((a, b) => {
+            // Sort by dateRead (most recent first)
+            if (a.dateRead && b.dateRead) {
+              const dateA = a.dateRead instanceof Date ? a.dateRead.getTime() : new Date(a.dateRead).getTime();
+              const dateB = b.dateRead instanceof Date ? b.dateRead.getTime() : new Date(b.dateRead).getTime();
+              return dateB - dateA; // Most recent first
+            }
+            return 0;
+          });
+        
+        // Then get the rest of the books
+        const otherBooks = allShelfBooks.filter(book => book.status !== 'reading');
+        const sortedOtherBooks = getSortedBooks(otherBooks);
+        
+        // Combine with reading books first
+        displayedBooks = [...readingBooks, ...sortedOtherBooks];
+        break;
+    }
+    
+    setBooksToDisplay(displayedBooks);
+  }, [viewTab, sortBy, sortOrder, books, recommendations, getSortedBooks, allShelfBooks, toReadBooks]);
+
+  const handleTabChange = useCallback((value: string) => {
+    const newTab = value as ViewTab;
+    setViewTab(newTab);
+    
+    if (newTab === 'shelf' || newTab === 'list') {
+      setDisplayStyle(newTab);
+    }
+  }, []);
   
   const handleSort = useCallback((option: SortOption) => {
     if (sortBy === option) {
