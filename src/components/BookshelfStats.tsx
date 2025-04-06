@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
@@ -30,6 +29,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const genreIconMap: Record<string, React.ReactNode> = {
   'Fiction': <BookCopy className="h-4 w-4 text-blue-500" />,
@@ -164,6 +164,15 @@ const BookshelfStats: React.FC = () => {
       }, null)
     : null;
 
+  // Define light blue accent colors for the pie chart
+  const PIE_CHART_COLORS = [
+    '#a0d2eb', // Light Blue
+    '#8ecae6', // Slightly darker blue
+    '#7cc0e0', // Medium blue
+    '#6bb4d9', // Deeper blue
+    '#5aa8d3'  // Darkest blue
+  ];
+
   const getGenreIcon = (genre: string) => {
     return genreIconMap[genre] || <BookCopy className="h-4 w-4 text-gray-500" />;
   };
@@ -211,33 +220,43 @@ const BookshelfStats: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Top Genres</h3>
+        <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1">
+          <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg text-center">Genre Distribution</h3>
           {topGenres.length > 0 ? (
-            <div className="space-y-4">
-              {topGenres.map((item, index) => (
-                <div key={item.genre} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-600' : 
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {getGenreIcon(item.genre)}
-                    </div>
-                    <span className="font-medium">{item.genre}</span>
-                  </div>
-                  <span className="text-gray-500">{item.count} books</span>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={topGenres}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                  nameKey="genre"
+                  isAnimationActive={true}
+                  animationDuration={800}
+                >
+                  {topGenres.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                  formatter={(value, name) => [`${value} books`, name]}
+                />
+                {/* Optional: Add a legend if needed */}
+                {/* <Legend /> */}
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <div className="text-gray-500 text-center py-4">
-              Add books with genres to see statistics
+            <div className="text-gray-500 text-center py-4 h-[200px] flex items-center justify-center">
+              Add books with genres to see distribution
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 h-full">
+        <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1 h-full">
           <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Currently Reading</h3>
           {currentlyReading ? (
             <div className="flex items-start gap-3">
@@ -286,7 +305,7 @@ const BookshelfStats: React.FC = () => {
         </div>
 
         {latestRead && (
-          <div className="bg-white rounded-xl shadow-md p-6 h-full">
+          <div className="bg-white rounded-xl shadow-md p-6 md:col-span-1 h-full">
             <h3 className="text-sm text-gray-500 font-medium mb-4 uppercase text-lg">Last Finished</h3>
             <div className="flex items-start gap-3">
               <div className="w-24 h-36 shadow-md rounded-sm overflow-hidden flex-shrink-0">
