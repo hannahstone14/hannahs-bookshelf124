@@ -300,13 +300,22 @@ const Bookshelf: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <BookshelfTabs 
-        activeTab={viewTab} 
-        onTabChange={handleTabChange} 
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-      />
+      {/* Header Row: Title + Tabs/Sort */}
+      <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-6">
+        {/* Removing the H2 title from here */}
+        {/* <h2 className="text-xl font-medium flex items-center">
+          <BookOpen className={`h-5 w-5 mr-2 text-blue-700`} />
+          Bookshelf
+        </h2> */}
+        {/* Keep the Tabs/Sort */}
+        <BookshelfTabs 
+          activeTab={viewTab}
+          onTabChange={handleTabChange}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+        />
+      </div>
       
       {books.length === 0 && recommendations.length === 0 ? (
         <EmptyBookshelf onAddBookClick={handleAddBookClick} />

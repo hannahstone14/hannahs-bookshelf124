@@ -3,7 +3,7 @@ import Bookshelf from '@/components/Bookshelf';
 import BookshelfStats from '@/components/BookshelfStats';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { shouldUseFallback } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BookOpen } from 'lucide-react';
 
 const Index = () => {
   const { books, recommendations, recoverData, isLoading } = useBookshelf();
@@ -33,6 +33,11 @@ const Index = () => {
       <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <BookshelfStats />
+          
+          <h2 className="text-xl font-medium flex items-center mt-10 mb-4 border-b border-gray-200 pb-2">
+            <BookOpen className={`h-5 w-5 mr-2 text-blue-700`} />
+            Bookshelf
+          </h2>
           
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
