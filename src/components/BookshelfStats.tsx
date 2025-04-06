@@ -268,47 +268,58 @@ const BookshelfStats: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 md:col-span-1">
-          <h3 className="text-sm text-gray-600 font-semibold mb-4 uppercase text-center tracking-wider">Genre Distribution</h3>
+      {/* Grid for Pie Chart, Currently Reading, Last Finished */}
+      {/* Using gap-6 (24px). Added items-stretch to make cards equal height by default */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 items-stretch"> 
+        {/* Genre Distribution Card */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> {/* Reduced padding slightly, added flex flex-col */}
+          <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3> {/* Adjusted margin */}
           {chartGenreData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={chartGenreData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={renderCustomizedLabel}
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  isAnimationActive={true}
-                  animationDuration={800}
-                >
-                  {chartGenreData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                  formatter={(value, name) => [`${value} books`, name]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            // Added flex-grow to allow chart to take available space
+            <div className="flex-grow flex items-center justify-center min-h-[150px]"> 
+              <ResponsiveContainer width="100%" height={150}> {/* Adjusted height slightly */}
+                <PieChart>
+                  <Pie
+                    data={chartGenreData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
+                    outerRadius={65} // Adjusted radius
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    isAnimationActive={true}
+                    animationDuration={800}
+                  >
+                    {chartGenreData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    formatter={(value, name) => [`${value} books`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="text-gray-500 text-center py-4 h-[200px] flex items-center justify-center">
-              Add books with genres to see distribution
+            <div className="text-gray-500 text-center py-4 h-[170px] flex flex-col items-center justify-center flex-grow">
+              <BookOpenCheck className="h-8 w-8 text-gray-300 mb-2" />
+              <p className="text-xs text-gray-400">Add books with genres</p>
+              <p className="text-xs text-gray-400">to see distribution</p>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 md:col-span-1 h-full">
-          <h3 className="text-sm text-gray-600 font-semibold mb-4 uppercase tracking-wider">Currently Reading</h3>
+        {/* Currently Reading Card */}
+        {/* Added flex flex-col to structure content vertically */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
+          <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Currently Reading</h3> {/* Adjusted margin */}
           {currentlyReading ? (
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0">
+            // Added flex-grow to allow content to take available space
+            <div className="flex items-start gap-3 flex-grow"> 
+              <div className="w-20 h-28 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Adjusted size slightly */}
                 {currentlyReading.coverUrl ? (
                   <img 
                     src={currentlyReading.coverUrl} 
@@ -337,26 +348,25 @@ const BookshelfStats: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-4 h-full items-center">
-              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                <BookOpenCheck className="h-6 w-6 text-gray-400" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium">None</h4>
-                <p className="text-gray-500 text-xs">No books currently being read</p>
-                <p className="text-gray-400 text-[11px] mt-1">
-                  Mark a book as "Reading" to see it here
-                </p>
+            // Added flex-grow and centered content for empty state
+            <div className="flex flex-col items-center justify-center gap-2 flex-grow text-center h-full min-h-[150px]">
+              <BookOpenCheck className="h-8 w-8 text-gray-300" /> 
+              <div> 
+                <h4 className="text-sm font-medium text-gray-600">None</h4>
+                <p className="text-gray-500 text-xs mt-1">No book currently being read.</p>
               </div>
             </div>
           )}
         </div>
 
-        {latestRead && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 md:col-span-1 h-full">
-            <h3 className="text-sm text-gray-600 font-semibold mb-4 uppercase tracking-wider">Last Finished</h3>
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-24 shadow-sm rounded-sm overflow-hidden flex-shrink-0">
+        {/* Last Finished Card */}
+        {/* Added flex flex-col */}
+        {latestRead ? ( // Conditionally render the whole card
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
+            <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Last Finished</h3> {/* Adjusted margin */}
+             {/* Added flex-grow */}
+            <div className="flex items-start gap-3 flex-grow">
+              <div className="w-20 h-28 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Adjusted size slightly */}
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -380,6 +390,12 @@ const BookshelfStats: React.FC = () => {
                 </p>
               </div>
             </div>
+          </div>
+        ) : ( // Render a placeholder or empty state if no books have been read
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col items-center justify-center text-center min-h-[170px]"> 
+             <BookmarkCheck className="h-8 w-8 text-gray-300 mb-2" />
+             <h4 className="text-sm font-medium text-gray-600">No Books Finished</h4>
+             <p className="text-gray-500 text-xs mt-1">Finish reading a book to see it here.</p>
           </div>
         )}
       </div>
