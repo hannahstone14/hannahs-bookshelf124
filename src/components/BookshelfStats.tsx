@@ -358,14 +358,20 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
               <div className="overflow-hidden flex-grow flex flex-col justify-between h-44"> {/* Increased text size and spacing */}
                 <div>
                   <h4 className="text-base font-medium line-clamp-2 mb-1">{currentlyReading.title}</h4>
-                  <p className="text-gray-600 text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> {/* Increased size/margin */} 
-                  <p className="text-gray-500 text-sm mt-1 line-clamp-1"> {/* Increased size/margin */} 
+                  <p className="text-gray-600 text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> 
+                  <p className="text-gray-500 text-sm mt-1 line-clamp-1"> 
                     {currentlyReading.pages} pages
+                    {currentlyReading.genres && currentlyReading.genres.length > 0 && (
+                      <span> · {currentlyReading.genres[0]}</span>
+                    )}
                   </p>
-                </div>
-                <div className="mt-2">
-                  <div className="text-sm text-gray-600 mb-1">{currentlyReading.progress}% completed</div> {/* Increased size/margin */} 
-                  <Progress value={currentlyReading.progress} className="h-2 bg-gray-200" /> {/* Increased height */} 
+                  <div className="mt-2">
+                    <div className="text-sm text-gray-600 mb-1">{currentlyReading.progress}% completed</div> 
+                    <Progress 
+                      value={currentlyReading.progress} 
+                      className="h-2 bg-gray-200" 
+                    /> 
+                  </div>
                 </div>
               </div>
             </div>
