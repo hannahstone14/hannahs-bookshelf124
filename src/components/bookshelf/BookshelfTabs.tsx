@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   BookOpen, 
@@ -52,19 +51,19 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
           className="w-full md:w-[540px]"
         >
           <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+            <TabsTrigger value="shelf" className="data-[state=inactive]:bg-gray-100 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <BookOpen className="h-4 w-4 mr-2" />
               Shelf View
             </TabsTrigger>
-            <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+            <TabsTrigger value="list" className="data-[state=inactive]:bg-gray-100 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <List className="h-4 w-4 mr-2" />
               List View
             </TabsTrigger>
-            <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+            <TabsTrigger value="to-read" className="data-[state=inactive]:bg-gray-100 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Bookmark className="h-4 w-4 mr-2" />
               To Read
             </TabsTrigger>
-            <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-200 data-[state=active]:bg-blue-700 data-[state=active]:text-white">
+            <TabsTrigger value="recommendations" className="data-[state=inactive]:bg-gray-100 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <LightbulbIcon className="h-4 w-4 mr-2" />
               Recommendations
             </TabsTrigger>
@@ -76,9 +75,9 @@ const BookshelfTabs: React.FC<BookshelfTabsProps> = ({
             <Button 
               variant="outline" 
               size="icon"
-              className="border-blue-700 text-blue-700 h-12 w-12"
+              className="border-gray-300 text-gray-700 h-10 w-10 rounded-md"
             >
-              <SortAsc className="h-5 w-5" />
+              <SortAsc className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-white z-50">
