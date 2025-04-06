@@ -127,6 +127,7 @@ export const updateBook = async (
     if (bookData.seriesName !== undefined) updateData.series_name = bookData.seriesName;
     if (bookData.seriesPosition !== undefined) updateData.series_position = bookData.seriesPosition;
     if (bookData.tags !== undefined) updateData.tags = bookData.tags;
+    if (bookData.email !== undefined) updateData.email = bookData.email;
     
     // Perform the update operation
     const updateResult = await withTimeout<SupabaseResponse<any[]>>(

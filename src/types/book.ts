@@ -1,4 +1,3 @@
-
 export interface Book {
   id: string;
   title: string;
@@ -17,4 +16,5 @@ export interface Book {
   seriesName?: string; // Optional name of the series
   seriesPosition?: number; // Optional position in the series
   tags?: string[]; // New property for tags that will show as badges
+  email?: string; // Added optional email field
 }

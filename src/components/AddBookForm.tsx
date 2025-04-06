@@ -38,6 +38,7 @@ const bookFormSchema = z.object({
   seriesName: z.string().optional(),
   seriesPosition: z.number().int().min(1, "Series position must be at least 1").optional(),
   tags: z.array(z.string()).optional(),
+  email: z.string().email("Must be a valid email address").optional().or(z.literal('')),
 });
 
 interface AddBookFormProps {
@@ -76,6 +77,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
       seriesPosition: bookToEdit?.seriesPosition || 1,
       dateRead: bookToEdit?.dateRead || undefined,
       tags: bookToEdit?.tags || [],
+      email: bookToEdit?.email || '',
     },
   });
 
@@ -169,6 +171,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
         isSeries: data.isSeries,
         seriesName: data.isSeries ? (data.seriesName || data.title) : undefined,
         seriesPosition: data.isSeries ? data.seriesPosition : undefined,
+        email: data.email || undefined,
       };
       
       if (bookToEdit) {
@@ -525,6 +528,21 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ isOpen, onClose, onSuccess, b
                   Tags will appear as badges on your book covers
                 </FormDescription>
               </div>
+              
+              {/* Email Field */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="reader@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={form.control}
