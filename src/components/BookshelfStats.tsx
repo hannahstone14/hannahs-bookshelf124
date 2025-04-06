@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useBookshelf } from '@/context/BookshelfContext';
 import { Book } from '@/types/book';
@@ -180,7 +179,7 @@ const BookshelfStats: React.FC = () => {
             <AvatarFallback>HL</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-medium">Hannah's Library</h1>
+            <h1 className="text-3xl font-medium">My Reading Collection</h1>
             <p className="text-gray-500 text-sm">I do not endorse everything I read.</p>
           </div>
         </div>
