@@ -1,13 +1,16 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { BookshelfProvider } from "./context/BookshelfContext";
 import { useEffect } from "react";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from './firebaseConfig';
+import Login from './components/Login';
+import Header from './components/Header';
 
 // Configure React Query for better caching and retries
 const queryClient = new QueryClient({
@@ -48,23 +51,35 @@ const DataPersistenceLogger = () => {
   return null;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BookshelfProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <DataPersistenceLogger />
-        
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </BookshelfProvider>
-  </QueryClientProvider>
-);
+// Main App Component with Authentication Handling
+const App = () => {
+  const [user, loading, error] = useAuthState(auth);
+
+  if (loading) {
+    // Optional: Add a loading spinner component
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BookshelfProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <DataPersistenceLogger />
+          
+          <BrowserRouter>
+            <Header />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </BookshelfProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

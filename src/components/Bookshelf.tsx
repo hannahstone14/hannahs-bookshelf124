@@ -9,6 +9,9 @@ import EmptyBookshelf from './bookshelf/EmptyBookshelf';
 import BookshelfSection from './bookshelf/BookshelfSection';
 import { Button } from './ui/button';
 import { PlusCircle } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 
 // Placeholder: Assume an AuthContext exists
 // import { useAuth } from '@/context/AuthContext'; 
@@ -17,10 +20,12 @@ type DisplayStyle = 'shelf' | 'list';
 
 const Bookshelf: React.FC = () => {
   const isMounted = useRef(true);
+  const navigate = useNavigate();
   
-  // Placeholder: Get authentication status
-  // const { isAuthenticated } = useAuth(); 
-  const isAuthenticated = true; // Replace with actual auth check
+  // Get authentication status from Firebase hook
+  const [user, loadingAuth] = useAuthState(auth);
+  // Check if the logged-in user is the allowed user
+  const isAllowedUser = user?.email === 'hstone1416@gmail.com';
   
   const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
   
@@ -188,21 +193,27 @@ const Bookshelf: React.FC = () => {
   const handleEdit = useCallback((book: Book) => {
     if (!isMounted.current) return;
     
-    if (!isAuthenticated) {
-      // Placeholder: Redirect to login or show login modal
-      alert('Please log in to edit books.'); 
-      console.log("User not authenticated. Redirecting to login...");
-      // Example: navigate('/login'); 
+    // Use the actual auth state and check for the specific user
+    if (!isAllowedUser) { 
+      alert('You do not have permission to edit books.'); 
+      console.log("User not authorized. Redirecting to login...");
+      navigate('/login'); // Redirect to login page
       return;
     }
     
     setSelectedBook(book);
     setIsEditDialogOpen(true);
-  }, [isAuthenticated]);
+  }, [isAllowedUser, navigate]);
 
   const handleDelete = useCallback((bookId: string) => {
+    if (!isAllowedUser) {
+      alert('You do not have permission to delete books.');
+      console.log("User not authorized for delete. Redirecting to login...");
+      navigate('/login'); // Redirect to login page
+      return;
+    }
     removeBook(bookId);
-  }, [removeBook]);
+  }, [removeBook, isAllowedUser, navigate]);
 
   const handleAddDialogOpenChange = useCallback((open: boolean) => {
     if (!isMounted.current) return;
@@ -240,16 +251,16 @@ const Bookshelf: React.FC = () => {
   const handleAddBookClick = useCallback(() => {
     if (!isMounted.current) return;
 
-    if (!isAuthenticated) {
-      // Placeholder: Redirect to login or show login modal
-      alert('Please log in to add books.');
-      console.log("User not authenticated. Redirecting to login...");
-      // Example: navigate('/login');
+    // Use the actual auth state and check for the specific user
+    if (!isAllowedUser) { 
+      alert('Please log in with the authorized account to add books.');
+      console.log("User not authorized. Redirecting to login...");
+      navigate('/login'); // Redirect to login page
       return;
     }
     
     setIsAddDialogOpen(true);
-  }, [isAuthenticated]);
+  }, [isAllowedUser, navigate]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
