@@ -356,6 +356,7 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                 )}
               </div>
               <div className="overflow-hidden flex-grow flex flex-col justify-between h-44"> {/* Increased text size and spacing */}
+                {/* Top Section */}
                 <div>
                   <h4 className="text-base font-medium line-clamp-2 mb-1">{currentlyReading.title}</h4>
                   <p className="text-gray-600 text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> 
@@ -365,13 +366,17 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                       <span> · {currentlyReading.genres[0]}</span>
                     )}
                   </p>
-                  <div className="mt-2">
-                    <div className="text-sm text-gray-600 mb-1">{currentlyReading.progress}% completed</div> 
-                    <Progress 
-                      value={currentlyReading.progress} 
-                      className="h-2 bg-gray-200" 
-                    /> 
-                  </div>
+                </div>
+                
+                {/* Bottom Section: Progress Bar and Percentage Text (NEW) */}
+                <div className="flex items-center gap-2 mt-auto pt-2"> { /* Use mt-auto to push to bottom, pt-2 for spacing */ }
+                  <Progress 
+                    value={currentlyReading.progress} 
+                    className="h-2 bg-gray-200 flex-grow" 
+                  /> 
+                  <span className="text-xs text-gray-600 flex-shrink-0">
+                    {currentlyReading.progress}%
+                  </span>
                 </div>
               </div>
             </div>
