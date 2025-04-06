@@ -15,10 +15,11 @@ interface BookListProps {
   books: Book[];
   onEdit: (book: Book) => void;
   onDelete: (bookId: string) => void;
+  onShowDetails: (book: Book) => void;
   cardClassName?: string;
 }
 
-const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete, cardClassName }) => {
+const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete, onShowDetails, cardClassName }) => {
   if (books.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-md">
@@ -40,6 +41,7 @@ const BookList: React.FC<BookListProps> = ({ books, onEdit, onDelete, cardClassN
           return (
             <div 
               key={book.id}
+              onClick={() => onShowDetails(book)}
               className={cn(
                 "flex items-center p-3 border-b border-gray-200 hover:bg-gray-50",
                 book.isSeries && "bg-purple-50 hover:bg-purple-100"

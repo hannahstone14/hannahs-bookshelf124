@@ -16,6 +16,7 @@ interface BookshelfGridProps {
   books: Book[];
   onEdit: (book: Book) => void;
   onDelete: (bookId: string) => void;
+  onShowDetails: (book: Book) => void;
   onDragStart?: (book: Book) => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>, book: Book) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>, book: Book) => void;
@@ -28,6 +29,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
   books, 
   onEdit, 
   onDelete,
+  onShowDetails,
   onDragStart,
   onDragOver,
   onDrop,
@@ -60,6 +62,7 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               onDragStart={() => onDragStart?.(book)}
               onDragOver={(e) => onDragOver?.(e, book)}
               onDrop={(e) => onDrop?.(e, book)}
+              onClick={() => onShowDetails(book)}
               className={`${onDragStart ? 'cursor-move' : ''} book-container relative group ${draggedOverBook?.id === book.id ? 'opacity-50' : ''}`}
             >
               <div className="absolute right-1 top-1 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -81,7 +84,12 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               </div>
               
               <div className="relative">
-                <BookCover book={book} showStatus={showStatus} />
+                <BookCover 
+                  book={book} 
+                  showStatus={showStatus} 
+                  showProgress={true} 
+                  showControls={false}
+                />
                 
                 {book.isSeries && (
                   <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">Series</Badge>

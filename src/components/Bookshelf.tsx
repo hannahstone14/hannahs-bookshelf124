@@ -35,6 +35,7 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BookDetailsModal from './BookDetailsModal';
 
 // Define types locally again
 export type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
@@ -74,6 +75,10 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   
   const [draggedBook, setDraggedBook] = useState<Book | null>(null);
   const [draggedOverBook, setDraggedOverBook] = useState<Book | null>(null);
+  
+  // State for Details Modal
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedBookForDetails, setSelectedBookForDetails] = useState<Book | null>(null);
   
   // Add state back
   const [viewTab, setViewTab] = useState<ViewTab>('shelf');
@@ -275,6 +280,27 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     }
   }, [sortBy]);
 
+  // Handler to open Details Modal
+  const handleShowDetails = (book: Book) => {
+    setSelectedBookForDetails(book);
+    setIsDetailsModalOpen(true);
+  };
+
+  // Handler to close Details Modal
+  const handleCloseDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    // Delay clearing the selected book to allow modal fade-out animation
+    setTimeout(() => setSelectedBookForDetails(null), 300); 
+  };
+
+  // Handler to trigger edit from Details Modal
+  const handleEditFromDetails = () => {
+    if (selectedBookForDetails) {
+      handleEdit(selectedBookForDetails); // Use existing handleEdit
+    }
+    handleCloseDetailsModal(); // Close details modal
+  };
+
   return (
     <div className="space-y-8">
        {/* Controls Row: Tabs, Sort, Add Button */}
@@ -361,6 +387,14 @@ const Bookshelf: React.FC<BookshelfProps> = ({
        </DialogContent>
      </Dialog>
 
+     {/* Details Modal (NEW) */}
+     <BookDetailsModal 
+       book={selectedBookForDetails} 
+       isOpen={isDetailsModalOpen} 
+       onClose={handleCloseDetailsModal} 
+       onEdit={handleEditFromDetails} 
+     />
+
      {/* Conditional Rendering based on Tab (uses local viewTab state) */}
      {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
        <EmptyBookshelf onAddBookClick={onAddBookClick} />
@@ -373,6 +407,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                 books={booksToDisplay} 
                 onEdit={handleEdit} 
                 onDelete={handleDelete}
+                onShowDetails={handleShowDetails}
               />
             ) : (
               <BookshelfGrid 
@@ -384,6 +419,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                 onDrop={handleDrop}
                 draggedOverBook={draggedOverBook}
                 showStatus={true} 
+                onShowDetails={handleShowDetails}
               />
             )
           ) : viewTab === 'to-read' ? (
@@ -398,6 +434,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
               onDelete={handleDelete}
               emptyMessage="Your reading list is empty!"
               emptySubMessage="Add some books you want to read later."
+              onShowDetails={handleShowDetails}
             />
           ) : viewTab === 'recommendations' ? (
             // Keep using BookshelfSection for Recommendations
@@ -411,6 +448,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
               onDelete={handleDelete}
               emptyMessage="No recommendations yet."
               emptySubMessage="AI recommendations will appear here once enabled."
+              onShowDetails={handleShowDetails}
             />
           ) : null}
         </div>

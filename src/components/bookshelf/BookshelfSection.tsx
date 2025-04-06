@@ -13,6 +13,7 @@ interface BookshelfSectionProps {
   displayStyle: 'shelf' | 'list';
   onEdit: (book: Book) => void;
   onDelete: (bookId: string) => void;
+  onShowDetails: (book: Book) => void;
   onDragStart?: (book: Book) => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>, book: Book) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>, book: Book) => void;
@@ -31,6 +32,7 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
   displayStyle,
   onEdit,
   onDelete,
+  onShowDetails,
   onDragStart,
   onDragOver,
   onDrop,
@@ -59,12 +61,19 @@ const BookshelfSection: React.FC<BookshelfSectionProps> = ({
         </div>
       ) : (
         displayStyle === 'list' ? (
-          <BookList books={books} onEdit={onEdit} onDelete={onDelete} cardClassName={cardClassName} />
+          <BookList 
+            books={books} 
+            onEdit={onEdit} 
+            onDelete={onDelete} 
+            onShowDetails={onShowDetails}
+            cardClassName={cardClassName} 
+          />
         ) : (
           <BookshelfGrid 
             books={books} 
             onEdit={onEdit} 
             onDelete={onDelete}
+            onShowDetails={onShowDetails}
             onDragStart={onDragStart}
             onDragOver={onDragOver}
             onDrop={onDrop}
