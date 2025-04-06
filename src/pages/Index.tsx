@@ -53,7 +53,7 @@ const Index = () => {
       
       <footer className="py-6 border-t border-gray-200 text-center text-sm text-gray-600 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p>This Is What I Read</p>
+          <p>This Is What I Read &copy; {new Date().getFullYear()}</p>
         </div>
       </footer>
     </div>
