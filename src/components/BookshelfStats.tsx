@@ -212,6 +212,15 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
   
   const chartGenreData = processGenreDataForChart(genreCounts);
 
+  // Find the top genre
+  let topGenreName = "N/A";
+  let topGenreCount = 0;
+  if (Object.keys(genreCounts).length > 0) {
+    const sortedEntries = Object.entries(genreCounts).sort(([,a],[,b]) => b-a);
+    topGenreName = sortedEntries[0][0];
+    topGenreCount = sortedEntries[0][1];
+  }
+
   // Define distinct, harmonious blue colors for the pie chart, based on #219ebc
   const PIE_CHART_COLORS_BLUE = [
     '#a9d6e5', // Lighter Sky Blue
@@ -278,9 +287,15 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> {/* Reduced padding slightly, added flex flex-col */}
           <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3> {/* Adjusted margin */}
           {chartGenreData.length > 0 ? (
-            // Fix: ResponsiveContainer should directly wrap PieChart
             <ResponsiveContainer width="100%" height={180} className="flex-grow min-h-[150px]"> 
               <PieChart>
+                {/* Text in the center */}
+                {topGenreName !== "N/A" && (
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-center">
+                    <tspan x="50%" dy="-0.5em" className="text-lg font-semibold text-gray-800 fill-current">{topGenreName}</tspan>
+                    <tspan x="50%" dy="1.2em" className="text-xs text-gray-500 fill-current">{topGenreCount} book{topGenreCount !== 1 ? 's' : ''}</tspan>
+                  </text>
+                )}
                 <Pie
                   data={chartGenreData}
                   cx="50%"
