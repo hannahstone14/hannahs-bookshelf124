@@ -212,25 +212,16 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
   
   const chartGenreData = processGenreDataForChart(genreCounts);
 
-  // Find the top genre
-  let topGenreName = "N/A";
-  let topGenreCount = 0;
-  if (Object.keys(genreCounts).length > 0) {
-    const sortedEntries = Object.entries(genreCounts).sort(([,a],[,b]) => b-a);
-    topGenreName = sortedEntries[0][0];
-    topGenreCount = sortedEntries[0][1];
-  }
-
-  // Define distinct, harmonious blue colors for the pie chart, based on #219ebc
-  const PIE_CHART_COLORS_BLUE = [
-    '#a9d6e5', // Lighter Sky Blue
-    '#89c2d9', // Light Steel Blue
-    '#61a5c2', // Medium Steel Blue
-    '#468faf', // Slightly Deeper Blue
-    '#2c7da0', // Deeper Blue
-    '#219ebc', // Target Blue
-    '#1a7f9c', // Darker Target Blue
-    '#014f86'  // Navy
+  // Define a new diverse, pastel/modern color palette
+  const PIE_CHART_COLORS_DIVERSE = [
+    '#8ecae6', // Light Blue
+    '#a2d2ff', // Lighter Blue
+    '#bde0fe', // Baby Blue
+    '#ffafcc', // Pink
+    '#ffc8dd', // Light Pink
+    '#cdb4db', // Lilac
+    '#d8e2dc', // Pale Gray
+    '#e2e2e2'  // Light Gray
   ].slice(0, chartGenreData.length); // Use only as many colors as needed
 
   const getGenreIcon = (genre: string) => {
@@ -284,58 +275,57 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
       {/* Using gap-6 (24px). Added items-stretch to make cards equal height by default */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 items-stretch"> 
         {/* Genre Distribution Card */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> {/* Reduced padding slightly, added flex flex-col */}
-          <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3> {/* Adjusted margin */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col">
+          <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3>
           {chartGenreData.length > 0 ? (
             <ResponsiveContainer width="100%" height={180} className="flex-grow min-h-[150px]"> 
               <PieChart>
-                {/* Text in the center */}
-                {topGenreName !== "N/A" && (
-                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-center">
-                    <tspan x="50%" dy="-0.5em" className="text-lg font-semibold text-gray-800 fill-current">{topGenreName}</tspan>
-                    <tspan x="50%" dy="1.2em" className="text-xs text-gray-500 fill-current">{topGenreCount} book{topGenreCount !== 1 ? 's' : ''}</tspan>
-                  </text>
-                )}
                 <Pie
                   data={chartGenreData}
                   cx="50%"
                   cy="50%"
-                  labelLine={true} // Enable label lines
-                  outerRadius={80}
-                  innerRadius={50} // Keep inner radius for donut
+                  labelLine={true} 
+                  outerRadius={70} // Slightly smaller radius for labels
+                  innerRadius={45} // Adjust inner radius accordingly
                   fill="#8884d8"
                   dataKey="value"
-                  // Custom label component for outside lines with smaller text
-                  label={({ cx, cy, midAngle, outerRadius, percent, name }) => {
+                  // Custom label component with smaller text
+                  label={({ cx, cy, midAngle, outerRadius, percent, name, value }) => { // Added value to access count
                     const RADIAN = Math.PI / 180;
-                    // Calculate position for the label slightly outside the outer radius
-                    const radius = outerRadius + 15; // Adjust this value for desired distance
+                    const radius = outerRadius + 18; // Position labels further out
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     const percentage = (percent * 100).toFixed(0);
                     
-                    // Hide label for small slices
                     if (parseFloat(percentage) < 3) return null;
 
                     return (
                       <text
                         x={x}
                         y={y}
-                        className="text-[10px] fill-gray-700" // Smaller text, dark gray fill
+                        className="text-[9px] fill-gray-600" // Slightly smaller, darker gray fill
                         textAnchor={x > cx ? 'start' : 'end'}
                         dominantBaseline="central"
                       >
-                        {`${name} (${percentage}%)`}
+                        {`${name} (${percentage}%)`} 
                       </text>
                     );
                   }}
                 >
                   {chartGenreData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_BLUE[index % PIE_CHART_COLORS_BLUE.length]} />
+                    // Use the new diverse color palette
+                    <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_DIVERSE[index % PIE_CHART_COLORS_DIVERSE.length]} />
                   ))}
                 </Pie>
+                {/* Customized Tooltip */}
                 <Tooltip 
+                  formatter={(value: number, name: string, props) => {
+                     // Calculate percentage from the payload
+                     const percentage = (props.payload?.percent * 100).toFixed(0);
+                     return [`${value} book${value !== 1 ? 's' : ''} (${percentage}%)`, name]; // Format tooltip text
+                  }}
                   contentStyle={{ backgroundColor: 'white', borderRadius: '4px', border: '1px solid #e5e7eb', padding: '4px 8px', fontSize: '12px' }}
+                  cursor={{ fill: 'rgba(200, 200, 200, 0.1)' }} // Optional: subtle hover effect
                 />
               </PieChart>
             </ResponsiveContainer>
