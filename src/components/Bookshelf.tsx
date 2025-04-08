@@ -301,6 +301,17 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     handleCloseDetailsModal(); // Close details modal
   };
 
+  // Modified onAddBookClick handler to check authentication
+  const handleAddBookClick = () => {
+    if (!isAllowedUser) {
+      alert('You need to log in to add books.');
+      console.log("User not authorized. Redirecting to login...");
+      navigate('/login');
+      return;
+    }
+    onAddBookClick();
+  };
+
   return (
     <div className="space-y-8">
        {/* Controls Row: Tabs, Sort, Add Button */}
@@ -355,7 +366,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           <Button 
             className="bg-[#219ebc] hover:bg-[#1a7f9c] text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0"
             id="add-book-button"
-            onClick={onAddBookClick} 
+            onClick={handleAddBookClick} 
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             Add Book
@@ -397,7 +408,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
      {/* Conditional Rendering based on Tab (uses local viewTab state) */}
      {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
-       <EmptyBookshelf onAddBookClick={onAddBookClick} />
+       <EmptyBookshelf onAddBookClick={handleAddBookClick} />
      ) : (
         <div className="space-y-8">
           {/* Render Grid or List directly without BookshelfSection props */}
