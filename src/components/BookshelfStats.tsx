@@ -229,10 +229,11 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
   };
 
   return (
-    <div className="mb-12">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-32 w-32 border-2 border-white shadow-md">
+    <div className="mb-8">
+      {/* Header Section - Improved Mobile Layout */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-4">
+          <Avatar className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 border-2 border-white shadow-md flex-shrink-0">
             <AvatarImage 
               src="/lovable-uploads/47602fcc-f8fb-42c1-ab12-804de5049f44.png" 
               alt="Hannah's profile" 
@@ -240,70 +241,81 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
             <AvatarFallback>HL</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-medium">Hannah's Library</h1>
+            <h1 className="text-2xl sm:text-3xl font-medium">Hannah's Library</h1>
             <p className="text-gray-500 text-sm">I do not endorse everything I read.</p>
           </div>
         </div>
         
-        <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 flex-grow">
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col items-center min-w-[120px]">
-            <div className="text-3xl font-semibold text-gray-800">{formatPagesRead(pagesRead)}</div>
-            <h3 className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">Pages Read</h3>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex items-center gap-4">
-            <div className="flex flex-col items-center px-2">
-              <div className="text-2xl font-semibold text-gray-800">{totalBooksRead}</div>
-              <h3 className="text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Books Read</h3>
-            </div>
-            <div className="h-8 w-px bg-gray-200"></div>
-            <div className="flex flex-col items-center px-2">
-              <div className="text-2xl font-semibold text-gray-800">{booksReadThisYear}</div>
-              <h3 className="text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Read In {currentYear}</h3>
-            </div>
-            <div className="h-8 w-px bg-gray-200"></div>
-            <div className="flex flex-col items-center px-2">
-              <div className="text-2xl font-semibold text-gray-800">{totalSeriesCount}</div>
-              <h3 className="text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Series</h3>
-            </div>
-          </div>
+        {/* Add Book Button - More Mobile Friendly */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onAddBookClick}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 h-10 shadow-md flex items-center gap-2 self-center sm:self-start"
+          id="add-book-button"
+          aria-label="Add a new book"
+        >
+          <PlusCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Book</span>
+        </Button>
+      </div>
 
+      {/* Stats Cards - Improved Mobile Layout */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
+          <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">{formatPagesRead(pagesRead)}</div>
+          <h3 className="text-[10px] sm:text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1 text-center">Pages Read</h3>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
+          <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">{totalBooksRead}</div>
+          <h3 className="text-[10px] sm:text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Books Read</h3>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
+          <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">{booksReadThisYear}</div>
+          <h3 className="text-[10px] sm:text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Read In {currentYear}</h3>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
+          <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">{totalSeriesCount}</div>
+          <h3 className="text-[10px] sm:text-[11px] text-gray-500 font-medium uppercase tracking-wider text-center mt-1">Series</h3>
         </div>
       </div>
       
-      {/* Grid for Pie Chart, Currently Reading, Last Finished */}
-      {/* Using gap-6 (24px). Added items-stretch to make cards equal height by default */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 items-stretch"> 
+      {/* Grid for Pie Chart, Currently Reading, Last Finished - Improved Mobile Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 items-stretch"> 
         {/* Genre Distribution Card */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col">
           <h3 className="text-xs text-gray-500 font-semibold mb-2 uppercase text-center tracking-wider flex-shrink-0">Genre Distribution</h3>
           {chartGenreData.length > 0 ? (
             <ResponsiveContainer width="100%" height={180} className="flex-grow min-h-[150px]"> 
-              <PieChart>
+              <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                 <Pie
                   data={chartGenreData}
                   cx="50%"
                   cy="50%"
                   labelLine={true} 
-                  outerRadius={70} // Slightly smaller radius for labels
-                  innerRadius={45} // Adjust inner radius accordingly
+                  outerRadius={65} // Slightly smaller radius for better mobile fit
+                  innerRadius={40} // Adjust inner radius accordingly
                   fill="#8884d8"
                   dataKey="value"
                   // Custom label component with smaller text
-                  label={({ cx, cy, midAngle, outerRadius, percent, name, value }) => { // Added value to access count
+                  label={({ cx, cy, midAngle, outerRadius, percent, name, value }) => { 
                     const RADIAN = Math.PI / 180;
-                    const radius = outerRadius + 18; // Position labels further out
+                    const radius = outerRadius + 18; 
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     const percentage = (percent * 100).toFixed(0);
                     
-                    if (parseFloat(percentage) < 3) return null;
+                    // Only show labels for larger slices on mobile
+                    if (parseFloat(percentage) < 5) return null;
 
                     return (
                       <text
                         x={x}
                         y={y}
-                        className="text-[9px] fill-gray-600" // Slightly smaller, darker gray fill
+                        className="text-[8px] sm:text-[9px] fill-gray-600" 
                         textAnchor={x > cx ? 'start' : 'end'}
                         dominantBaseline="central"
                       >
@@ -313,38 +325,36 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                   }}
                 >
                   {chartGenreData.map((entry, index) => (
-                    // Use the new diverse color palette
                     <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS_DIVERSE[index % PIE_CHART_COLORS_DIVERSE.length]} />
                   ))}
                 </Pie>
-                {/* Customized Tooltip */}
                 <Tooltip 
                   formatter={(value: number, name: string, props) => {
-                     // Calculate percentage from the payload
                      const percentage = (props.payload?.percent * 100).toFixed(0);
-                     return [`${value} book${value !== 1 ? 's' : ''} (${percentage}%)`, name]; // Format tooltip text
+                     return [`${value} book${value !== 1 ? 's' : ''} (${percentage}%)`, name];
                   }}
                   contentStyle={{ backgroundColor: 'white', borderRadius: '4px', border: '1px solid #e5e7eb', padding: '4px 8px', fontSize: '12px' }}
-                  cursor={{ fill: 'rgba(200, 200, 200, 0.1)' }} // Optional: subtle hover effect
+                  cursor={{ fill: 'rgba(200, 200, 200, 0.1)' }}
                 />
               </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex-grow flex items-center justify-center text-gray-400 text-sm">
-              <BookOpenCheck className="h-8 w-8 text-gray-300 mb-2" />
-              <p className="text-xs text-gray-400">Add books with genres</p>
-              <p className="text-xs text-gray-400">to see distribution</p>
+              <div className="text-center">
+                <BookOpenCheck className="h-6 w-6 text-gray-300 mb-2 mx-auto" />
+                <p className="text-xs text-gray-400">Add books with genres</p>
+                <p className="text-xs text-gray-400">to see distribution</p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Currently Reading Card */}
-        {/* Added flex flex-col to structure content vertically */}
+        {/* Currently Reading Card - Improved for Mobile */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
-          <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Currently Reading</h3> {/* Adjusted margin */}
+          <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Currently Reading</h3>
           {currentlyReading ? (
-            <div className="flex items-start gap-4 flex-grow"> {/* Increased gap */} 
-              <div className="w-28 h-44 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased cover size */}
+            <div className="flex items-start gap-3 sm:gap-4 flex-grow"> 
+              <div className="w-24 sm:w-28 h-36 sm:h-42 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> 
                 {currentlyReading.coverUrl ? (
                   <img 
                     src={currentlyReading.coverUrl} 
@@ -356,16 +366,15 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: currentlyReading.color || '#3B82F6' }}
                   >
-                    <span className="text-white text-base font-bold">{currentlyReading.title.substring(0, 2)}</span> {/* Increased fallback text */} 
+                    <span className="text-white text-base font-bold">{currentlyReading.title.substring(0, 2)}</span>
                   </div>
                 )}
               </div>
-              <div className="overflow-hidden flex-grow flex flex-col justify-between h-44"> {/* Increased text size and spacing */}
-                {/* Top Section */}
+              <div className="overflow-hidden flex-grow flex flex-col justify-between h-36 sm:h-42"> 
                 <div>
-                  <h4 className="text-base font-medium line-clamp-2 mb-1">{currentlyReading.title}</h4>
-                  <p className="text-gray-600 text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> 
-                  <p className="text-gray-500 text-sm mt-1 line-clamp-1"> 
+                  <h4 className="text-sm sm:text-base font-medium line-clamp-2 mb-1">{currentlyReading.title}</h4>
+                  <p className="text-gray-600 text-xs sm:text-sm line-clamp-1 mb-2">{currentlyReading.author}</p> 
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1 line-clamp-1"> 
                     {currentlyReading.pages} pages
                     {currentlyReading.genres && currentlyReading.genres.length > 0 && (
                       <span> · {currentlyReading.genres[0]}</span>
@@ -373,8 +382,7 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                   </p>
                 </div>
                 
-                {/* Bottom Section: Progress Bar and Percentage Text (NEW) */}
-                <div className="flex items-center gap-2 mt-auto pt-2"> { /* Use mt-auto to push to bottom, pt-2 for spacing */ }
+                <div className="flex items-center gap-2 mt-auto pt-2">
                   <Progress 
                     value={currentlyReading.progress} 
                     className="h-2 bg-gray-200 flex-grow" 
@@ -386,9 +394,8 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
               </div>
             </div>
           ) : (
-            // Added flex-grow and centered content for empty state
-            <div className="flex flex-col items-center justify-center gap-2 flex-grow text-center h-full min-h-[150px]">
-              <BookOpenCheck className="h-8 w-8 text-gray-300" /> 
+            <div className="flex flex-col items-center justify-center gap-2 flex-grow text-center h-full min-h-[120px]">
+              <BookOpenCheck className="h-6 w-6 text-gray-300" /> 
               <div> 
                 <h4 className="text-sm font-medium text-gray-600">None</h4>
                 <p className="text-gray-500 text-xs mt-1">No book currently being read.</p>
@@ -397,14 +404,12 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
           )}
         </div>
 
-        {/* Last Finished Card */}
-        {/* Added flex flex-col */}
-        {latestRead ? ( // Conditionally render the whole card
+        {/* Last Finished Card - Improved for Mobile */}
+        {latestRead ? (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col"> 
-            <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Last Finished</h3> {/* Adjusted margin */}
-             {/* Added flex-grow */}
-            <div className="flex items-start gap-4 flex-grow"> {/* Increased gap */} 
-              <div className="w-28 h-44 shadow-sm rounded-sm overflow-hidden flex-shrink-0"> {/* Increased cover size */}
+            <h3 className="text-xs text-gray-500 font-semibold mb-3 uppercase tracking-wider flex-shrink-0">Last Finished</h3>
+            <div className="flex items-start gap-3 sm:gap-4 flex-grow">
+              <div className="w-24 sm:w-28 h-36 sm:h-42 shadow-sm rounded-sm overflow-hidden flex-shrink-0">
                 {latestRead.coverUrl ? (
                   <img 
                     src={latestRead.coverUrl} 
@@ -416,23 +421,22 @@ const BookshelfStats: React.FC<BookshelfStatsProps> = ({
                     className="w-full h-full flex items-center justify-center"
                     style={{ backgroundColor: latestRead.color || '#3B82F6' }}
                   >
-                     <span className="text-white text-base font-bold">{latestRead.title.substring(0, 2)}</span> {/* Increased fallback text */} 
+                     <span className="text-white text-base font-bold">{latestRead.title.substring(0, 2)}</span>
                   </div>
                 )}
               </div>
-               {/* Increased text size and spacing */}
-              <div className="overflow-hidden flex-grow h-44"> 
-                <h4 className="text-base font-medium line-clamp-2 mb-1">{latestRead.title}</h4>
-                <p className="text-gray-600 text-sm line-clamp-1 mb-2">{latestRead.author}</p> {/* Increased size/margin */} 
-                <p className="text-gray-500 text-sm mt-1 line-clamp-1"> {/* Increased size/margin */} 
+              <div className="overflow-hidden flex-grow h-36 sm:h-42"> 
+                <h4 className="text-sm sm:text-base font-medium line-clamp-2 mb-1">{latestRead.title}</h4>
+                <p className="text-gray-600 text-xs sm:text-sm line-clamp-1 mb-2">{latestRead.author}</p>
+                <p className="text-gray-500 text-xs sm:text-sm mt-1 line-clamp-1">
                   {latestRead.pages} pages · {latestRead.genres && latestRead.genres.length > 0 ? latestRead.genres[0] : 'No genre'}
                 </p>
               </div>
             </div>
           </div>
-        ) : ( // Render a placeholder or empty state if no books have been read
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col items-center justify-center text-center min-h-[170px]"> 
-             <BookmarkCheck className="h-8 w-8 text-gray-300 mb-2" />
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col items-center justify-center text-center min-h-[120px]"> 
+             <BookmarkCheck className="h-6 w-6 text-gray-300 mb-2" />
              <h4 className="text-sm font-medium text-gray-600">No Books Finished</h4>
              <p className="text-gray-500 text-xs mt-1">Finish reading a book to see it here.</p>
           </div>

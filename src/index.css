@@ -264,6 +264,32 @@
 /* Responsive grid adjustments */
 @media (max-width: 640px) {
   .book-container {
+    width: 110px;
+    margin-bottom: 8px;
+  }
+  
+  .book-cover {
+    height: 176px;
+    width: 110px;
+  }
+  
+  /* Disable hover effects on mobile for better performance */
+  .book-cover:hover,
+  .book-container:hover {
+    transform: none;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Reduce margin/padding on mobile */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* Add styles for split screen */
+@media (min-width: 641px) and (max-width: 1200px) {
+  .book-container {
     width: 120px;
   }
   

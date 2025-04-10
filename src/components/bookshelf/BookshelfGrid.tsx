@@ -47,10 +47,10 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
 
   return (
     <div className={cn(
-      "bg-white border border-gray-200 rounded-lg shadow-sm p-6 relative",
+      "bg-white border border-gray-200 rounded-lg shadow-sm p-4 sm:p-6 relative",
       cardClassName
     )}>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-6">
         {books.map(book => {
           // Create a modified title that adds "Series" for series books
           const displayTitle = book.title;
@@ -68,11 +68,11 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
               <div className="absolute right-1 top-1 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-7 w-7 bg-white">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button variant="outline" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-white">
+                      <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white z-50">
+                  <DropdownMenuContent align="end" className="w-40 sm:w-48 bg-white z-50">
                     <DropdownMenuItem onClick={() => onEdit(book)}>
                       <Pencil className="h-4 w-4 mr-2" /> Edit
                     </DropdownMenuItem>
@@ -92,22 +92,20 @@ const BookshelfGrid: React.FC<BookshelfGridProps> = ({
                 />
                 
                 {book.isSeries && (
-                  <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-xs">Series</Badge>
+                  <Badge className="absolute top-2 left-2 bg-purple-600 text-white text-[10px] sm:text-xs px-1 py-0 sm:px-1.5 sm:py-0.5">Series</Badge>
                 )}
-                
-                {/* Removed duplicate reading badge that was here */}
               </div>
               
               <div className="mt-1 text-center">
-                <div className="text-sm font-medium break-words max-w-full whitespace-normal">
+                <div className="text-xs sm:text-sm font-medium break-words max-w-full whitespace-normal line-clamp-2">
                   {displayTitle}
                 </div>
-                <div className="text-xs text-gray-500 break-words max-w-full">
+                <div className="text-[10px] sm:text-xs text-gray-500 break-words max-w-full">
                   {book.author}
                 </div>
                 
                 {book.recommendedBy && (
-                  <div className="text-xs text-center mt-1 text-blue-500 break-words max-w-full">
+                  <div className="text-[10px] sm:text-xs text-center mt-1 text-blue-500 break-words max-w-full">
                     From: {book.recommendedBy}
                   </div>
                 )}
