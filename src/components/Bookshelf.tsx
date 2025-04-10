@@ -314,156 +314,164 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
   return (
     <div className="space-y-8">
-       {/* Controls Row: Tabs, Sort, Add Button */}
-       <div className="flex justify-between items-center mb-6 gap-4"> { /* Use justify-between and gap */ }
-          {/* Wrapper for Tabs and Sort */}
-          <div className="flex items-center gap-4 flex-grow"> { /* Allow this section to grow */ }
-            {/* Tabs */} 
-            <Tabs value={viewTab} onValueChange={handleTabChange} className="hidden sm:block"> 
-              <TabsList className="bg-gray-100 p-1 rounded-lg h-10"> { /* Match height with buttons */ }
-                <TabsTrigger value="shelf" className={cn("px-3 text-sm", viewTab === 'shelf' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookOpenIcon className="h-4 w-4 mr-1.5"/>Shelf</TabsTrigger>
-                <TabsTrigger value="list" className={cn("px-3 text-sm", viewTab === 'list' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><List className="h-4 w-4 mr-1.5"/>List</TabsTrigger>
-                <TabsTrigger value="to-read" className={cn("px-3 text-sm", viewTab === 'to-read' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><BookmarkIcon className="h-4 w-4 mr-1.5"/>To Read</TabsTrigger>
-                <TabsTrigger value="recommendations" className={cn("px-3 text-sm", viewTab === 'recommendations' ? 'bg-white shadow-sm rounded-md text-gray-900' : 'text-gray-600')}><LightbulbIcon className="h-4 w-4 mr-1.5"/>Recs</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {/* Sort Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-10 w-10"> { /* Match height */ }
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white z-50">
-                 <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => handleSort('dateRead')} className="text-sm">
-                    {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
-                    Date Read
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSort('title')} className="text-sm">
-                    {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                    Title
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSort('author')} className="text-sm">
-                    {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
-                    Author
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSort('progress')} className="text-sm">
-                    {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
-                    Progress
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSort('favorite')} className="text-sm">
-                    {sortBy === 'favorite' && (sortOrder === 'desc' ? <Star className="h-4 w-4 mr-2" /> : <Star className="h-4 w-4 mr-2 opacity-50" />)}
-                    Favorites First
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          {/* Existing Black Add Book Button (Update color) */} 
-          <Button 
-            className="bg-[#219ebc] hover:bg-[#1a7f9c] text-white text-sm px-4 py-2 rounded-md h-10 flex-shrink-0"
-            id="add-book-button"
-            onClick={handleAddBookClick} 
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Book
-          </Button>
-       </div>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
+        <Tabs value={viewTab} onValueChange={(value) => setViewTab(value as ViewTab)} className="flex-grow">
+          <TabsList className="bg-gray-200 p-1 rounded-lg flex justify-center sm:justify-start">
+            <TabsTrigger 
+              value="shelf" 
+              className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+            >
+              Shelf
+            </TabsTrigger>
+            <TabsTrigger 
+              value="list" 
+              className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+            >
+              List
+            </TabsTrigger>
+            <TabsTrigger 
+              value="to-read" 
+              className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+            >
+              To Read
+            </TabsTrigger>
+            <TabsTrigger 
+              value="recommendations" 
+              className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+            >
+              Recommendations
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-     <Dialog open={isAddDialogOpen} onOpenChange={onDialogClose}>
-       <DialogContent className="sm:max-w-[425px]">
-         <DialogTitle>Add New Book</DialogTitle>
-         <AddBookForm 
-           isOpen={isAddDialogOpen} 
-           onClose={onDialogClose} 
-           onSuccess={onDialogClose} 
-         />
-       </DialogContent>
-     </Dialog>
-
-     <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
-       <DialogContent className="sm:max-w-[425px]">
-         <DialogTitle>Edit Book</DialogTitle>
-         {selectedBook && (
-           <AddBookForm 
-             isOpen={isEditDialogOpen}
-             onClose={() => setIsEditDialogOpen(false)}
-             onSuccess={handleEditSuccess} 
-             bookToEdit={selectedBook}
-           />
-         )}
-       </DialogContent>
-     </Dialog>
-
-     {/* Details Modal (NEW) */}
-     <BookDetailsModal 
-       book={selectedBookForDetails} 
-       isOpen={isDetailsModalOpen} 
-       onClose={handleCloseDetailsModal} 
-       onEdit={handleEditFromDetails} 
-     />
-
-     {/* Conditional Rendering based on Tab (uses local viewTab state) */}
-     {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
-       <EmptyBookshelf onAddBookClick={handleAddBookClick} />
-     ) : (
-        <div className="space-y-8">
-          {/* Render Grid or List directly without BookshelfSection props */}
-          {viewTab === 'shelf' || viewTab === 'list' ? (
-            displayStyle === 'list' ? (
-              <BookList 
-                books={booksToDisplay} 
-                onEdit={handleEdit} 
-                onDelete={handleDelete}
-                onShowDetails={handleShowDetails}
-              />
-            ) : (
-              <BookshelfGrid 
-                books={booksToDisplay} 
-                onEdit={handleEdit} 
-                onDelete={handleDelete}
-                onDragStart={setDraggedBook}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                draggedOverBook={draggedOverBook}
-                showStatus={true} 
-                onShowDetails={handleShowDetails}
-              />
-            )
-          ) : viewTab === 'to-read' ? (
-             // Keep using BookshelfSection for To Read as it's a distinct section
-             <BookshelfSection 
-              title="To Read"
-              icon={Bookmark}
-              iconColor="text-orange-500"
-              books={booksToDisplay}
-              displayStyle={displayStyle} // Pass current display style
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              emptyMessage="Your reading list is empty!"
-              emptySubMessage="Add some books you want to read later."
-              onShowDetails={handleShowDetails}
-            />
-          ) : viewTab === 'recommendations' ? (
-            // Keep using BookshelfSection for Recommendations
-            <BookshelfSection 
-              title="Recommendations"
-              icon={LightbulbIcon}
-              iconColor="text-yellow-500"
-              books={booksToDisplay}
-              displayStyle={displayStyle} // Pass current display style
-              onEdit={handleEdit} 
-              onDelete={handleDelete}
-              emptyMessage="No recommendations yet."
-              emptySubMessage="AI recommendations will appear here once enabled."
-              onShowDetails={handleShowDetails}
-            />
-          ) : null}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 mt-2 sm:mt-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-9 w-9 sm:h-10 sm:w-10"> { /* Slightly smaller on mobile */ }
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white z-50">
+              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => handleSort('dateRead')} className="text-sm">
+                  {sortBy === 'dateRead' && (sortOrder === 'desc' ? <ArrowDown10 className="h-4 w-4 mr-2" /> : <ArrowDown10 className="h-4 w-4 mr-2 rotate-180" />)}
+                  Date Read
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('title')} className="text-sm">
+                  {sortBy === 'title' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                  Title
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('author')} className="text-sm">
+                  {sortBy === 'author' && (sortOrder === 'desc' ? <ArrowDownZA className="h-4 w-4 mr-2" /> : <ArrowDownAZ className="h-4 w-4 mr-2" />)}
+                  Author
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('progress')} className="text-sm">
+                  {sortBy === 'progress' && (sortOrder === 'desc' ? <Percent className="h-4 w-4 mr-2" /> : <Percent className="h-4 w-4 mr-2 rotate-180" />)}
+                  Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('favorite')} className="text-sm">
+                  {sortBy === 'favorite' && <Star className="h-4 w-4 mr-2 fill-yellow-400 text-yellow-400" />}
+                  Favorite
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-     )}
+      </div>
+      
+      <Dialog open={isAddDialogOpen} onOpenChange={onDialogClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogTitle>Add New Book</DialogTitle>
+          <AddBookForm 
+            isOpen={isAddDialogOpen} 
+            onClose={onDialogClose} 
+            onSuccess={onDialogClose} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogTitle>Edit Book</DialogTitle>
+          {selectedBook && (
+            <AddBookForm 
+              isOpen={isEditDialogOpen}
+              onClose={() => setIsEditDialogOpen(false)}
+              onSuccess={handleEditSuccess} 
+              bookToEdit={selectedBook}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Modal (NEW) */}
+      <BookDetailsModal 
+        book={selectedBookForDetails} 
+        isOpen={isDetailsModalOpen} 
+        onClose={handleCloseDetailsModal} 
+        onEdit={handleEditFromDetails} 
+      />
+
+      {/* Conditional Rendering based on Tab (uses local viewTab state) */}
+      {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
+        <EmptyBookshelf onAddBookClick={handleAddBookClick} />
+      ) : (
+         <div className="space-y-8">
+           {/* Render Grid or List directly without BookshelfSection props */}
+           {viewTab === 'shelf' || viewTab === 'list' ? (
+             displayStyle === 'list' ? (
+               <BookList 
+                 books={booksToDisplay} 
+                 onEdit={handleEdit} 
+                 onDelete={handleDelete}
+                 onShowDetails={handleShowDetails}
+               />
+             ) : (
+               <BookshelfGrid 
+                 books={booksToDisplay} 
+                 onEdit={handleEdit} 
+                 onDelete={handleDelete}
+                 onDragStart={setDraggedBook}
+                 onDragOver={handleDragOver}
+                 onDrop={handleDrop}
+                 draggedOverBook={draggedOverBook}
+                 showStatus={true} 
+                 onShowDetails={handleShowDetails}
+               />
+             )
+           ) : viewTab === 'to-read' ? (
+              // Keep using BookshelfSection for To Read as it's a distinct section
+              <BookshelfSection 
+               title="To Read"
+               icon={Bookmark}
+               iconColor="text-orange-500"
+               books={booksToDisplay}
+               displayStyle={displayStyle} // Pass current display style
+               onEdit={handleEdit}
+               onDelete={handleDelete}
+               emptyMessage="Your reading list is empty!"
+               emptySubMessage="Add some books you want to read later."
+               onShowDetails={handleShowDetails}
+             />
+           ) : viewTab === 'recommendations' ? (
+             // Keep using BookshelfSection for Recommendations
+             <BookshelfSection 
+               title="Recommendations"
+               icon={LightbulbIcon}
+               iconColor="text-yellow-500"
+               books={booksToDisplay}
+               displayStyle={displayStyle} // Pass current display style
+               onEdit={handleEdit} 
+               onDelete={handleDelete}
+               emptyMessage="No recommendations yet."
+               emptySubMessage="AI recommendations will appear here once enabled."
+               onShowDetails={handleShowDetails}
+             />
+           ) : null}
+         </div>
+      )}
     </div>
   );
 };

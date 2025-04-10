@@ -17,7 +17,7 @@ const Library = () => {
   return (
     <BookshelfProvider>
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <main className="flex-grow py-8 px-4 sm:px-6 lg:px-8">
+        <main className="flex-grow py-6 px-3 sm:py-8 sm:px-4 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <BookshelfStats onAddBookClick={handleAddBookClick} />
             <Bookshelf 
