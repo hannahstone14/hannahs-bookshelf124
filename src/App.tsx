@@ -73,9 +73,9 @@ const App = () => {
           <BrowserRouter>
             <Header />
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Navigate to="/library" replace />} />
               <Route path="/library" element={<Library />} />
-              <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+              <Route path="/login" element={user ? <Navigate to="/library" replace /> : <Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
