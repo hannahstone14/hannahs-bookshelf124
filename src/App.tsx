@@ -11,6 +11,8 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebaseConfig';
 import Login from './components/Login';
 import Header from './components/Header';
+import Home from './pages/Home';
+import Library from './pages/Library';
 
 // Configure React Query for better caching and retries
 const queryClient = new QueryClient({
@@ -71,7 +73,8 @@ const App = () => {
           <BrowserRouter>
             <Header />
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/library" element={<Library />} />
               <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
