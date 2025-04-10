@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import BookDetailsModal from './BookDetailsModal';
 
 // Define types locally again
-export type ViewTab = 'shelf' | 'list' | 'to-read' | 'recommendations';
+export type ViewTab = 'shelf' | 'list' | 'to-read';
 export type SortOption = 'title' | 'author' | 'dateRead' | 'progress' | 'favorite';
 
 // Placeholder: Assume an AuthContext exists
@@ -66,7 +66,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   // Check if the logged-in user is the allowed user
   const isAllowedUser = user?.email === 'hstone1416@gmail.com';
   
-  const { books, recommendations, reorderBooks, removeBook } = useBookshelf();
+  const { books, reorderBooks, removeBook, toggleFavorite } = useBookshelf();
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -95,7 +95,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   
   const allShelfBooks = books.filter(book => book.status !== 'to-read');
   
-  const toReadBooks: Book[] = [];
+  const toReadBooks = books.filter(book => book.status === 'to-read');
   
   const seriesBooks = books.filter(book => book.isSeries);
   const uniqueSeriesNames = new Set();
@@ -155,9 +155,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({
       case 'to-read':
         displayedBooks = getSortedBooks(toReadBooks);
         break;
-      case 'recommendations':
-        displayedBooks = getSortedBooks(recommendations);
-        break;
       case 'shelf':
       case 'list':
       default:
@@ -187,7 +184,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     if (viewTab === 'shelf' || viewTab === 'list') {
       setDisplayStyle(viewTab);
     }
-  }, [viewTab, sortBy, sortOrder, books, recommendations, getSortedBooks, allShelfBooks, toReadBooks]); // Depend on local state
+  }, [viewTab, sortBy, sortOrder, books, getSortedBooks, allShelfBooks, toReadBooks]); // Depend on local state
 
   const handleEdit = useCallback((book: Book) => {
     if (!isMounted.current) return;
@@ -337,12 +334,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             >
               To Read
             </TabsTrigger>
-            <TabsTrigger 
-              value="recommendations" 
-              className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
-            >
-              Recommendations
-            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -418,7 +409,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
       />
 
       {/* Conditional Rendering based on Tab (uses local viewTab state) */}
-      {booksToDisplay.length === 0 && viewTab !== 'recommendations' && viewTab !== 'to-read' ? (
+      {booksToDisplay.length === 0 && viewTab !== 'to-read' ? (
         <EmptyBookshelf onAddBookClick={handleAddBookClick} />
       ) : (
          <div className="space-y-8">
@@ -456,20 +447,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                onDelete={handleDelete}
                emptyMessage="Your reading list is empty!"
                emptySubMessage="Add some books you want to read later."
-               onShowDetails={handleShowDetails}
-             />
-           ) : viewTab === 'recommendations' ? (
-             // Keep using BookshelfSection for Recommendations
-             <BookshelfSection 
-               title="Recommendations"
-               icon={LightbulbIcon}
-               iconColor="text-yellow-500"
-               books={booksToDisplay}
-               displayStyle={displayStyle} // Pass current display style
-               onEdit={handleEdit} 
-               onDelete={handleDelete}
-               emptyMessage="No recommendations yet."
-               emptySubMessage="AI recommendations will appear here once enabled."
                onShowDetails={handleShowDetails}
              />
            ) : null}

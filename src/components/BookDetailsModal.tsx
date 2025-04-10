@@ -8,10 +8,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Book } from '@/types/book';
-import { CalendarIcon, BookOpenText, Pencil, Star } from 'lucide-react';
+import { CalendarIcon, BookOpenText, Pencil, Star, Heart } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { useBookshelf } from '@/context/BookshelfContext';
+import { cn } from '@/lib/utils';
 
 interface BookDetailsModalProps {
   book: Book | null;
@@ -26,6 +28,8 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
   onClose,
   onEdit
 }) => {
+  const { toggleFavorite } = useBookshelf();
+
   if (!book) return null;
 
   const formatDate = (date: Date | string | undefined) => {
@@ -38,6 +42,12 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
     }
   };
 
+  const handleToggleFavorite = () => {
+    if (book) {
+      toggleFavorite(book.id);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md md:max-w-lg">
@@ -47,7 +57,7 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
         
         <div className="flex flex-col md:flex-row gap-4 mt-2">
           {/* Book Cover */}
-          <div className="w-full md:w-1/3 flex justify-center">
+          <div className="w-full md:w-1/3 flex justify-center relative">
             {book.coverUrl ? (
               <img 
                 src={book.coverUrl} 
@@ -60,6 +70,12 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
                 style={{ backgroundColor: book.color || '#3B82F6' }}
               >
                 <span className="text-white text-lg font-bold">{book.title.substring(0, 2)}</span>
+              </div>
+            )}
+            {/* Favorite Icon on Cover */}
+            {book.favorite && (
+              <div className="absolute top-2 right-2 bg-white p-1 rounded-full shadow-md">
+                <Heart className="h-4 w-4 text-red-500 fill-red-500" />
               </div>
             )}
           </div>
@@ -75,12 +91,12 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Status</h3>
                 <Badge 
-                  className={
+                  className={cn(
                     book.status === 'read' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
                     book.status === 'reading' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
                     book.status === 'to-read' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' :
                     'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                  }
+                  )}
                 >
                   {book.status.replace('-', ' ')}
                 </Badge>
@@ -162,15 +178,18 @@ const BookDetailsModal: React.FC<BookDetailsModalProps> = ({
           </div>
         </div>
         
-        <DialogFooter className="sm:justify-between">
-          <div className="flex items-center">
-            {book.favorite && (
-              <div className="flex items-center text-yellow-500">
-                <Star className="h-4 w-4 fill-yellow-500 mr-1" /> 
-                <span className="text-sm">Favorite</span>
-              </div>
-            )}
-          </div>
+        <DialogFooter className="sm:justify-between mt-4">
+          {/* Favorite Toggle Button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleToggleFavorite} 
+            className="flex items-center gap-1 text-gray-600 hover:text-red-500"
+          >
+            <Heart className={cn("h-4 w-4", book.favorite && "fill-red-500 text-red-500")} />
+            {book.favorite ? 'Favorited' : 'Favorite'}
+          </Button>
+          
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
               Close

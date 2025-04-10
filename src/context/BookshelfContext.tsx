@@ -10,7 +10,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface BookshelfContextType {
   books: Book[];
-  recommendations: Book[];
   addBook: (bookData: Omit<Book, 'id'>, totalSeriesBooks?: number, totalSeriesPages?: number) => void;
   removeBook: (id: string) => void;
   editBook: (id: string, bookData: Partial<Book>) => void;
@@ -44,15 +43,13 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   const { 
     books = [], 
-    recommendations = [],
-    setBooks,
-    setRecommendations
+    setBooks
   } = useLocalStorageState ? localStorage : supabaseStorage;
   
   useEffect(() => {
     console.log(`BookshelfProvider initialized. Using localStorage: ${useLocalStorageState}`);
-    console.log(`Current books count: ${books.length}, recommendations count: ${recommendations.length}`);
-  }, [useLocalStorageState, books.length, recommendations.length]);
+    console.log(`Current books count: ${books.length}`);
+  }, [useLocalStorageState, books.length]);
   
   useEffect(() => {
     if (!useLocalStorageState && 'isLoading' in supabaseStorage) {
@@ -68,28 +65,16 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  const updateLocalState = (book: Book, isRecommendation: boolean) => {
-    if (isRecommendation) {
-      setRecommendations(prev => {
-        const exists = prev.some(b => b.id === book.id);
-        if (exists) {
-          return prev.map(b => b.id === book.id ? book : b);
-        } else {
-          return [...prev, book];
-        }
-      });
-    } else {
-      setBooks(prev => {
-        const exists = prev.some(b => b.id === book.id);
-        if (exists) {
-          return prev.map(b => b.id === book.id ? book : b);
-        } else {
-          return [...prev, book];
-        }
-      });
-    }
-    
-    console.log(`Local state updated: ${isRecommendation ? 'recommendation' : 'book'} with ID ${book.id}`);
+  const updateLocalState = (book: Book) => {
+    setBooks(prev => {
+      const exists = prev.some(b => b.id === book.id);
+      if (exists) {
+        return prev.map(b => b.id === book.id ? book : b);
+      } else {
+        return [...prev, book];
+      }
+    });
+    console.log(`Local book state updated for ID ${book.id}`);
   };
 
   const addBook = async (
@@ -101,61 +86,33 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.log('Adding book:', bookData.title);
       
       if (bookData.isSeries && totalSeriesBooks && totalSeriesPages && totalSeriesBooks > 1) {
-        // For UI updates, we need a complete book with ID
-        const completeBook: Book = {
-          ...bookData,
-          id: uuidv4()
-        };
-        
+        const completeBook: Book = { ...bookData, id: uuidv4() };
         const tempSeriesBooks = createSeriesBooks(completeBook, totalSeriesBooks, totalSeriesPages);
         
-        // Update UI with temporary books (these have IDs)
-        tempSeriesBooks.forEach(seriesBook => {
-          updateLocalState(seriesBook as Book, bookData.status === 'recommendation');
-        });
+        tempSeriesBooks.forEach(seriesBook => updateLocalState(seriesBook as Book));
         
         try {
-          // When sending to API, we need to remove the ID and use Omit<Book, "id"> type
           const addPromises = tempSeriesBooks.map(seriesBook => {
-            // Create a proper Omit<Book, "id"> by removing the id property
             const { id, ...bookWithoutId } = seriesBook as Book;
             return bookService.addBook(bookWithoutId);
           });
-          
           const newBooks = await Promise.all(addPromises);
-          
-          // Update UI with books returned from API (these have server-generated IDs)
-          newBooks.forEach(newBook => {
-            updateLocalState(newBook, bookData.status === 'recommendation');
-          });
-          
+          newBooks.forEach(newBook => updateLocalState(newBook));
           toast.success(`Added ${tempSeriesBooks.length} books in the ${bookData.seriesName} series!`);
         } catch (error) {
           console.error('Error adding series books:', error);
           toast.error('Failed to add all series books');
         }
       } else {
-        // For UI updates, create a complete book with ID
-        const tempBook: Book = {
-          ...bookData,
-          id: uuidv4(),
-        };
-        
+        const tempBook: Book = { ...bookData, id: uuidv4() };
         console.log('Updating UI with temporary book:', tempBook);
-        updateLocalState(tempBook, bookData.status === 'recommendation');
+        updateLocalState(tempBook);
         
         try {
-          // When sending to API, pass bookData which is already Omit<Book, "id">
           const newBook = await bookService.addBook(bookData);
-          
           console.log('Received book from API:', newBook);
-          updateLocalState(newBook, bookData.status === 'recommendation');
-          
-          if (bookData.status === 'recommendation') {
-            toast.success('Thank you for your recommendation!');
-          } else {
-            toast.success('Book added to your shelf!');
-          }
+          updateLocalState(newBook);
+          toast.success('Book added to your shelf!');
         } catch (error) {
           console.error('Error adding book from API:', error);
           toast.error('Failed to save book to server, but it is saved locally');
@@ -169,79 +126,51 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const removeBook = async (id: string) => {
     try {
-      const isRecommendation = recommendations.some(rec => rec.id === id);
-      
-      if (isRecommendation) {
-        setRecommendations(prev => prev.filter(book => book.id !== id));
-      } else {
-        setBooks(prev => prev.filter(book => book.id !== id));
-      }
-      
-      await bookService.deleteBook(id, isRecommendation);
-      
-      toast.info(isRecommendation ? 'Recommendation removed' : 'Book removed from your shelf');
+      setBooks(prev => prev.filter(book => book.id !== id));
+      await bookService.deleteBook(id);
+      toast.info('Book removed from your shelf');
     } catch (error) {
       console.error('Error removing book:', error);
       toast.error('Failed to remove book');
-      
       recoverData();
     }
   };
 
   const editBook = async (id: string, bookData: Partial<Book>) => {
     try {
-      const isRecommendation = recommendations.some(rec => rec.id === id);
-      const currentCollection = isRecommendation ? recommendations : books;
-      const currentBook = currentCollection.find(b => b.id === id);
-      
-      if (!currentBook) {
-        throw new Error(`Book with id ${id} not found`);
-      }
+      const currentBook = books.find(b => b.id === id);
+      if (!currentBook) throw new Error(`Book with id ${id} not found`);
       
       const updatedBook = { ...currentBook, ...bookData } as Book;
-      updateLocalState(updatedBook, isRecommendation);
+      updateLocalState(updatedBook);
       
-      const serverUpdatedBook = await bookService.updateBook(id, bookData, isRecommendation);
-      
-      updateLocalState(serverUpdatedBook, isRecommendation);
-      
+      const serverUpdatedBook = await bookService.updateBook(id, bookData);
+      updateLocalState(serverUpdatedBook);
       toast.success('Book updated successfully!');
     } catch (error) {
       console.error('Error editing book:', error);
       toast.error('Failed to update book');
-      
       recoverData();
     }
   };
 
   const updateProgress = async (id: string, progress: number) => {
     const status = progress === 100 ? 'read' : 'reading';
-    
     try {
-      // Find books with matching information (possible duplicates)
       const currentBook = books.find(b => b.id === id);
-      if (!currentBook) {
-        throw new Error(`Book with id ${id} not found`);
-      }
-      
-      // Remove any potential duplicates (same title and author)
+      if (!currentBook) throw new Error(`Book with id ${id} not found`);
+
       const duplicates = books.filter(b => 
         b.id !== id && 
         b.title === currentBook.title && 
         b.author === currentBook.author
       );
-      
       if (duplicates.length > 0) {
         console.log(`Found ${duplicates.length} duplicate books, removing them`);
-        // Remove duplicates from UI state
-        setBooks(prev => prev.filter(book => 
-          !duplicates.some(dup => dup.id === book.id)
-        ));
-        
-        // Remove duplicates from storage
+        setBooks(prev => prev.filter(book => !duplicates.some(dup => dup.id === book.id)));
         try {
           for (const dup of duplicates) {
-            await bookService.deleteBook(dup.id, false);
+            await bookService.deleteBook(dup.id);
           }
         } catch (deleteError) {
           console.error('Error deleting duplicate books:', deleteError);
@@ -249,126 +178,91 @@ export const BookshelfProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       
       const updatedBook = { ...currentBook, progress, status } as Book;
-      updateLocalState(updatedBook, false);
-      
+      updateLocalState(updatedBook);
       await bookService.updateBook(id, { progress, status });
-      
       toast.success('Reading progress updated!');
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error('Failed to update progress');
-      
       recoverData();
     }
   };
 
   const toggleFavorite = async (id: string) => {
-    const isRecommendation = recommendations.some(rec => rec.id === id);
-    const collection = isRecommendation ? recommendations : books;
-    const book = collection.find(b => b.id === id);
-    
-    if (book) {
-      try {
-        const updatedBook = { ...book, favorite: !book.favorite } as Book;
-        updateLocalState(updatedBook, isRecommendation);
-        
-        await bookService.updateBook(id, { favorite: !book.favorite }, isRecommendation);
-        
-        toast.success('Favorite status updated!');
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-        toast.error('Failed to update favorite status');
-        
-        recoverData();
-      }
+    try {
+      const currentBook = books.find(b => b.id === id);
+      if (!currentBook) throw new Error(`Book with id ${id} not found`);
+
+      const updatedBook = { ...currentBook, favorite: !currentBook.favorite } as Book;
+      updateLocalState(updatedBook);
+      
+      await bookService.updateBook(id, { favorite: updatedBook.favorite });
+      toast.success(updatedBook.favorite ? 'Added to favorites!' : 'Removed from favorites');
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite status');
+      recoverData();
     }
   };
 
   const reorderBooks = async (currentOrder: string[], newOrder: string[]) => {
+    const optimisticBooks = newOrder.map((id, index) => {
+      const book = books.find(b => b.id === id);
+      if (!book) return null;
+      return { ...book, order: index };
+    }).filter(Boolean) as Book[];
+    
+    const remainingBooks = books.filter(b => !newOrder.includes(b.id));
+    setBooks([...optimisticBooks, ...remainingBooks]);
+
     try {
-      console.log('Reordering books, current order:', currentOrder, 'new order:', newOrder);
-      
-      setBooks(prev => {
-        const booksCopy = [...prev];
-        const booksMap = new Map(booksCopy.map(book => [book.id, book]));
-        
-        const orderedBooks = newOrder
-          .filter(id => booksMap.has(id))
-          .map(id => booksMap.get(id)!)
-          .map((book, index) => ({...book, order: index}));
-        
-        const unorderedBooks = booksCopy.filter(book => !newOrder.includes(book.id));
-        
-        const result = [...orderedBooks, ...unorderedBooks];
-        console.log('Locally reordered books:', result.length);
-        return result;
-      });
-      
       await bookService.updateBookOrder(newOrder);
-      
-      toast.success('Books reordered successfully!');
     } catch (error) {
       console.error('Error reordering books:', error);
-      toast.error('Failed to reorder books');
-      
-      recoverData();
+      toast.error('Failed to save book order');
+      const originalBooks = currentOrder.map((id, index) => {
+        const book = books.find(b => b.id === id);
+        if (!book) return null;
+        return { ...book, order: index };
+      }).filter(Boolean) as Book[];
+      const originalRemaining = books.filter(b => !currentOrder.includes(b.id));
+      setBooks([...originalBooks, ...originalRemaining]);
     }
   };
 
   const recoverData = async () => {
     try {
-      setIsLoading(true);
-      console.log('Attempting to recover data from service...');
-      const [booksData, recommendationsData] = await Promise.all([
-        bookService.getAllBooks(),
-        bookService.getAllRecommendations()
-      ]);
-      
-      if (isMounted.current) {
-        console.log(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
-        setBooks(booksData);
-        setRecommendations(recommendationsData);
-        if (booksData.length > 0 || recommendationsData.length > 0) {
-          toast.success(`Recovered ${booksData.length} books and ${recommendationsData.length} recommendations`);
-        }
-      }
+      const allBooks = await bookService.getAllBooks();
+      setBooks(allBooks);
+      console.log('Data recovery successful.');
     } catch (error) {
       console.error('Error recovering data:', error);
-      toast.error('Failed to recover books');
-    } finally {
-      if (isMounted.current) {
-        setIsLoading(false);
-      }
+      toast.error('Failed to recover data from server.');
     }
   };
 
   useEffect(() => {
-    const shouldRecover = (books.length === 0 && recommendations.length === 0 && !isLoading && !initialLoadRef.current);
+    const shouldRecover = (books.length === 0 && !isLoading && !initialLoadRef.current);
     
     if (shouldRecover) {
       initialLoadRef.current = true;
       console.log('No books found in state, attempting to recover data...');
       recoverData();
     }
-  }, [isLoading, books.length, recommendations.length]);
+  }, [isLoading, books.length]);
 
   const value = {
     books,
-    recommendations,
     addBook,
     removeBook,
     editBook,
+    reorderBooks,
     updateProgress,
     toggleFavorite,
-    reorderBooks,
     recoverData,
     hasBackup,
-    isLoading
+    isLoading,
   };
 
-  return (
-    <BookshelfContext.Provider value={value}>
-      {children}
-    </BookshelfContext.Provider>
-  );
+  return <BookshelfContext.Provider value={value}>{children}</BookshelfContext.Provider>;
 };

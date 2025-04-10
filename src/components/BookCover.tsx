@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Book } from '@/types/book';
 import { cn } from '@/lib/utils';
-import { BookMarked, Star } from 'lucide-react';
+import { BookMarked, Star, Heart } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 
@@ -132,10 +132,10 @@ const BookCover: React.FC<BookCoverProps> = ({ book, showStatus, showProgress, s
         </div>
       )}
 
-      {/* Favorite star badge */}
+      {/* Favorite Heart Icon - NEW */}
       {book.favorite && (
-        <div className="absolute top-1 right-1 bg-yellow-400 text-white p-1 rounded-full z-20 shadow-sm">
-          <Star size={14} fill="white" />
+        <div className="absolute top-1 right-1 bg-white/80 backdrop-blur-sm p-1 rounded-full z-20 shadow">
+          <Heart className="h-4 w-4 text-red-500 fill-red-500" />
         </div>
       )}
 
