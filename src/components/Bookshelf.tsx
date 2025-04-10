@@ -314,9 +314,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 w-full">
+      {/* Container for Tabs and Sort Button - Always flex row */}
+      <div className="flex items-center justify-between gap-4 w-full mb-6">
+        {/* Tabs - Allow to grow */}
         <Tabs value={viewTab} onValueChange={(value) => setViewTab(value as ViewTab)} className="flex-grow">
-          <TabsList className="bg-gray-200 p-1 rounded-lg flex justify-center sm:justify-start">
+          <TabsList className="bg-gray-200 p-1 rounded-lg flex justify-center sm:justify-start flex-wrap">
             <TabsTrigger 
               value="shelf" 
               className="px-3 py-1.5 text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
@@ -344,10 +346,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           </TabsList>
         </Tabs>
 
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 mt-2 sm:mt-0">
+        {/* Sort Button - Don't shrink */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-9 w-9 sm:h-10 sm:w-10"> { /* Slightly smaller on mobile */ }
+              <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 h-9 w-9 sm:h-10 sm:w-10">
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
