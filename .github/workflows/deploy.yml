@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+# Set permissions at the job level
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
