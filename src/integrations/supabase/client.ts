@@ -2,10 +2,26 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://dufrrvnxxokvopoyfutw.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZnJydm54eG9rdm9wb3lmdXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMTIxMzgsImV4cCI6MjA1ODc4ODEzOH0.dNI5zCEaZAk_q9I0liOiDRD_7ciJd5DvybBxYt0SekM";
+// Read variables from environment
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Basic check to ensure variables are loaded
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error("Supabase URL or Anon Key is missing. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env.local file.");
+  // Optionally, throw an error or handle this case appropriately
+  // throw new Error("Supabase environment variables are not set.");
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Initialize client only if variables are present
+export const supabase = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY 
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+  : null; // Or handle the absence of keys as needed
+
+// Add a function to check client availability if needed elsewhere
+export const isSupabaseConnected = (): boolean => {
+  return supabase !== null;
+};
